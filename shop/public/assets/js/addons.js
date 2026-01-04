@@ -1,0 +1,271 @@
+define([], function () {
+    require.config({
+    paths: {
+        'nkeditor': '../addons/nkeditor/js/customplugin',
+        'nkeditor-core': '../addons/nkeditor/nkeditor',
+        'nkeditor-lang': '../addons/nkeditor/lang/zh-CN',
+        'dompurify': '../addons/nkeditor/js/dompurify',
+    },
+    shim: {
+        'nkeditor': {
+            deps: [
+                'nkeditor-core',
+                'nkeditor-lang'
+            ]
+        },
+        'nkeditor-core': {
+            deps: [
+                'css!../addons/nkeditor/themes/black/editor.min.css',
+                'css!../addons/nkeditor/css/common.css'
+            ],
+            exports: 'window.KindEditor'
+        },
+        'nkeditor-lang': {
+            deps: [
+                'nkeditor-core'
+            ]
+        }
+    }
+});
+require(['form'], function (Form) {
+    var _bindevent = Form.events.bindevent;
+    Form.events.bindevent = function (form) {
+        _bindevent.apply(this, [form]);
+        if ($(Config.nkeditor.classname || '.editor', form).length > 0) {
+            require(['nkeditor', 'upload', 'dompurify'], function (Nkeditor, Upload, DOMPurify) {
+                var getFileFromBase64, uploadFiles;
+                uploadFiles = async function (files, options) {
+                    var self = this;
+                    for (var i = 0; i < files.length; i++) {
+                        try {
+                            await new Promise((resolve) => {
+                                var url, html, file;
+                                file = files[i];
+                                Upload.api.send(file, function (data) {
+                                    url = Config.nkeditor.fullmode ? Fast.api.cdnurl(data.url, true) : Fast.api.cdnurl(data.url);
+                                    if (file.type.indexOf("image") !== -1) {
+                                        self.exec("insertimage", url);
+                                    } else {
+                                        html = '<a class="ke-insertfile" href="' + url + '" data-ke-src="' + url + '" target="_blank">' + (file.name || url) + '</a>';
+                                        self.exec("inserthtml", html);
+                                    }
+                                    resolve();
+                                }, function () {
+                                    resolve();
+                                }, undefined, options || {});
+                            });
+                        } catch (e) {
+
+                        }
+                    }
+                };
+                getFileFromBase64 = function (data, url) {
+                    var arr = data.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+                    while (n--) {
+                        u8arr[n] = bstr.charCodeAt(n);
+                    }
+                    var filename, suffix;
+                    if (typeof url != 'undefined') {
+                        var urlArr = url.split('.');
+                        filename = url.substr(url.lastIndexOf('/') + 1);
+                        suffix = urlArr.pop();
+                    } else {
+                        filename = Math.random().toString(36).substring(5, 15);
+                    }
+                    if (!suffix) {
+                        suffix = data.substring("data:image/".length, data.indexOf(";base64"));
+                    }
+
+                    var exp = new RegExp("\\." + suffix + "$", "i");
+                    filename = exp.test(filename) ? filename : filename + "." + suffix;
+                    var file = new File([u8arr], filename, {type: mime});
+                    return file;
+                };
+
+                // 添加 hook 过滤 iframe 来源
+                DOMPurify.addHook('uponSanitizeElement', function (node, data, config) {
+                    if (data.tagName === 'iframe') {
+                        var allowedIframePrefixes = Config.nkeditor.allowiframeprefixs || [];
+                        var src = node.getAttribute('src');
+
+                        // 判断是否匹配允许的前缀
+                        var isAllowed = false;
+                        for (var i = 0; i < allowedIframePrefixes.length; i++) {
+                            if (src && src.indexOf(allowedIframePrefixes[i]) === 0) {
+                                isAllowed = true;
+                                break;
+                            }
+                        }
+
+                        if (!isAllowed) {
+                            // 不符合要求则移除该节点
+                            return node.parentNode.removeChild(node);
+                        }
+
+                        // 添加安全属性
+                        node.setAttribute('allowfullscreen', '');
+                        node.setAttribute('allow', 'fullscreen');
+                    }
+                });
+
+                if (Config.nkeditor.isdompurify) {
+                    var purifyOptions = {
+                        ADD_TAGS: ['iframe'],
+                        FORCE_REJECT_IFRAME: false
+                    };
+                    Nkeditor.plugin('dompurify', function (K) {
+                        this.handler('beforeGetHtml', function (html) {
+                            return DOMPurify.sanitize(html, purifyOptions);
+                        });
+                        this.handler('beforeSetHtml', function (html) {
+                            return DOMPurify.sanitize(html, purifyOptions);
+                        });
+                    });
+                }
+                $(Config.nkeditor.classname || '.editor', form).each(function () {
+                    var that = this;
+                    var options = $(this).data("nkeditor-options");
+                    var editor = Nkeditor.create(that, $.extend({}, {
+                        width: '100%',
+                        filterMode: false,
+                        wellFormatMode: false,
+                        allowMediaUpload: true, //是否允许媒体上传
+                        allowFileManager: true,
+                        allowImageUpload: true,
+                        baiduMapKey: Config.nkeditor.baidumapkey || '',
+                        baiduMapCenter: Config.nkeditor.baidumapcenter || '',
+                        fontSizeTable: ['9px', '10px', '12px', '14px', '16px', '18px', '21px', '24px', '32px'],
+                        formulaPreviewUrl: typeof Config.nkeditor != 'undefined' && Config.nkeditor.formulapreviewurl ? Config.nkeditor.formulapreviewurl : "", //数学公式的预览地址
+                        cssPath: Config.site.cdnurl + '/assets/addons/nkeditor/plugins/code/prism.css',
+                        cssData: "body {font-size: 13px}",
+                        fillDescAfterUploadImage: false, //是否在上传后继续添加描述信息
+                        themeType: typeof Config.nkeditor != 'undefined' ? Config.nkeditor.theme : 'black', //编辑器皮肤,这个值从后台获取
+                        fileManagerJson: Fast.api.fixurl("/addons/nkeditor/index/attachment/module/" + Config.modulename),
+                        items: [
+                            'source', 'undo', 'redo', 'preview', 'print', 'template', 'code', 'quote', 'cut', 'copy', 'paste',
+                            'plainpaste', 'justifyleft', 'justifycenter', 'justifyright',
+                            'justifyfull', 'insertorderedlist', 'insertunorderedlist', 'indent', 'outdent', 'subscript',
+                            'superscript', 'clearhtml', 'quickformat', 'selectall',
+                            'formatblock', 'fontname', 'fontsize', 'forecolor', 'hilitecolor', 'bold',
+                            'italic', 'underline', 'strikethrough', 'lineheight', 'removeformat', 'image', 'multiimage', 'graft',
+                            'media', 'insertfile', 'table', 'hr', 'emoticons', 'baidumap', 'pagebreak',
+                            'anchor', 'link', 'unlink', 'remoteimage', 'search', 'math', 'about', 'fullscreen'
+                        ],
+                        afterCreate: function () {
+                            var self = this;
+                            //Ctrl+回车提交
+                            Nkeditor.ctrl(document, 13, function () {
+                                self.sync();
+                                $(that).closest("form").submit();
+                            });
+                            Nkeditor.ctrl(self.edit.doc, 13, function () {
+                                self.sync();
+                                $(that).closest("form").submit();
+                            });
+                            //粘贴上传
+                            $("body", self.edit.doc).bind('paste', function (event) {
+                                var originalEvent;
+                                originalEvent = event.originalEvent;
+                                if (originalEvent.clipboardData && originalEvent.clipboardData.files.length > 0) {
+                                    uploadFiles.call(self, originalEvent.clipboardData.files, self.options.upload || {});
+                                    return false;
+                                }
+                            });
+                            //拖拽上传
+                            $("body", self.edit.doc).bind('drop', function (event) {
+                                var originalEvent;
+                                originalEvent = event.originalEvent;
+                                if (originalEvent.dataTransfer && originalEvent.dataTransfer.files.length > 0) {
+                                    uploadFiles.call(self, originalEvent.dataTransfer.files, self.options.upload || {});
+                                    return false;
+                                }
+                            });
+                        },
+                        afterChange: function () {
+                            $(this.srcElement[0]).trigger("change");
+                        },
+                        //自定义处理
+                        beforeUpload: function (callback, file) {
+                            var file = file ? file : $("input.ke-upload-file", this.form).prop('files')[0];
+                            Upload.api.send(file, function (data) {
+                                var data = {code: '000', data: {url: Config.nkeditor.fullmode ? Fast.api.cdnurl(data.url, true) : Fast.api.cdnurl(data.url)}, title: '', width: '', height: '', border: '', align: ''};
+                                callback(data);
+                            }, undefined, undefined, this.options.upload || {});
+                        },
+                        //错误处理 handler
+                        errorMsgHandler: function (message, type) {
+                            try {
+                                Fast.api.msg(message);
+                                console.log(message, type);
+                            } catch (Error) {
+                                alert(message);
+                            }
+                        },
+                        uploadFiles: uploadFiles
+                    }, options || {}));
+                    $(this).data("nkeditor", editor);
+                });
+            });
+        }
+    }
+});
+
+if (Config.modulename == 'admin' && Config.controllername == 'index' && Config.actionname == 'index') {
+    require.config({
+        paths: {
+            'vue3': "../addons/shopro/libs/vue",
+            'vue': "../addons/shopro/libs/vue.amd",
+            'text': "../addons/shopro/libs/require-text",
+            'SaChat': '../addons/shopro/chat/index',
+            'ElementPlus': '../addons/shopro/libs/element-plus/index',
+            'ElementPlusIconsVue3': "../addons/shopro/libs/element-plus/icons-vue",
+            'ElementPlusIconsVue': '../addons/shopro/libs/element-plus/icons-vue.amd',
+            'io': '../addons/shopro/libs/socket.io',
+        },
+        shim: {
+            'ElementPlus': {
+                deps: ['css!../addons/shopro/libs/element-plus/index.css']
+            },
+        },
+    });
+    require(['vue3', 'ElementPlusIconsVue3'], function (Vue3, ElementPlusIconsVue3) {
+        require(['vue', 'jquery', 'SaChat', 'text!../addons/shopro/chat/index.html', 'ElementPlus', 'ElementPlusIconsVue', 'io'], function (Vue, $, SaChat, SaChatTemplate, ElementPlus, ElementPlusIconsVue, io) {
+            if (Config.dark_type != 'none') {
+                SaChatTemplate = SaChatTemplate.replaceAll('__DARK__', `<link rel="stylesheet" href="__CDN__/assets/addons/shopro/css/dark.css?v={$site.version|htmlentities}" />`)
+            }
+
+            SaChatTemplate = SaChatTemplate.replaceAll('__DARK__', ``)
+            SaChatTemplate = SaChatTemplate.replaceAll('__CDN__', Config.__CDN__)
+
+            Fast.api.ajax({
+                url: 'shopro/chat/index/init',
+                loading: false,
+                type: 'GET'
+            }, function (ret, res) {
+                $("body").append(`<div id="SaChatTemplateContainer"></div>
+                <div id="SaChatWrap"><sa-chat></sa-chat></div>`);
+
+                $("#SaChatTemplateContainer").append(SaChatTemplate);
+
+                const { createApp } = Vue
+                const app = createApp({})
+
+                app.use(ElementPlus)
+                for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+                    app.component(key, component)
+                }
+
+                app.component('sa-chat', SaChat)
+                app.mount(`#SaChatWrap`)
+                return false;
+            }, function (ret, res) {
+                if (res.msg == '') {
+                    return false;
+                }
+            })
+        });
+
+    });
+}
+});
