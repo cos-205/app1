@@ -87,6 +87,35 @@
   ],
   "subPackages": [
     {
+      "root": "pages/auth",
+      "pages": [
+        {
+          "path": "login",
+          "style": {
+            "navigationBarTitleText": "登录",
+            "navigationStyle": "custom"
+          },
+          "meta": {
+            "auth": false,
+            "title": "登录",
+            "group": "账户"
+          }
+        },
+        {
+          "path": "register",
+          "style": {
+            "navigationBarTitleText": "注册",
+            "navigationStyle": "custom"
+          },
+          "meta": {
+            "auth": false,
+            "title": "注册",
+            "group": "账户"
+          }
+        }
+      ]
+    },
+    {
       "root": "pages/goods",
       "pages": [
         {
