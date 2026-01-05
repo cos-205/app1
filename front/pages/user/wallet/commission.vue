@@ -17,7 +17,7 @@
             <view class="ss-m-r-20">
               <button
                 class="ss-reset-button withdraw-btn"
-                @tap="sheep.$router.go('/pages/pay/withdraw')"
+                @tap="xxep.$router.go('/pages/pay/withdraw')"
               >
                 提现
               </button>
@@ -141,11 +141,11 @@
 <script setup>
   import { computed, reactive } from 'vue';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import dayjs from 'dayjs';
   import _ from 'lodash';
 
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/user/wallet_card_bg.png');
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/user/wallet_card_bg.png');
 
   // 数据
   const pagination = {
@@ -180,9 +180,9 @@
       value: 'expense',
     },
   ];
-  const userInfo = computed(() => sheep.$store('user').userInfo);
+  const userInfo = computed(() => xxep.$store('user').userInfo);
 
-  const agentInfo = computed(() => sheep.$store('user').agentInfo);
+  const agentInfo = computed(() => xxep.$store('user').agentInfo);
 
   const dateFilterText = computed(() => {
     if (state.date[0] === state.date[1]) {
@@ -194,7 +194,7 @@
 
   async function getLogList(page = 1, list_rows = 8) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.user.wallet.log({
+    let res = await xxep.$api.user.wallet.log({
       type: 'commission',
       tab: tabMaps[state.currentTab].value,
       list_rows,
@@ -237,7 +237,7 @@
   // 确认操作
   async function onConfirm() {
     if (state.amount <= 0) {
-      sheep.$helper.toast('请输入正确的金额');
+      xxep.$helper.toast('请输入正确的金额');
       return;
     }
     uni.showModal({
@@ -245,12 +245,12 @@
       content: '确认把您的佣金转入到余额钱包中？',
       success: async function (res) {
         if (res.confirm) {
-          const { code } = await sheep.$api.commission.transfer({
+          const { code } = await xxep.$api.commission.transfer({
             amount: state.amount,
           });
           if (code === 1) {
             state.showModal = false;
-            sheep.$store('user').getInfo();
+            xxep.$store('user').getInfo();
             onChangeTab({ index: 0 });
           }
         }
@@ -258,8 +258,8 @@
     });
   }
   async function getAgentInfo() {
-    await sheep.$store('user').getInfo();
-    await sheep.$store('user').getAgentInfo();
+    await xxep.$store('user').getInfo();
+    await xxep.$store('user').getAgentInfo();
   }
 
   onLoad(async (options) => {

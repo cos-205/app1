@@ -13,7 +13,7 @@
         <view class="header-box ss-flex">
           <image
             class="bg-img"
-            :src="sheep.$url.cdn(state.background)"
+            :src="xxep.$url.cdn(state.background)"
             mode="widthFix"
             @load="onImgLoad"
           ></image>
@@ -68,7 +68,7 @@
             <view
               class="tcp-text"
               @tap.stop="
-                sheep.$router.go('/pages/public/richtext', {
+                xxep.$router.go('/pages/public/richtext', {
                   id: state.protocol.id,
                   title: state.protocol.title,
                 })
@@ -91,7 +91,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
   import { isEmpty } from 'lodash';
@@ -121,7 +121,7 @@
   });
 
   async function getAgentForm() {
-    const { code, data } = await sheep.$api.commission.form();
+    const { code, data } = await xxep.$api.commission.form();
     state.code = code;
     if (code === 1) {
       state.status = data.status;
@@ -142,16 +142,16 @@
 
   async function submit() {
     if (!state.isAgree) {
-      sheep.$helper.toast('请同意申请协议');
+      xxep.$helper.toast('请同意申请协议');
       return;
     }
 
     const validate = state.formList.every((item) => {
       if (isEmpty(item.value)) {
         if (item.type !== 'image') {
-          sheep.$helper.toast(`请填写${item.name}`);
+          xxep.$helper.toast(`请填写${item.name}`);
         } else {
-          sheep.$helper.toast(`请上传${item.name}`);
+          xxep.$helper.toast(`请上传${item.name}`);
         }
         return false;
       }
@@ -162,11 +162,11 @@
       return;
     }
 
-    const { code } = await sheep.$api.commission.apply({
+    const { code } = await xxep.$api.commission.apply({
       data: state.formList,
     });
     if (code === 1) {
-      sheep.$router.back();
+      xxep.$router.back();
     }
   }
 

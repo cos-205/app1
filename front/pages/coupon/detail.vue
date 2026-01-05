@@ -8,7 +8,7 @@
           <view class="tag-box ss-flex ss-col-center ss-row-center">
             <image
               class="tag-image"
-              :src="sheep.$url.static('/assets/addons/shopro/uniapp/app/coupon_icon.png')"
+              :src="xxep.$url.static('/assets/addons/cus/uniapp/app/coupon_icon.png')"
               mode="aspectFit"
             ></image>
           </view>
@@ -87,7 +87,7 @@
             :data="item"
             :titleColor="props.goodsFieldsStyle?.title?.color"
             :subTitleColor="props.goodsFieldsStyle?.subtitle?.color"
-            @click="sheep.$router.go('/pages/goods/index', { id: item.id })"
+            @click="xxep.$router.go('/pages/goods/index', { id: item.id })"
             :goodsFields="{
               title: { show: true },
               subtitle: { show: true },
@@ -108,7 +108,7 @@
             :data="item"
             :titleColor="props.goodsFieldsStyle?.title?.color"
             :subTitleColor="props.goodsFieldsStyle?.subtitle?.color"
-            @click="sheep.$router.go('/pages/goods/index', { id: item.id })"
+            @click="xxep.$router.go('/pages/goods/index', { id: item.id })"
             :goodsFields="{
               title: { show: true },
               subtitle: { show: true },
@@ -141,7 +141,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import { reactive } from 'vue';
   import _ from 'lodash';
@@ -198,7 +198,7 @@
   }
   async function getGoodsList(categoryId, page = 1, list_rows = 5) {
     state.loadStatus = 'loading';
-    const res = await sheep.$api.goods.list({
+    const res = await xxep.$api.goods.list({
       category_id: categoryId,
       list_rows,
       page,
@@ -218,7 +218,7 @@
     }
   }
   async function getCoupon() {
-    const { code, msg } = await sheep.$api.coupon.get(state.couponId);
+    const { code, msg } = await xxep.$api.coupon.get(state.couponId);
     if (code === 1) {
       uni.showToast({
         title: msg,
@@ -229,7 +229,7 @@
     }
   }
   async function getCouponContent(id, c) {
-    const { data } = await sheep.$api.coupon.detail(id, c);
+    const { data } = await xxep.$api.coupon.detail(id, c);
     state.list = data;
     data.items_value.forEach((i) => {
       state.tabMaps.push({ name: i.name, value: i.id });

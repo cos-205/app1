@@ -3,7 +3,7 @@
     <view class="header-box ss-flex-col ss-row-center ss-col-center">
       <image
         class="logo-img ss-m-b-46"
-        :src="sheep.$url.cdn(appInfo.logo)"
+        :src="xxep.$url.cdn(appInfo.logo)"
         mode="aspectFit"
       ></image>
       <view class="name ss-m-b-24">{{ appInfo.name }}</view>
@@ -33,7 +33,7 @@
           clickable
           :border="false"
           class="list-border"
-          @tap="sheep.$router.go('/pages/public/feedback')"
+          @tap="xxep.$router.go('/pages/public/feedback')"
         ></uni-list-item>
         <uni-list-item
           title="关于我们"
@@ -42,7 +42,7 @@
           :border="false"
           class="list-border"
           @tap="
-            sheep.$router.go('/pages/public/richtext', {
+            xxep.$router.go('/pages/public/richtext', {
               id: appInfo.about_us.id,
               title: appInfo.about_us.title,
             })
@@ -50,7 +50,7 @@
         ></uni-list-item>
         <!-- 为了过审 只有iOS-App有注销账号功能 -->
         <uni-list-item
-          v-if="isLogin && sheep.$platform.os === 'ios' && sheep.$platform.name === 'App'"
+          v-if="isLogin && xxep.$platform.os === 'ios' && xxep.$platform.name === 'App'"
           title="注销账号"
           rightText=""
           showArrow
@@ -68,7 +68,7 @@
           <view
             class="tcp-text"
             @tap="
-              sheep.$router.go('/pages/public/richtext', {
+              xxep.$router.go('/pages/public/richtext', {
                 id: appInfo.user_protocol.id,
                 title: appInfo.user_protocol.title,
               })
@@ -80,7 +80,7 @@
           <view
             class="tcp-text"
             @tap="
-              sheep.$router.go('/pages/public/richtext', {
+              xxep.$router.go('/pages/public/richtext', {
                 id: appInfo.privacy_protocol.id,
                 title: appInfo.privacy_protocol.title,
               })
@@ -108,18 +108,18 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { computed, reactive } from 'vue';
 
-  const appInfo = computed(() => sheep.$store('app').info);
-  const isLogin = computed(() => sheep.$store('user').isLogin);
+  const appInfo = computed(() => xxep.$store('app').info);
+  const isLogin = computed(() => xxep.$store('user').isLogin);
   const storageSize = uni.getStorageInfoSync().currentSize + 'Kb';
   const state = reactive({
     showModal: false,
   });
 
   function onCheckUpdate() {
-    sheep.$platform.checkUpdate();
+    xxep.$platform.checkUpdate();
     // 小程序初始化时已检查更新
     // H5实时更新无需检查
     // App 1.跳转应用市场更新 2.手动热更新 3.整包更新
@@ -130,10 +130,10 @@
       content: '确认注销账号？',
       success: async function (res) {
         if (res.confirm) {
-          const { code } = await sheep.$api.user.logoff();
+          const { code } = await xxep.$api.user.logoff();
           if (code === 1) {
-            sheep.$store('user').logout();
-            sheep.$router.go('/pages/index/user');
+            xxep.$store('user').logout();
+            xxep.$router.go('/pages/index/user');
           }
         }
       },
@@ -146,9 +146,9 @@
       content: '确认退出账号？',
       success: async function (res) {
         if (res.confirm) {
-          const result = await sheep.$store('user').logout();
+          const result = await xxep.$store('user').logout();
           if (result) {
-            sheep.$router.go('/pages/index/user');
+            xxep.$router.go('/pages/index/user');
           }
         }
       },

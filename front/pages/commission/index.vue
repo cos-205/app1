@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onShow } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
   import commissionInfo from './components/commission-info.vue';
@@ -36,10 +36,10 @@
     },
   });
 
-  const agentInfo = computed(() => sheep.$store('user').agentInfo);
+  const agentInfo = computed(() => xxep.$store('user').agentInfo);
 
   async function getUserInfo() {
-    await sheep.$store('user').getInfo();
+    await xxep.$store('user').getInfo();
   }
 
   const bgStyle = {
@@ -47,7 +47,7 @@
   };
 
   async function getAgentInfo() {
-    const { code, data } = await sheep.$store('user').getAgentInfo();
+    const { code, data } = await xxep.$store('user').getAgentInfo();
     if (code !== 1) {
       state.error = code;
       state.errorData = data;

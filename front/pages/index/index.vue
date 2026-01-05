@@ -21,15 +21,15 @@
 <script setup>
   import { computed } from 'vue';
   import { onLoad, onPageScroll, onPullDownRefresh } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
-  import $share from '@/sheep/platform/share';
+  import xxep from '@/xxep';
+  import $share from '@/xxep/platform/share';
 
   // 隐藏原生tabBar
   uni.hideTabBar({
     fail: () => {},
   });
 
-  const template = computed(() => sheep.$store('app').template?.home);
+  const template = computed(() => xxep.$store('app').template?.home);
 
   onLoad((options) => {
     // #ifdef MP
@@ -42,7 +42,7 @@
 
     // 预览模板
     if (options.templateId) {
-      sheep.$store('app').init(options.templateId);
+      xxep.$store('app').init(options.templateId);
     }
 
     // 解析分享信息
@@ -52,13 +52,13 @@
 
     // 进入指定页面(完整页面路径)
     if (options.page) {
-      sheep.$router.go(decodeURIComponent(options.page));
+      xxep.$router.go(decodeURIComponent(options.page));
     }
   });
 
   // 下拉刷新
   onPullDownRefresh(() => {
-    sheep.$store('app').init();
+    xxep.$store('app').init();
     setTimeout(function () {
       uni.stopPullDownRefresh();
     }, 800);

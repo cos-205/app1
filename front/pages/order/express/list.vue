@@ -9,7 +9,7 @@
         class="express-box"
         v-for="item in state.list"
         :key="item.type"
-        @tap="sheep.$router.go('/pages/order/express/log', { id: item.id, orderId: state.orderId })"
+        @tap="xxep.$router.go('/pages/order/express/log', { id: item.id, orderId: state.orderId })"
       >
         <view class="express-box-header ss-flex ss-row-between">
           <view class="express-box-header-type">{{ item.status_text }}</view>
@@ -23,7 +23,7 @@
             <scroll-view class="scroll-box" scroll-x scroll-anchoring>
               <view class="ss-flex">
                 <view v-for="i in item.items" :key="i" class="ss-m-r-20"
-                  ><image class="content-img" :src="sheep.$url.static(i.goods_image)" />
+                  ><image class="content-img" :src="xxep.$url.static(i.goods_image)" />
                 </view>
               </view>
             </scroll-view>
@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
   const state = reactive({
@@ -44,7 +44,7 @@
     orderId: '',
   });
   async function getExpressList(orderId) {
-    const { data } = await sheep.$api.order.express.list(orderId);
+    const { data } = await xxep.$api.order.express.list(orderId);
     state.list = data;
   }
   onLoad((Option) => {

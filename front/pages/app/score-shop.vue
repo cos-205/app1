@@ -7,7 +7,7 @@
           size="sl"
           :data="item"
           priceColor="#FF3000"
-          @tap="sheep.$router.go('/pages/goods/score', { id: item.id })"
+          @tap="xxep.$router.go('/pages/goods/score', { id: item.id })"
         ></s-score-card>
       </view>
     </view>
@@ -27,7 +27,7 @@
   </s-layout>
 </template>
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import { reactive } from 'vue';
   import _ from 'lodash';
@@ -43,7 +43,7 @@
   });
   async function getData(page = 1, list_rows = 5) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.app.scoreShop.list({
+    let res = await xxep.$api.app.scoreShop.list({
       list_rows,
       page,
     });

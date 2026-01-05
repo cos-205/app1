@@ -5,13 +5,13 @@ return [
     'hooks' => [
         'config_init' => [
             'nkeditor',
-            'shopro',
+            'cus',
         ],
         'upgrade' => [
-            'shopro',
+            'cus',
         ],
         'app_init' => [
-            'shopro',
+            'cus',
         ],
     ],
     'route' => [],

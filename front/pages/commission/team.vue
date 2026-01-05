@@ -15,7 +15,7 @@
         推荐人：
         <image
           class="referrer-avatar ss-m-r-10"
-          :src="sheep.$url.cdn(userInfo.parent_user.avatar)"
+          :src="xxep.$url.cdn(userInfo.parent_user.avatar)"
           mode="aspectFill"
         >
         </image>
@@ -64,14 +64,14 @@
           :key="item.id"
           :avatar-circle="true"
           :title="item.nickname"
-          :avatar="sheep.$url.cdn(item.avatar)"
+          :avatar="xxep.$url.cdn(item.avatar)"
           :note="filterUserNum(item.agent?.child_user_count_1)"
         >
           <view class="chat-custom-right">
             <view v-if="item.agent?.level_info" class="tag-box ss-flex ss-col-center">
               <image
                 class="tag-img"
-                :src="sheep.$url.cdn(item.agent.level_info.image)"
+                :src="xxep.$url.cdn(item.agent.level_info.image)"
                 mode="aspectFill"
               >
               </image>
@@ -89,16 +89,16 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
   import _ from 'lodash';
   import { onPageScroll } from '@dcloudio/uni-app';
 
-  const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
-  const agentInfo = computed(() => sheep.$store('user').agentInfo);
-  const userInfo = computed(() => sheep.$store('user').userInfo);
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/user/withdraw_bg.png');
+  const statusBarHeight = xxep.$platform.device.statusBarHeight * 2;
+  const agentInfo = computed(() => xxep.$store('user').agentInfo);
+  const userInfo = computed(() => xxep.$store('user').userInfo);
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/user/withdraw_bg.png');
 
   onPageScroll((e) => {
     if (e.scrollTop > 100) {
@@ -126,7 +126,7 @@
 
   async function getTeamList(page = 1, list_rows = 16) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.commission.team({
+    let res = await xxep.$api.commission.team({
       list_rows,
       page,
     });

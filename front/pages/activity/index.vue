@@ -20,7 +20,7 @@
             class="goods-md-box"
             size="md"
             :data="item"
-            @click="sheep.$router.go('/pages/goods/index', { id: item.id })"
+            @click="xxep.$router.go('/pages/goods/index', { id: item.id })"
             @getHeight="mountMasonry($event, 'left')"
           >
             <template v-slot:cart>
@@ -35,7 +35,7 @@
             class="goods-md-box"
             size="md"
             :data="item"
-            @click="sheep.$router.go('/pages/goods/index', { id: item.id })"
+            @click="xxep.$router.go('/pages/goods/index', { id: item.id })"
             @getHeight="mountMasonry($event, 'right')"
           >
             <template v-slot:cart>
@@ -59,7 +59,7 @@
 <script setup>
   import { reactive } from 'vue';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import _ from 'lodash';
 
   const state = reactive({
@@ -97,7 +97,7 @@
   }
   async function getList(activityId, page = 1, list_rows = 6) {
     state.loadStatus = 'loading';
-    const res = await sheep.$api.goods.activityList({
+    const res = await xxep.$api.goods.activityList({
       list_rows,
       activity_id: activityId,
       page,
@@ -117,7 +117,7 @@
     }
   }
   async function getActivity(id) {
-    const { code, data } = await sheep.$api.activity.activity(id);
+    const { code, data } = await xxep.$api.activity.activity(id);
     if (code === 1) {
       state.activityInfo = data;
     }

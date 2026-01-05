@@ -70,8 +70,8 @@
               v-show="item.from === 'customer_service'"
               class="chat-avatar ss-m-r-24"
               :src="
-                sheep.$url.cdn(item?.sender?.avatar) ||
-                sheep.$url.static('/assets/addons/shopro/uniapp/chat/default.png')
+                xxep.$url.cdn(item?.sender?.avatar) ||
+                xxep.$url.static('/assets/addons/cus/uniapp/chat/default.png')
               "
               mode="aspectFill"
             ></image>
@@ -88,13 +88,13 @@
               <image
                 v-if="chatData.isSendSucces == -1"
                 class="loading"
-                :src="sheep.$url.static('/assets/addons/shopro/uniapp/chat/loading.png')"
+                :src="xxep.$url.static('/assets/addons/cus/uniapp/chat/loading.png')"
                 mode="aspectFill"
               ></image>
               <!-- <image
                 v-if="chatData.isSendSucces == 1"
                 class="warning"
-                :src="sheep.$url.static('/assets/addons/shopro/uniapp/chat/warning.png')"
+                :src="xxep.$url.static('/assets/addons/cus/uniapp/chat/warning.png')"
                 mode="aspectFill"
                 @click="onAgainSendMessage(item)"
               ></image> -->
@@ -115,9 +115,9 @@
                 <su-image
                   class="message-img"
                   isPreview
-                  :previewList="[sheep.$url.cdn(item.content.url)]"
+                  :previewList="[xxep.$url.cdn(item.content.url)]"
                   :current="0"
-                  :src="sheep.$url.cdn(item.content.url)"
+                  :src="xxep.$url.cdn(item.content.url)"
                   :height="200"
                   :width="200"
                   mode="aspectFill"
@@ -128,7 +128,7 @@
               <GoodsItem
                 :goodsData="item.content.item"
                 @tap="
-                  sheep.$router.go('/pages/goods/index', {
+                  xxep.$router.go('/pages/goods/index', {
                     id: item.content.item.id,
                   })
                 "
@@ -139,7 +139,7 @@
                 from="msg"
                 :orderData="item.content.item"
                 @tap="
-                  sheep.$router.go('/pages/order/detail', {
+                  xxep.$router.go('/pages/order/detail', {
                     id: item.content.item.id,
                   })
                 "
@@ -149,7 +149,7 @@
             <image
               v-show="item.from === 'customer'"
               class="chat-avatar ss-m-l-24"
-              :src="sheep.$url.cdn(customerUserInfo.avatar)"
+              :src="xxep.$url.cdn(customerUserInfo.avatar)"
               mode="aspectFill"
             >
             </image>
@@ -228,7 +228,7 @@
                   <template v-for="item in emoji" :key="item">
                     <image
                       class="emoji-img"
-                      :src="sheep.$url.cdn(`/assets/addons/shopro/img/chat/emoji/${item.file}`)"
+                      :src="xxep.$url.cdn(`/assets/addons/cus/img/chat/emoji/${item.file}`)"
                       @tap="onEmoji(item)"
                     >
                     </image>
@@ -246,7 +246,7 @@
               >
                 <image
                   class="icon"
-                  :src="sheep.$url.static('/assets/addons/shopro/uniapp/chat/image.png')"
+                  :src="xxep.$url.static('/assets/addons/cus/uniapp/chat/image.png')"
                   mode="aspectFill"
                 ></image>
               </s-uploader>
@@ -255,7 +255,7 @@
             <view class="goods" @tap="onShowSelect('goods')">
               <image
                 class="icon"
-                :src="sheep.$url.static('/assets/addons/shopro/uniapp/chat/goods.png')"
+                :src="xxep.$url.static('/assets/addons/cus/uniapp/chat/goods.png')"
                 mode="aspectFill"
               ></image>
               <view>商品</view>
@@ -263,7 +263,7 @@
             <view class="order" @tap="onShowSelect('order')">
               <image
                 class="icon"
-                :src="sheep.$url.static('/assets/addons/shopro/uniapp/chat/order.png')"
+                :src="xxep.$url.static('/assets/addons/cus/uniapp/chat/order.png')"
                 mode="aspectFill"
               ></image>
               <view>订单</view>
@@ -283,7 +283,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { computed, reactive, toRefs, onUnmounted } from 'vue';
   import { onLoad } from '@dcloudio/uni-app';
   import { emojiList, emojiPage } from './emoji.js';
@@ -313,10 +313,10 @@
   const chatHistoryPagination = toRefs(chatData).chatHistoryPagination;
   const customerUserInfo = toRefs(chatData).customerUserInfo;
   const socketState = toRefs(chatData).socketState;
-  const sys_navBar = sheep.$platform.navbar;
-  const chatConfig = computed(() => sheep.$store('app').chat);
+  const sys_navBar = xxep.$platform.navbar;
+  const chatConfig = computed(() => xxep.$store('app').chat);
 
-  const { screenHeight, safeAreaInsets, safeArea, screenWidth } = sheep.$platform.device;
+  const { screenHeight, safeAreaInsets, safeArea, screenWidth } = xxep.$platform.device;
   const pageHeight = safeArea.height - 44 - 35 - 50;
 
   const chatStatus = {
@@ -375,7 +375,7 @@
   // 点击工具栏开关
   function onTools(mode) {
     if (!socketState.value.isConnect) {
-      sheep.$helper.toast(socketState.value.tip || '您已掉线！请返回重试');
+      xxep.$helper.toast(socketState.value.tip || '您已掉线！请返回重试');
       return;
     }
 
@@ -398,7 +398,7 @@
     let msg = '';
     switch (type) {
       case 'image':
-        const { url, fullurl } = await sheep.$api.app.upload(data.tempFiles[0].path, 'default');
+        const { url, fullurl } = await xxep.$api.app.upload(data.tempFiles[0].path, 'default');
         msg = {
           from: 'customer',
           mode: 'image',
@@ -462,7 +462,7 @@
 
   function onAgainSendMessage(item) {
     if (!socketState.value.isConnect) {
-      sheep.$helper.toast(socketState.value.tip || '您已掉线！请返回重试');
+      xxep.$helper.toast(socketState.value.tip || '您已掉线！请返回重试');
       return;
     }
     if (!item) return;
@@ -479,7 +479,7 @@
 
   function onSendMessage() {
     if (!socketState.value.isConnect) {
-      sheep.$helper.toast(socketState.value.tip || '您已掉线！请返回重试');
+      xxep.$helper.toast(socketState.value.tip || '您已掉线！请返回重试');
       return;
     }
     if (!chat.msg) return;
@@ -504,7 +504,7 @@
   // 点击猜你想问
   function onTemplateList(e) {
     if (!socketState.value.isConnect) {
-      sheep.$helper.toast(socketState.value.tip || '您已掉线！请返回重试');
+      xxep.$helper.toast(socketState.value.tip || '您已掉线！请返回重试');
       return;
     }
     const data = {
@@ -547,8 +547,8 @@
           let emojiFile = selEmojiFile(item);
           newData = newData.replace(
             item,
-            `<img class="chat-img" style="width: 24px;height: 24px;margin: 0 3px;" src="${sheep.$url.cdn(
-              '/assets/addons/shopro/img/chat/emoji/' + emojiFile,
+            `<img class="chat-img" style="width: 24px;height: 24px;margin: 0 3px;" src="${xxep.$url.cdn(
+              '/assets/addons/cus/img/chat/emoji/' + emojiFile,
             )}"/>`,
           );
         });

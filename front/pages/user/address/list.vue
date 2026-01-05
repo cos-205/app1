@@ -15,7 +15,7 @@
       <view class="footer-box ss-flex ss-row-between ss-p-20">
         <!-- 微信小程序和微信H5 -->
         <button
-          v-if="['WechatMiniProgram', 'WechatOfficialAccount'].includes(sheep.$platform.name)"
+          v-if="['WechatMiniProgram', 'WechatOfficialAccount'].includes(xxep.$platform.name)"
           @tap="importWechatAddress"
           class="border ss-reset-button sync-wxaddress ss-m-20 ss-flex ss-row-center ss-col-center"
         >
@@ -24,7 +24,7 @@
         </button>
         <button
           class="add-btn ss-reset-button ui-Shadow-Main"
-          @tap="sheep.$router.go('/pages/user/address/edit')"
+          @tap="xxep.$router.go('/pages/user/address/edit')"
         >
           新增收货地址
         </button>
@@ -41,7 +41,7 @@
 <script setup>
   import { reactive, onBeforeMount } from 'vue';
   import { onShow } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { isEmpty } from 'lodash';
 
   const state = reactive({
@@ -54,7 +54,7 @@
     uni.$emit('SELECT_ADDRESS', {
       addressInfo,
     });
-    sheep.$router.back();
+    xxep.$router.back();
   };
 
   // 导入微信地址
@@ -74,7 +74,7 @@
           is_default: false,
         };
         if (!isEmpty(wechatAddress)) {
-          sheep.$router.go('/pages/user/address/edit', {
+          xxep.$router.go('/pages/user/address/edit', {
             data: JSON.stringify(wechatAddress),
           });
         }
@@ -85,7 +85,7 @@
     });
     // #endif
     // #ifdef H5
-    sheep.$platform.useProvider('wechat').jssdk.openAddress({
+    xxep.$platform.useProvider('wechat').jssdk.openAddress({
       success: (res) => {
         wechatAddress = {
           consignee: res.userName,
@@ -98,7 +98,7 @@
           is_default: false,
         };
         if (!isEmpty(wechatAddress)) {
-          sheep.$router.go('/pages/user/address/edit', {
+          xxep.$router.go('/pages/user/address/edit', {
             data: JSON.stringify(wechatAddress),
           });
         }
@@ -108,7 +108,7 @@
   }
 
   onShow(async () => {
-    state.list = (await sheep.$api.user.address.list()).data;
+    state.list = (await xxep.$api.user.address.list()).data;
     state.loading = false;
   });
 
@@ -117,7 +117,7 @@
       return;
     }
     // 提前加载省市区数据
-    sheep.$api.data.area().then((res) => {
+    xxep.$api.data.area().then((res) => {
       if (res.code === 1) {
         uni.setStorageSync('areaData', res.data);
       }

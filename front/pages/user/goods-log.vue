@@ -55,7 +55,7 @@
               priceColor="#FF3000"
               :titleWidth="400"
               @tap="
-                sheep.$router.go('/pages/goods/index', {
+                xxep.$router.go('/pages/goods/index', {
                   id: item.goods_id,
                 })
               "
@@ -106,12 +106,12 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { reactive } from 'vue';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import _ from 'lodash';
 
-  const sys_navBar = sheep.$platform.navbar;
+  const sys_navBar = xxep.$platform.navbar;
   const pagination = {
     data: [],
     current_page: 1,
@@ -133,7 +133,7 @@
 
   async function getData(page = 1, list_rows = 10) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.user.goodsLog.list({
+    let res = await xxep.$api.user.goodsLog.list({
       type: 'views',
       list_rows,
       page,
@@ -182,7 +182,7 @@
   async function onCancel() {
     if (state.selectedCollectList) {
       state.selectedCollectList = state.selectedCollectList.toString();
-      const { code } = await sheep.$api.user.view.delete({
+      const { code } = await xxep.$api.user.view.delete({
         goods_id: state.selectedCollectList,
       });
       if (code === 1) {

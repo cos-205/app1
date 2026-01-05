@@ -59,7 +59,7 @@
           <view class="item-title">扣除积分</view>
           <view class="ss-flex ss-col-center">
             <image
-              :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/score1.svg')"
+              :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/score1.svg')"
               class="score-img"
             ></image>
             <text class="item-value ss-m-r-24">{{ state.orderInfo.score_amount }}</text>
@@ -114,7 +114,7 @@
         <view class="ss-flex" v-if="state.orderPayload.order_type === 'score'">
           <view class="total-num ss-font-30 text-red ss-m-l-4"> + </view>
           <image
-            :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/score1.svg')"
+            :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/score1.svg')"
             class="score-img"
           ></image>
           <view class="total-num ss-font-30 text-red">{{ state.orderInfo.score_amount }}</view>
@@ -152,7 +152,7 @@
           <view v-if="state.orderPayload.order_type === 'score'" class="ss-flex">
             <view class="total-num ss-font-30 text-red ss-m-l-4">+</view>
             <image
-              :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/score1.svg')"
+              :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/score1.svg')"
               class="score-img"
             ></image>
             <view class="total-num ss-font-30 text-red">{{ state.orderInfo.score_amount }}</view>
@@ -173,7 +173,7 @@
 <script setup>
   import { reactive, computed } from 'vue';
   import { onLoad, onPageScroll, onShow } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { isEmpty } from 'lodash';
 
   const state = reactive({
@@ -197,13 +197,13 @@
     uni.$once('SELECT_ADDRESS', (e) => {
       changeConsignee(e.addressInfo);
     });
-    sheep.$router.go('/pages/user/address/list');
+    xxep.$router.go('/pages/user/address/list');
   }
 
   // 更改收货人地址&计算订单信息
   async function changeConsignee(addressInfo = {}) {
     if (isEmpty(addressInfo)) {
-      const { code, data } = await sheep.$api.user.address.default();
+      const { code, data } = await xxep.$api.user.address.default();
       if (code === 1 && !isEmpty(data)) {
         addressInfo = data;
       }
@@ -228,13 +228,13 @@
       state.invoiceInfo = e.invoiceInfo;
       state.orderPayload.invoice_id = e.invoiceInfo.id || 0;
     });
-    sheep.$router.go('/pages/user/invoice/list');
+    xxep.$router.go('/pages/user/invoice/list');
   }
 
   // 提交订单/立即兑换
   function onConfirm() {
     if (!state.orderPayload.address_id && state.orderInfo.need_address === 1) {
-      sheep.$helper.toast('请选择收货地址');
+      xxep.$helper.toast('请选择收货地址');
       return;
     }
 
@@ -256,18 +256,18 @@
 
   // 创建订单&跳转
   async function submitOrder() {
-    const { code, data } = await sheep.$api.order.create(state.orderPayload);
+    const { code, data } = await xxep.$api.order.create(state.orderPayload);
     if (code === 1) {
       // 更新购物车列表
       if (state.orderPayload.from === 'cart') {
-        sheep.$store('cart').submitUpdateList();
+        xxep.$store('cart').submitUpdateList();
       }
       if (data.status === 'paid') {
-        sheep.$router.redirect('/pages/pay/result', {
+        xxep.$router.redirect('/pages/pay/result', {
           orderSN: data.order_sn,
         });
       } else {
-        sheep.$router.redirect('/pages/pay/index', {
+        xxep.$router.redirect('/pages/pay/index', {
           orderSN: data.order_sn,
         });
       }
@@ -276,9 +276,9 @@
 
   // 检查库存&计算订单价格
   async function getOrderInfo() {
-    let { code, data, msg } = await sheep.$api.order.calc(state.orderPayload);
+    let { code, data, msg } = await xxep.$api.order.calc(state.orderPayload);
     if (code === 0) {
-      sheep.$helper.toast(msg);
+      xxep.$helper.toast(msg);
     }
     state.totalNumber = 0;
     state.orderInfo = data;
@@ -289,7 +289,7 @@
 
   // 获取可用优惠券
   async function getCoupons() {
-    const { code, data } = await sheep.$api.order.coupons(state.orderPayload);
+    const { code, data } = await xxep.$api.order.coupons(state.orderPayload);
     if (code === 1) {
       state.couponInfo = data;
     }

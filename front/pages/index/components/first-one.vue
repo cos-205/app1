@@ -4,14 +4,14 @@
       <s-goods-column
         size="sl"
         :data="item"
-        @click="sheep.$router.go('/pages/goods/index', { id: item.id })"
+        @click="xxep.$router.go('/pages/goods/index', { id: item.id })"
       ></s-goods-column>
     </view>
   </view>
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   const props = defineProps({
     data: {
       type: Object,

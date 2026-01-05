@@ -33,7 +33,7 @@
 <script setup>
   import { onLoad } from '@dcloudio/uni-app';
   import { reactive } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
 
   const state = reactive({
     list: [],
@@ -41,7 +41,7 @@
   });
 
   async function getFaqList() {
-    const { code, data } = await sheep.$api.data.faq();
+    const { code, data } = await xxep.$api.data.faq();
     if (code === 1) {
       state.list = data;
       state.loading = false;

@@ -6,7 +6,7 @@
         <uni-swiper-dot :info="goodsImages" :current="state.current" mode="round">
           <swiper class="swiper-box" @change="change">
             <swiper-item v-for="(item, index) in goodsImages" :key="index">
-              <image class="log-card-img" :src="sheep.$url.static(item.image)"></image>
+              <image class="log-card-img" :src="xxep.$url.static(item.image)"></image>
             </swiper-item>
           </swiper>
         </uni-swiper-dot>
@@ -72,7 +72,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
 
@@ -95,7 +95,7 @@
     state.current = e.detail.current;
   }
   async function getExpressdetail(id, orderId) {
-    const { data } = await sheep.$api.order.express.detail(id, orderId);
+    const { data } = await xxep.$api.order.express.detail(id, orderId);
     state.info = data;
   }
   onLoad((Option) => {

@@ -42,15 +42,15 @@
 <script setup>
   import { reactive } from 'vue';
   import { onPageScroll } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
-  import throttle from '@/sheep/helper/throttle.js';
-  import { showMenuTools, closeMenuTools } from '@/sheep/hooks/useModal';
+  import xxep from '@/xxep';
+  import throttle from '@/xxep/helper/throttle.js';
+  import { showMenuTools, closeMenuTools } from '@/xxep/hooks/useModal';
 
-  const sys_statusBar = sheep.$platform.device.statusBarHeight;
-  const sys_navBar = sheep.$platform.navbar;
+  const sys_statusBar = xxep.$platform.device.statusBarHeight;
+  const sys_navBar = xxep.$platform.navbar;
   const capsuleStyle = {
-    width: sheep.$platform.capsule.width + 'px',
-    height: sheep.$platform.capsule.height + 'px',
+    width: xxep.$platform.capsule.width + 'px',
+    height: xxep.$platform.capsule.height + 'px',
   };
 
   const state = reactive({
@@ -75,13 +75,13 @@
     ],
   });
   const emits = defineEmits(['clickLeft']);
-  const hasHistory = sheep.$router.hasHistory();
+  const hasHistory = xxep.$router.hasHistory();
 
   function onClickLeft() {
     if (hasHistory) {
-      sheep.$router.back();
+      xxep.$router.back();
     } else {
-      sheep.$router.go('/pages/index/index');
+      xxep.$router.go('/pages/index/index');
     }
     emits('clickLeft');
   }
@@ -126,7 +126,7 @@
   }
 
   onPageScroll((e) => {
-    state.tabOpacityVal = e.scrollTop > sheep.$platform.navbar ? 1 : e.scrollTop * 0.01;
+    state.tabOpacityVal = e.scrollTop > xxep.$platform.navbar ? 1 : e.scrollTop * 0.01;
     if (commentCard.top === 0) {
       throttle(() => {
         getCommentCardNode();

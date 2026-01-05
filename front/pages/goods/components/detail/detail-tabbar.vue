@@ -10,7 +10,7 @@
           <block v-if="modelValue.favorite">
             <image
               class="item-icon"
-              :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/collect_1.gif')"
+              :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/collect_1.gif')"
               mode="aspectFit"
             ></image>
             <view class="item-title">已收藏</view>
@@ -18,7 +18,7 @@
           <block v-else>
             <image
               class="item-icon"
-              :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/collect_0.png')"
+              :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/collect_0.png')"
               mode="aspectFit"
             ></image>
             <view class="item-title">收藏</view>
@@ -31,7 +31,7 @@
         >
           <image
             class="item-icon"
-            :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/message.png')"
+            :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/message.png')"
             mode="aspectFit"
           ></image>
           <view class="item-title">客服</view>
@@ -43,7 +43,7 @@
         >
           <image
             class="item-icon"
-            :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/share.png')"
+            :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/share.png')"
             mode="aspectFit"
           ></image>
           <view class="item-title">分享</view>
@@ -68,8 +68,8 @@
    */
 
   import { computed, reactive } from 'vue';
-  import sheep from '@/sheep';
-  import { showShareModal } from '@/sheep/hooks/useModal';
+  import xxep from '@/xxep';
+  import { showShareModal } from '@/xxep/hooks/useModal';
 
   // 数据
   const state = reactive({});
@@ -126,7 +126,7 @@
     uni.setStorageSync('tabbar', e);
   };
   async function onFavorite() {
-    const { code } = await sheep.$api.user.favorite.do(props.modelValue.id);
+    const { code } = await xxep.$api.user.favorite.do(props.modelValue.id);
     if (code === 1) {
       if (props.modelValue.favorite) {
         props.modelValue.favorite = 0;
@@ -137,7 +137,7 @@
   }
 
   const onChat = () => {
-    sheep.$router.go('/pages/chat/index', {
+    xxep.$router.go('/pages/chat/index', {
       id: props.modelValue.id,
     });
   };

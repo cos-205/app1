@@ -2,7 +2,7 @@
   <view>
     <view class="user ss-flex ss-m-b-14">
       <view class="ss-m-r-20 ss-flex">
-        <image class="avatar" :src="sheep.$url.cdn(item.user_avatar)"></image>
+        <image class="avatar" :src="xxep.$url.cdn(item.user_avatar)"></image>
       </view>
       <view class="nickname ss-m-r-20">
         {{ item.user_nickname }}
@@ -32,7 +32,7 @@
 </template>
 
 <script setup>
-import sheep from '@/sheep';
+import xxep from '@/xxep';
 import { reactive } from 'vue';
 const props = defineProps({
   item: {
@@ -44,7 +44,7 @@ const state = reactive({
   commentImages: [],
 });
 props.item.images?.forEach((i) => {
-  state.commentImages.push(sheep.$url.cdn(i));
+  state.commentImages.push(xxep.$url.cdn(i));
 });
 </script>
 

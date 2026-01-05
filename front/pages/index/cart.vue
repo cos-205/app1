@@ -103,12 +103,12 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { computed, reactive, unref } from 'vue';
   import { onShow } from '@dcloudio/uni-app';
 
-  const sys_navBar = sheep.$platform.navbar;
-  const cart = sheep.$store('cart');
+  const sys_navBar = xxep.$platform.navbar;
+  const cart = xxep.$store('cart');
 
   const state = reactive({
     editMode: computed(() => cart.editMode),
@@ -146,10 +146,10 @@
       });
     });
     if (goods_list.length === 0) {
-      sheep.$helper.toast('请选择商品');
+      xxep.$helper.toast('请选择商品');
       return;
     }
-    sheep.$router.go('/pages/order/confirm', {
+    xxep.$router.go('/pages/order/confirm', {
       data: JSON.stringify({
         order_type: 'goods',
         goods_list,

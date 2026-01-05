@@ -96,7 +96,7 @@
 
 <script setup>
   import { reactive } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import _ from 'lodash';
   const state = reactive({
@@ -110,7 +110,7 @@
     loadStatus: '',
   });
   async function getList(page = 1, list_rows = 6) {
-    const res = await sheep.$api.pay.withdraw.list({ list_rows, page });
+    const res = await xxep.$api.pay.withdraw.list({ list_rows, page });
     if (res.code === 1) {
       let logList = _.concat(state.pagination.data, res.data.data);
       state.pagination = {
@@ -133,8 +133,8 @@
 
   // 取消提现
   const onCancel = async (withdraw, index) => {
-    if (sheep.$platform.name !== withdraw.platform) {
-      sheep.$helper.toast('请在发起该次提现的平台操作');
+    if (xxep.$platform.name !== withdraw.platform) {
+      xxep.$helper.toast('请在发起该次提现的平台操作');
       return;
     }
 
@@ -143,23 +143,23 @@
       type: withdraw.withdraw_type,
     };
 
-    let { code, msg, data } = await sheep.$api.pay.withdraw.cancel(payload);
+    let { code, msg, data } = await xxep.$api.pay.withdraw.cancel(payload);
     if (code === -1) {
-      sheep.$platform.useProvider('wechat').bind();
+      xxep.$platform.useProvider('wechat').bind();
     }
     if (code === 1) {
-      sheep.$helper.toast('提现已撤销, 请等待处理结果');
+      xxep.$helper.toast('提现已撤销, 请等待处理结果');
       // 刷新列表
       state.pagination.data[index] = data;
     } else {
-      sheep.$helper.toast(msg);
+      xxep.$helper.toast(msg);
     }
   };
 
   // 继续提现
   const onRetry = async (withdraw, index) => {
-    if (sheep.$platform.name !== withdraw.platform) {
-      sheep.$helper.toast('请在发起该次提现的平台操作');
+    if (xxep.$platform.name !== withdraw.platform) {
+      xxep.$helper.toast('请在发起该次提现的平台操作');
       return;
     }
     let payload = {
@@ -167,10 +167,10 @@
       type: withdraw.withdraw_type,
     };
 
-    const { data } = await sheep.$api.pay.withdraw.retry(payload);
+    const { data } = await xxep.$api.pay.withdraw.retry(payload);
 
     if (payload.type === 'wechat') {
-      sheep.$platform.useProvider('wechat').transfer(data.transfer_data);
+      xxep.$platform.useProvider('wechat').transfer(data.transfer_data);
     }
   };
 

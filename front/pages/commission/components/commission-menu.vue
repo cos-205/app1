@@ -2,7 +2,7 @@
 <template>
   <view class="menu-box ss-flex-col">
     <view class="header-box">
-      <image class="header-bg" :src="sheep.$url.static('/assets/addons/shopro/uniapp/commission/title1.png')" />
+      <image class="header-bg" :src="xxep.$url.static('/assets/addons/cus/uniapp/commission/title1.png')" />
       <view class="ss-flex header-title">
         <view class="title">功能专区</view>
         <text class="cicon-forward"></text>
@@ -13,11 +13,11 @@
         v-for="(item, index) in state.menuList"
         :key="index"
         class="item-box ss-flex-col ss-col-center"
-        @tap="sheep.$router.go(item.path)"
+        @tap="xxep.$router.go(item.path)"
       >
         <image
           class="menu-icon ss-m-b-10"
-          :src="sheep.$url.static(item.img)"
+          :src="xxep.$url.static(item.img)"
           mode="aspectFill"
         ></image>
         <view>{{ item.title }}</view>
@@ -29,12 +29,12 @@
         v-for="(item, index) in state.menuList"
         :index="index"
         :key="index"
-        @tap="sheep.$router.go(item.path)"
+        @tap="xxep.$router.go(item.path)"
       >
         <view class="grid-item-box ss-flex ss-flex-col ss-row-center ss-col-center">
           <image
             class="menu-icon ss-m-b-10"
-            :src="sheep.$url.static(item.img)"
+            :src="xxep.$url.static(item.img)"
             mode="aspectFill"
           ></image>
           <text class="menu-title">{{ item.title }}</text>
@@ -45,45 +45,45 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
 
   const state = reactive({
     menuList: [
       {
-        img: '/assets/addons/shopro/uniapp/commission/commission_icon1.png',
+        img: '/assets/addons/cus/uniapp/commission/commission_icon1.png',
         title: '我的团队',
         path: '/pages/commission/team',
       },
       {
-        img: '/assets/addons/shopro/uniapp/commission/commission_icon2.png',
+        img: '/assets/addons/cus/uniapp/commission/commission_icon2.png',
         title: '佣金明细',
         path: '/pages/user/wallet/commission',
       },
       {
-        img: '/assets/addons/shopro/uniapp/commission/commission_icon3.png',
+        img: '/assets/addons/cus/uniapp/commission/commission_icon3.png',
         title: '分销订单',
         path: '/pages/commission/order',
       },
       {
-        img: '/assets/addons/shopro/uniapp/commission/commission_icon4.png',
+        img: '/assets/addons/cus/uniapp/commission/commission_icon4.png',
         title: '推广商品',
         path: '/pages/commission/goods',
       },
       {
-        img: '/assets/addons/shopro/uniapp/commission/commission_icon5.png',
+        img: '/assets/addons/cus/uniapp/commission/commission_icon5.png',
         title: '我的资料',
         path: '/pages/commission/apply',
         isAgentFrom: true,
       },
       {
-        img: '/assets/addons/shopro/uniapp/commission/commission_icon7.png',
+        img: '/assets/addons/cus/uniapp/commission/commission_icon7.png',
         title: '邀请海报',
         path: 'action:showShareModal',
       },
       {
-        img: '/assets/addons/shopro/uniapp/commission/commission_icon8.png',
+        img: '/assets/addons/cus/uniapp/commission/commission_icon8.png',
         title: '分享记录',
         path: '/pages/commission/share-log',
       },

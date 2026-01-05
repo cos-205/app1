@@ -6,12 +6,12 @@
     </view>
     <view
       v-for="(item, index) in state.list"
-      @tap="sheep.$router.go('/pages/activity/groupon/detail', { id: item.id })"
+      @tap="xxep.$router.go('/pages/activity/groupon/detail', { id: item.id })"
       :key="index"
       class="ss-m-t-40 ss-flex ss-row-between border-bottom ss-p-b-30"
     >
       <view class="ss-flex ss-col-center">
-        <image :src="sheep.$url.cdn(item.leader.avatar)" class="user-avatar"></image>
+        <image :src="xxep.$url.cdn(item.leader.avatar)" class="user-avatar"></image>
         <view class="user-nickname ss-m-l-20 ss-line-1">{{ item.leader.nickname }}</view>
       </view>
       <view class="ss-flex ss-col-center">
@@ -33,8 +33,8 @@
 
 <script setup>
   import { onMounted, reactive } from 'vue';
-  import sheep from '@/sheep';
-  import { useDurationTime } from '@/sheep/hooks/useGoods';
+  import xxep from '@/xxep';
+  import { useDurationTime } from '@/xxep/hooks/useGoods';
 
   const props = defineProps({
     modelValue: {
@@ -67,7 +67,7 @@
   }
 
   onMounted(async () => {
-    const { data } = await sheep.$api.activity.getGrouponList({
+    const { data } = await xxep.$api.activity.getGrouponList({
       goods_id: props.modelValue.id,
       activity_id: props.modelValue.activity.id,
     });

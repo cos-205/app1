@@ -57,7 +57,7 @@
     <su-fixed bottom placeholder>
       <view class="foot-wrap">
         <view class="foot_box ss-flex ss-col-center ss-row-between ss-p-x-30">
-          <button class="ss-reset-button contcat-btn" @tap="sheep.$router.go('/pages/chat/index')">联系客服</button>
+          <button class="ss-reset-button contcat-btn" @tap="xxep.$router.go('/pages/chat/index')">联系客服</button>
           <button class="ss-reset-button ui-BG-Main-Gradient sub-btn" @tap="submit">提交</button>
         </view>
       </view>
@@ -84,7 +84,7 @@
 </template>
 
 <script setup>
-import sheep from '@/sheep';
+import xxep from '@/xxep';
 import { onLoad } from '@dcloudio/uni-app';
 import { reactive, ref, unref } from 'vue';
 const form = ref(null);
@@ -147,19 +147,19 @@ const rules = reactive({});
 // 提交表单
 async function submit() {
   // #ifdef MP
-  sheep.$platform.useProvider('wechat').subscribeMessage('order_aftersale_change');
+  xxep.$platform.useProvider('wechat').subscribeMessage('order_aftersale_change');
   // #endif
   let data = {
     ...formData,
     order_id: state.goodsItem.order_id,
     order_item_id: state.goodsItem.id,
   };
-  const res = await sheep.$api.order.aftersale.apply(data);
+  const res = await xxep.$api.order.aftersale.apply(data);
   if (res.code === 1) {
     uni.showToast({
       title: res.msg,
     });
-    sheep.$router.go('/pages/order/aftersale/list');
+    xxep.$router.go('/pages/order/aftersale/list');
   }
 }
 //选择售后类型

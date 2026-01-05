@@ -2,7 +2,7 @@
 <template>
   <view class="list-goods-card ss-flex-col" @tap="onClick">
     <view class="md-img-box">
-      <image class="goods-img md-img-box" :src="sheep.$url.cdn(img)" mode="aspectFill"></image>
+      <image class="goods-img md-img-box" :src="xxep.$url.cdn(img)" mode="aspectFill"></image>
     </view>
     <view class="md-goods-content ss-flex-col ss-row-around">
       <view class="md-goods-title ss-line-2 ss-m-x-20 ss-m-t-6 ss-m-b-16">{{ title }}</view>
@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
 

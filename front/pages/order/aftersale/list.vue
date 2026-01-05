@@ -18,7 +18,7 @@
         class="list-box ss-m-y-20"
         v-for="order in state.pagination.data"
         :key="order.id"
-        @tap="sheep.$router.go('/pages/order/aftersale/detail', { id: order.id })"
+        @tap="xxep.$router.go('/pages/order/aftersale/detail', { id: order.id })"
       >
         <view class="order-head ss-flex ss-col-center ss-row-between">
           <text class="no">服务单号：{{ order.aftersale_sn }}</text>
@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
   import _ from 'lodash';
@@ -125,7 +125,7 @@
   // 获取售后列表
   async function getOrderList(page = 1, list_rows = 5) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.order.aftersale.list({
+    let res = await xxep.$api.order.aftersale.list({
       type: tabMaps[state.currentTab].value,
       list_rows,
       page,
@@ -151,7 +151,7 @@
       content: '确定要取消此申请吗？',
       success: async function (res) {
         if (res.confirm) {
-          const { code } = await sheep.$api.order.aftersale.cancel(orderId);
+          const { code } = await xxep.$api.order.aftersale.cancel(orderId);
           if (code === 1) {
             state.pagination = pagination
             getOrderList();
@@ -167,7 +167,7 @@
       content: '确定要删除吗？',
       success: async function (res) {
         if (res.confirm) {
-          const { code } = await sheep.$api.order.aftersale.delete(orderId);
+          const { code } = await xxep.$api.order.aftersale.delete(orderId);
           if (code === 1) {
             state.pagination = pagination
             getOrderList();

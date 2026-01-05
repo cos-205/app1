@@ -1,6 +1,6 @@
 import { reactive, ref, unref } from 'vue';
-import sheep from '@/sheep';
-import chat from '@/sheep/api/chat';
+import xxep from '@/xxep';
+import chat from '@/xxep/api/chat';
 import dayjs from 'dayjs';
 import io from '@hyoga/uni-socket.io';
 
@@ -690,7 +690,7 @@ export function useChatWebSocket(socketConfig) {
           date: message.createtime * 1000, //时间
           sender: message.sender,
           content: {
-            url: sheep.$url.cdn(message.message),
+            url: xxep.$url.cdn(message.message),
             messageId: message.id,
           },
         };

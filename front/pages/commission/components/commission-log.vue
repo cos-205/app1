@@ -4,7 +4,7 @@
     <view class="header-box">
       <image
         class="header-bg"
-        :src="sheep.$url.static('/assets/addons/shopro/uniapp/commission/title2.png')"
+        :src="xxep.$url.static('/assets/addons/cus/uniapp/commission/title2.png')"
       />
       <view class="ss-flex header-title">
         <view class="title">实时动态</view>
@@ -29,21 +29,21 @@
                 <image
                   v-if="item.oper_type === 'user'"
                   class="log-img"
-                  :src="sheep.$url.cdn(item.oper?.avatar)"
+                  :src="xxep.$url.cdn(item.oper?.avatar)"
                   mode="aspectFill"
                 ></image>
                 <image
                   v-else-if="item.oper_type === 'admin'"
                   class="log-img"
                   :src="
-                    sheep.$url.static('/assets/addons/shopro/uniapp/avatar/default_user.png')
+                    xxep.$url.static('/assets/addons/cus/uniapp/avatar/default_user.png')
                   "
                   mode="aspectFill"
                 ></image>
                 <image
                   v-else
                   class="log-img"
-                  :src="sheep.$url.static('/assets/addons/shopro/uniapp/avatar/notice.png')"
+                  :src="xxep.$url.static('/assets/addons/cus/uniapp/avatar/notice.png')"
                   mode="aspectFill"
                 ></image>
               </view>
@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { computed, reactive } from 'vue';
   import _ from 'lodash';
   import dayjs from 'dayjs';
@@ -82,7 +82,7 @@
   });
 
   async function getLog(page = 1) {
-    const res = await sheep.$api.commission.log({
+    const res = await xxep.$api.commission.log({
       page,
     });
     if (res.code === 1) {

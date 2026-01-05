@@ -24,7 +24,7 @@
           :price="state.data.goods.price[0]"
           priceColor="#E1212B"
           @tap="
-            sheep.$router.go('/pages/goods/groupon', {
+            xxep.$router.go('/pages/goods/groupon', {
               id: state.data.goods.id,
               activity_id: state.data.goods.activity.id,
             })
@@ -93,7 +93,7 @@
             v-for="item in state.data.groupon_logs"
             :key="item.id"
           >
-            <image :src="sheep.$url.cdn(item.avatar)" class="avatar-img"></image>
+            <image :src="xxep.$url.cdn(item.avatar)" class="avatar-img"></image>
             <view
               class="header-tag ss-flex ss-col-center ss-row-center"
               v-if="item.is_leader == '1'"
@@ -103,7 +103,7 @@
           </view>
           <view class="default-avatar ss-m-r-24 ss-m-b-20" v-for="item in state.number" :key="item">
             <image
-              :src="sheep.$url.static('/assets/addons/shopro/uniapp/avatar/unknown.png')"
+              :src="xxep.$url.static('/assets/addons/cus/uniapp/avatar/unknown.png')"
               class="avatar-img"
             ></image>
           </view>
@@ -112,7 +112,7 @@
           class="detail-cell-wrap ss-flex ss-col-center ss-row-between"
           v-if="state.data.activity?.richtext_id > 0"
           @tap="
-            sheep.$router.go('/pages/public/richtext', {
+            xxep.$router.go('/pages/public/richtext', {
               id: state.data.activity.richtext_id,
               title: state.data.activity.richtext_title,
             })
@@ -204,14 +204,14 @@
 
 <script setup>
   import { computed, reactive } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
-  import { useDurationTime } from '@/sheep/hooks/useGoods';
-  import { showShareModal } from '@/sheep/hooks/useModal';
+  import { useDurationTime } from '@/xxep/hooks/useGoods';
+  import { showShareModal } from '@/xxep/hooks/useModal';
   import { isEmpty } from 'lodash';
 
-  const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/user/withdraw_bg.png');
+  const statusBarHeight = xxep.$platform.device.statusBarHeight * 2;
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/user/withdraw_bg.png');
 
   const state = reactive({
     data: {},
@@ -223,10 +223,10 @@
   });
   const shareInfo = computed(() => {
     if (isEmpty(state.data)) return {};
-    return sheep.$platform.share.getShareInfo(
+    return xxep.$platform.share.getShareInfo(
       {
         title: state.data.goods.title,
-        image: sheep.$url.cdn(state.data.goods.image),
+        image: xxep.$url.cdn(state.data.goods.image),
         desc: state.data.goods.subtitle,
         params: {
           page: '5',
@@ -236,7 +236,7 @@
       {
         type: 'groupon', // 邀请拼团海报
         title: state.data.goods.title, // 商品标题
-        image: sheep.$url.cdn(state.data.goods.image), // 商品主图
+        image: xxep.$url.cdn(state.data.goods.image), // 商品主图
         price: state.data.goods.price[0], // 商品价格
         original_price: state.data.goods.original_price, // 商品原价
       },
@@ -245,7 +245,7 @@
 
   // 订单详情
   function onDetail(orderId) {
-    sheep.$router.go('/pages/order/detail', {
+    xxep.$router.go('/pages/order/detail', {
       id: orderId,
     });
   }
@@ -272,7 +272,7 @@
 
   // 立即购买
   function onBuy(e) {
-    sheep.$router.go('/pages/order/confirm', {
+    xxep.$router.go('/pages/order/confirm', {
       data: JSON.stringify({
         order_type: 'goods',
         buy_type: 'groupon',
@@ -296,7 +296,7 @@
 
   // 获取拼团团队详情
   async function getGrouponDetail(id) {
-    const { code, data } = await sheep.$api.activity.grouponDetail(id);
+    const { code, data } = await xxep.$api.activity.grouponDetail(id);
     if (code === 1) {
       state.data = data;
       let number = Number(state.data.num - state.data.current_num);

@@ -1,6 +1,6 @@
 import App from './App';
 import { createSSRApp } from 'vue';
-import { setupPinia } from './sheep/store';
+import { setupPinia } from './xxep/store';
 
 
 export function createApp() {

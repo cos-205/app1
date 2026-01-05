@@ -7,7 +7,7 @@
 <script setup>
   import { onLoad } from '@dcloudio/uni-app';
   import { reactive } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
 
   const state = reactive({
     title: '',
@@ -15,7 +15,7 @@
   });
 
   async function getRichTextContent(id) {
-    const { code, data } = await sheep.$api.data.richtext(id);
+    const { code, data } = await xxep.$api.data.richtext(id);
     if (code === 1) {
       state.content = data.content;
       if (state.title === '') {

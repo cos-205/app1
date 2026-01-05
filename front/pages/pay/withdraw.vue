@@ -14,7 +14,7 @@
         <view class="num-title">可提现金额（元）</view>
         <view class="wallet-num">{{ userInfo.commission || '0.00' }}</view>
       </view>
-      <button class="ss-reset-button log-btn" @tap="sheep.$router.go('/pages/pay/withdraw-log')"
+      <button class="ss-reset-button log-btn" @tap="xxep.$router.go('/pages/pay/withdraw-log')"
         >提现记录</button
       >
     </view>
@@ -85,15 +85,15 @@
 <script setup>
   import { computed, reactive, onBeforeMount } from 'vue';
   import { onShow } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import accountTypeSelect from './components/account-type-select.vue';
   import accountInfoModal from './components/account-info-modal.vue';
   import { onPageScroll } from '@dcloudio/uni-app';
 
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/user/withdraw_bg.png');
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/user/withdraw_bg.png');
   onPageScroll(() => {});
 
-  const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
+  const statusBarHeight = xxep.$platform.device.statusBarHeight * 2;
   function filterRules(rules) {
     let list = [];
     let str1 = '';
@@ -122,7 +122,7 @@
     return list;
   }
 
-  const userStore = sheep.$store('user');
+  const userStore = xxep.$store('user');
   const userInfo = computed(() => userStore.userInfo);
   const state = reactive({
     amount: '',
@@ -157,41 +157,41 @@
     };
 
     if (payload.money > userInfo.commission || payload.money <= 0) {
-      sheep.$helper.toast('请输入正确的提现金额');
+      xxep.$helper.toast('请输入正确的提现金额');
       return;
     }
 
     if (!payload.type) {
-      sheep.$helper.toast('请选择提现方式');
+      xxep.$helper.toast('请选择提现方式');
       return;
     }
 
     if (!payload.account_name || !payload.account_header || !payload.account_no) {
-      sheep.$helper.toast('请完善您的账户信息');
+      xxep.$helper.toast('请完善您的账户信息');
       return;
     }
 
-    if (sheep.$platform.name === 'H5' && payload.type === 'wechat') {
-      sheep.$helper.toast('请使用微信浏览器操作');
+    if (xxep.$platform.name === 'H5' && payload.type === 'wechat') {
+      xxep.$helper.toast('请使用微信浏览器操作');
       return;
     }
 
-    let { code, msg, data } = await sheep.$api.pay.withdraw.apply(payload);
+    let { code, msg, data } = await xxep.$api.pay.withdraw.apply(payload);
     if (code === -1) {
-      sheep.$platform.useProvider('wechat').bind();
+      xxep.$platform.useProvider('wechat').bind();
     }
     if (code === 1) {
       // 刷新用户佣金余额
       userStore.getInfo();
 
       if (payload.type === 'wechat') {
-        sheep.$platform.useProvider('wechat').transfer(data.transfer_data);
+        xxep.$platform.useProvider('wechat').transfer(data.transfer_data);
       }
     }
   };
 
   async function getWithdrawRules() {
-    let { code, data } = await sheep.$api.pay.withdraw.rules();
+    let { code, data } = await xxep.$api.pay.withdraw.rules();
     if (code === 1) {
       state.rules = data;
       state.rulesList = filterRules(state.rules);

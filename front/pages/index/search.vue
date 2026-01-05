@@ -31,7 +31,7 @@
 
 <script setup>
   import { reactive } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
   const state = reactive({
     historyList: [],
@@ -41,7 +41,7 @@
   function onSearch(keyword) {
     if (!keyword) return;
     saveSearchHistory(keyword);
-    sheep.$router.go('/pages/goods/list', { keyword });
+    xxep.$router.go('/pages/goods/list', { keyword });
   }
 
   // 保存搜索历史

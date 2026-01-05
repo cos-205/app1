@@ -20,7 +20,7 @@
           <view class="sale-item ss-flex ss-col-top" v-for="item in modelValue" :key="item.id">
             <image
               class="title-icon ss-m-r-14"
-              :src="sheep.$url.cdn(item.image)"
+              :src="xxep.$url.cdn(item.image)"
               mode="aspectFill"
             ></image>
             <view class="title-box">
@@ -41,7 +41,7 @@
 
 <script setup>
   import { reactive, computed } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import detailCell from './detail-cell.vue';
   const props = defineProps({
     modelValue: {

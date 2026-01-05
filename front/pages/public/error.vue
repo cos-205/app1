@@ -38,7 +38,7 @@
 <script setup>
   import { onLoad } from '@dcloudio/uni-app';
   import { ref } from 'vue';
-  import { ShoproInit } from '@/sheep';
+  import { CusInit } from '@/xxep';
 
   const errCode = ref('');
   const errMsg = ref('');
@@ -51,7 +51,7 @@
     uni.reLaunch({
       url: '/pages/index/index',
     });
-    ShoproInit();
+    CusInit();
   }
 </script>
 

@@ -30,7 +30,7 @@
   </view>
 </template>
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { reactive } from 'vue';
   const props = defineProps({
     item: {
@@ -50,7 +50,7 @@
     commentImages: [],
   });
   props.item.images?.forEach((i) => {
-    state.commentImages.push(sheep.$url.cdn(i));
+    state.commentImages.push(xxep.$url.cdn(i));
   });
 </script>
 <style lang="scss" scoped>

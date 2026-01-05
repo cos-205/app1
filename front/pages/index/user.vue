@@ -17,22 +17,22 @@
 <script setup>
   import { computed } from 'vue';
   import { onShow, onPageScroll, onPullDownRefresh } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
 
   // 隐藏原生tabBar
   uni.hideTabBar({
     fail: () => {},
   });
 
-  const template = computed(() => sheep.$store('app').template.user);
-  const isLogin = computed(() => sheep.$store('user').isLogin);
+  const template = computed(() => xxep.$store('app').template.user);
+  const isLogin = computed(() => xxep.$store('user').isLogin);
 
   onShow(() => {
-    sheep.$store('user').updateUserData();
+    xxep.$store('user').updateUserData();
   });
 
   onPullDownRefresh(() => {
-    sheep.$store('user').updateUserData();
+    xxep.$store('user').updateUserData();
     setTimeout(function () {
       uni.stopPullDownRefresh();
     }, 800);

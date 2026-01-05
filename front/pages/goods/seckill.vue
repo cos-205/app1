@@ -98,7 +98,7 @@
           <button
             class="ss-reset-button origin-price-btn ss-flex-col"
             v-if="state.goodsInfo.original_price"
-            @tap="sheep.$router.go('/pages/goods/index', { id: state.goodsInfo.id })"
+            @tap="xxep.$router.go('/pages/goods/index', { id: state.goodsInfo.id })"
           >
             <view>
               <view class="btn-price">{{ state.goodsInfo.original_price }}</view>
@@ -140,9 +140,9 @@
 <script setup>
   import { reactive, computed } from 'vue';
   import { onLoad, onPageScroll } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { isEmpty } from 'lodash';
-  import { useDurationTime, formatGoodsSwiper, formatPrice } from '@/sheep/hooks/useGoods';
+  import { useDurationTime, formatGoodsSwiper, formatPrice } from '@/xxep/hooks/useGoods';
   import detailNavbar from './components/detail/detail-navbar.vue';
   import detailCellSku from './components/detail/detail-cell-sku.vue';
   import detailCellService from './components/detail/detail-cell-service.vue';
@@ -153,13 +153,13 @@
   import detailContentCard from './components/detail/detail-content-card.vue';
   import detailProgress from './components/detail/detail-progress.vue';
 
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/goods/seckill-bg.png');
-  const btnBg = sheep.$url.css('/assets/addons/shopro/uniapp/goods/seckill-btn.png');
-  const disabledBtnBg = sheep.$url.css(
-    '/assets/addons/shopro/uniapp/goods/activity-btn-disabled.png',
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/goods/seckill-bg.png');
+  const btnBg = xxep.$url.css('/assets/addons/cus/uniapp/goods/seckill-btn.png');
+  const disabledBtnBg = xxep.$url.css(
+    '/assets/addons/cus/uniapp/goods/activity-btn-disabled.png',
   );
-  const seckillBg = sheep.$url.css('/assets/addons/shopro/uniapp/goods/seckill-tip-bg.png');
-  const grouponBg = sheep.$url.css('/assets/addons/shopro/uniapp/goods/groupon-tip-bg.png');
+  const seckillBg = xxep.$url.css('/assets/addons/cus/uniapp/goods/seckill-tip-bg.png');
+  const grouponBg = xxep.$url.css('/assets/addons/cus/uniapp/goods/groupon-tip-bg.png');
   onPageScroll(() => {});
   const state = reactive({
     goodsId: 0,
@@ -197,7 +197,7 @@
 
   // 立即购买
   function onBuy(e) {
-    sheep.$router.go('/pages/order/confirm', {
+    xxep.$router.go('/pages/order/confirm', {
       data: JSON.stringify({
         order_type: 'goods',
         buy_type: 'seckill',
@@ -215,10 +215,10 @@
 
   const shareInfo = computed(() => {
     if (isEmpty(state.goodsInfo?.activity)) return {};
-    return sheep.$platform.share.getShareInfo(
+    return xxep.$platform.share.getShareInfo(
       {
         title: state.goodsInfo.title,
-        image: sheep.$url.cdn(state.goodsInfo.image),
+        image: xxep.$url.cdn(state.goodsInfo.image),
         params: {
           page: '4',
           query: state.goodsInfo.id + ',' + state.goodsInfo.activity.id,
@@ -227,7 +227,7 @@
       {
         type: 'goods', // 商品海报
         title: state.goodsInfo.title, // 商品标题
-        image: sheep.$url.cdn(state.goodsInfo.image), // 商品主图
+        image: xxep.$url.cdn(state.goodsInfo.image), // 商品主图
         price: state.goodsInfo.price[0], // 商品价格
         original_price: state.goodsInfo.original_price, // 商品原价
       },
@@ -242,7 +242,7 @@
     }
     state.goodsId = options.id;
     // 加载商品信息
-    sheep.$api.goods
+    xxep.$api.goods
       .detail(options.id, {
         activity_id: options.activity_id,
       })

@@ -96,7 +96,7 @@
           <view class="order-from ss-flex ss-col-center ss-row-between">
             <view class="from-user ss-flex ss-col-center">
               <text>下单人：</text>
-              <image class="user-avatar" :src="sheep.$url.cdn(item.buyer.avatar)" mode="aspectFill">
+              <image class="user-avatar" :src="xxep.$url.cdn(item.buyer.avatar)" mode="aspectFill">
               </image>
               <text class="user-name">{{ item.buyer.nickname }}</text>
             </view>
@@ -142,14 +142,14 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
   import _ from 'lodash';
   import { onPageScroll } from '@dcloudio/uni-app';
 
-  const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/user/withdraw_bg.png');
+  const statusBarHeight = xxep.$platform.device.statusBarHeight * 2;
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/user/withdraw_bg.png');
 
   onPageScroll((e) => {
     if (e.scrollTop > 100) {
@@ -209,7 +209,7 @@
   // 获取订单列表
   async function getOrderList(page = 1, list_rows = 5) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.commission.order({
+    let res = await xxep.$api.commission.order({
       type: tabMaps[state.currentTab].value,
       list_rows,
       page,
@@ -229,7 +229,7 @@
   }
 
   async function getAgentInfo() {
-    const { code, data, msg } = await sheep.$api.commission.agent();
+    const { code, data, msg } = await xxep.$api.commission.agent();
     if (code === 1) {
       state.agentInfo = data;
     }

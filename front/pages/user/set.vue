@@ -3,7 +3,7 @@
     <view class="header-box ss-flex-col ss-row-center ss-col-center">
       <image
         class="logo-img ss-m-b-40"
-        src="/assets/addons/shopro/uniapp/tabbar/find2.png"
+        src="/assets/addons/cus/uniapp/tabbar/find2.png"
         mode="aspectFit"
       ></image>
       <view class="name ss-m-b-24">SHEEP商城</view>

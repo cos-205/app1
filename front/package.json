@@ -1,22 +1,22 @@
 {
-  "id": "shopro",
-  "name": "shopro",
-  "displayName": "Shopro商城",
+  "id": "cus",
+  "name": "cus",
+  "displayName": "Cus商城",
   "version": "3.1.0",
-  "description": "Shopro-B2C商城，一套代码，同时发行到iOS、Android、H5、微信小程序多个平台，请使用手机扫码快速体验强大功能",
+  "description": "Cus-B2C商城，一套代码，同时发行到iOS、Android、H5、微信小程序多个平台，请使用手机扫码快速体验强大功能",
   "scripts": {
-    "prettier": "prettier --write  \"{pages,sheep}/**/*.{js,json,tsx,css,less,scss,vue,html,md}\""
+    "prettier": "prettier --write  \"{pages,xxep}/**/*.{js,json,tsx,css,less,scss,vue,html,md}\""
   },
   "repository": "https://github.com/sheepjs/shop.git",
   "keywords": [
     "商城",
     "B2C",
-    "Shopro",
+    "Cus",
     "商城模板"
   ],
   "author": "",
   "license": "MIT",
-  "homepage": "https://www.shopro.top",
+  "homepage": "https://www.cus.top",
   "dcloudext": {
     "category": [
       "前端页面模板",

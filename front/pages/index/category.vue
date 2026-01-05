@@ -21,7 +21,7 @@
           <image
             v-if="state.categoryList.children[state.activeMenu].image"
             class="banner-img"
-            :src="sheep.$url.cdn(state.categoryList.children[state.activeMenu].image)"
+            :src="xxep.$url.cdn(state.categoryList.children[state.activeMenu].image)"
             mode="widthFix"
           >
           </image>
@@ -72,7 +72,7 @@
   import thirdOne from './components/third-one.vue';
   import firstOne from './components/first-one.vue';
   import firstTwo from './components/first-two.vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
 
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
@@ -90,12 +90,12 @@
     loadStatus: '',
   });
 
-  const { screenHeight, safeAreaInsets, screenWidth, safeArea } = sheep.$platform.device;
+  const { screenHeight, safeAreaInsets, screenWidth, safeArea } = xxep.$platform.device;
   const pageHeight = computed(() => safeArea.height - 44 - 50);
-  const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
+  const statusBarHeight = xxep.$platform.device.statusBarHeight * 2;
 
   async function getList(options) {
-    const { code, data } = await sheep.$api.category.list({
+    const { code, data } = await xxep.$api.category.list({
       id: options.id,
     });
     if (code === 1) {
@@ -118,7 +118,7 @@
 
   async function getGoodsList(id, page = 1, list_rows = 6) {
     state.loadStatus = 'loading';
-    const res = await sheep.$api.goods.list({
+    const res = await xxep.$api.goods.list({
       category_id: id,
       list_rows,
       page,

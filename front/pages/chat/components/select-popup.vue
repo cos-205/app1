@@ -33,7 +33,7 @@
 <script setup>
 import { reactive, watch } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
-import sheep from '@/sheep';
+import xxep from '@/xxep';
 import _ from 'lodash';
 import GoodsItem from './goods.vue';
 import OrderItem from './order.vue';
@@ -74,12 +74,12 @@ async function getList(page, list_rows = 5) {
   state.loadStatus = 'loading';
   const res =
     props.mode == 'goods'
-      ? await sheep.$api.user.goodsLog.list({
+      ? await xxep.$api.user.goodsLog.list({
           type: 'views',
           page,
           list_rows,
         })
-      : await sheep.$api.order.list({
+      : await xxep.$api.order.list({
           page,
           list_rows,
         });

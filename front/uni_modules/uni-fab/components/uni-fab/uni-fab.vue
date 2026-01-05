@@ -81,8 +81,8 @@
 </template>
 
 <script>
-import sheep from '@/sheep';
-const { safeAreaInsets } = sheep.$platform.device;
+import xxep from '@/xxep';
+const { safeAreaInsets } = xxep.$platform.device;
 let platform = 'other';
 // #ifdef APP-NVUE
 platform = uni.getSystemInfoSync().platform;

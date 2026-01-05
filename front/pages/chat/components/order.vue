@@ -6,7 +6,7 @@
     </view>
     <template v-if="from != 'msg'">
       <view class="bottom ss-flex" v-for="item in orderData.items" :key="item.id">
-        <image class="image" :src="sheep.$url.cdn(item.goods_image)" mode="aspectFill"> </image>
+        <image class="image" :src="xxep.$url.cdn(item.goods_image)" mode="aspectFill"> </image>
         <view class="ss-flex-1">
           <view class="title ss-line-2">
             {{ item.goods_title }}
@@ -21,7 +21,7 @@
     </template>
     <template v-else>
       <view class="bottom ss-flex" v-for="item in [orderData.items[0]]" :key="item.id">
-        <image class="image" :src="sheep.$url.cdn(item.goods_image)" mode="aspectFill"> </image>
+        <image class="image" :src="xxep.$url.cdn(item.goods_image)" mode="aspectFill"> </image>
         <view class="ss-flex-1">
           <view class="title title-1 ss-line-1">
             {{ item.goods_title }}
@@ -40,7 +40,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
 
   const props = defineProps({
     from: String,

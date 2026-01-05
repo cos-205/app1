@@ -23,13 +23,13 @@
                 <image
                   class="pay-icon"
                   v-if="item.disabled"
-                  :src="sheep.$url.static('/static/img/shop/pay/cod_disabled.png')"
+                  :src="xxep.$url.static('/static/img/shop/pay/cod_disabled.png')"
                   mode="aspectFit"
                 ></image>
                 <image
                   class="pay-icon"
                   v-else
-                  :src="sheep.$url.static(item.icon)"
+                  :src="xxep.$url.static(item.icon)"
                   mode="aspectFit"
                 ></image>
                 <text class="pay-title">{{ item.title }}</text>
@@ -80,10 +80,10 @@
 <script setup>
   import { computed, reactive } from 'vue';
   import { onLoad } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
-  import { useDurationTime } from '@/sheep/hooks/useGoods';
+  import xxep from '@/xxep';
+  import { useDurationTime } from '@/xxep/hooks/useGoods';
 
-  const userInfo = computed(() => sheep.$store('user').userInfo);
+  const userInfo = computed(() => xxep.$store('user').userInfo);
   // 检测支付环境
   //
   const state = reactive({
@@ -95,37 +95,37 @@
   });
   const allowedPayment = computed(() => {
     if (state.orderType === 'recharge') {
-      return sheep.$store('app').platform.recharge_payment;
+      return xxep.$store('app').platform.recharge_payment;
     }
-    return sheep.$store('app').platform.payment;
+    return xxep.$store('app').platform.payment;
   });
   const payMethods = [
     {
-      icon: '/assets/addons/shopro/uniapp/pay/wechat.png',
+      icon: '/assets/addons/cus/uniapp/pay/wechat.png',
       title: '微信支付',
       value: 'wechat',
       disabled: false,
     },
     {
-      icon: '/assets/addons/shopro/uniapp/pay/alipay.png',
+      icon: '/assets/addons/cus/uniapp/pay/alipay.png',
       title: '支付宝支付',
       value: 'alipay',
       disabled: false,
     },
     {
-      icon: '/assets/addons/shopro/uniapp/pay/wallet.png',
+      icon: '/assets/addons/cus/uniapp/pay/wallet.png',
       title: '余额支付',
       value: 'money',
       disabled: false,
     },
     {
-      icon: '/assets/addons/shopro/uniapp/pay/apple.png',
+      icon: '/assets/addons/cus/uniapp/pay/apple.png',
       title: 'Apple Pay',
       value: 'apple',
       disabled: false,
     },
     {
-      icon: '/assets/addons/shopro/uniapp/pay/cod.png',
+      icon: '/assets/addons/cus/uniapp/pay/cod.png',
       title: '货到付款',
       value: 'offline',
       disabled: false,
@@ -134,7 +134,7 @@
 
   const onPay = () => {
     if (state.payment === '') {
-      sheep.$helper.toast('请选择支付方式');
+      xxep.$helper.toast('请选择支付方式');
       return;
     }
     if (state.payment === 'money') {
@@ -143,7 +143,7 @@
         content: '确定要支付吗?',
         success: function (res) {
           if (res.confirm) {
-            sheep.$platform.pay(state.payment, state.orderType, state.orderInfo.order_sn);
+            xxep.$platform.pay(state.payment, state.orderType, state.orderInfo.order_sn);
           }
         },
       });
@@ -153,12 +153,12 @@
         content: '确定要下单吗?',
         success: function (res) {
           if (res.confirm) {
-            sheep.$platform.pay(state.payment, state.orderType, state.orderInfo.order_sn);
+            xxep.$platform.pay(state.payment, state.orderType, state.orderInfo.order_sn);
           }
         },
       });
     } else {
-      sheep.$platform.pay(state.payment, state.orderType, state.orderInfo.order_sn);
+      xxep.$platform.pay(state.payment, state.orderType, state.orderInfo.order_sn);
     }
   };
 
@@ -198,7 +198,7 @@
   }
 
   async function setRechargeOrder(id) {
-    const { data, code } = await sheep.$api.trade.order(id);
+    const { data, code } = await xxep.$api.trade.order(id);
     if (code === 1) {
       state.orderInfo = data;
       state.payMethods = payMethods;
@@ -208,7 +208,7 @@
     }
   }
   async function setGoodsOrder(id) {
-    const { data, code } = await sheep.$api.order.detail(id);
+    const { data, code } = await xxep.$api.order.detail(id);
     if (code === 1) {
       state.orderInfo = data;
       if (state.orderInfo.ext.offline_status === 'none') {
@@ -233,9 +233,9 @@
 
   onLoad((options) => {
     if (
-      sheep.$platform.name === 'WechatOfficialAccount' &&
-      sheep.$platform.os === 'ios' &&
-      !sheep.$platform.landingPage.includes('pages/pay/index')
+      xxep.$platform.name === 'WechatOfficialAccount' &&
+      xxep.$platform.os === 'ios' &&
+      !xxep.$platform.landingPage.includes('pages/pay/index')
     ) {
       location.reload();
       return;

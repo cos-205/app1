@@ -5,7 +5,7 @@
 
 <script setup>
   import { isEmpty } from 'lodash';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onShow } from '@dcloudio/uni-app';
 
   onLoad(async (options) => {
@@ -13,14 +13,14 @@
     let event = '';
     if (options.login_code) {
       event = 'login';
-      const { code } = await sheep.$platform.useProvider().login(options.login_code);
+      const { code } = await xxep.$platform.useProvider().login(options.login_code);
       if (code === 1) {
-        sheep.$store('user').getInfo();
+        xxep.$store('user').getInfo();
       }
     }
     if (options.bind_code) {
       event = 'bind';
-      const { code } = await sheep.$platform.useProvider().bind(options.bind_code);
+      const { code } = await xxep.$platform.useProvider().bind(options.bind_code);
     }
 
     // 检测H5登录回调

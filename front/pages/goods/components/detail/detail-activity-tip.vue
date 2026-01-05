@@ -9,12 +9,12 @@
           <view class="activity-title ss-flex">
             <view class="ss-m-r-16">
               <image
-                :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/seckill-icon.png')"
+                :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/seckill-icon.png')"
                 v-if="activity.type == 'seckill'"
                 class="activity-icon"
               ></image>
               <image
-                :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/groupon-icon.png')"
+                :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/groupon-icon.png')"
                 class="activity-icon"
                 v-else
               ></image>
@@ -31,10 +31,10 @@
 
 <script setup>
   import { ref, reactive } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
 
-  const seckillBg = sheep.$url.css('/assets/addons/shopro/uniapp/goods/seckill-tip-bg.png');
-  const grouponBg = sheep.$url.css('/assets/addons/shopro/uniapp/goods/groupon-tip-bg.png');
+  const seckillBg = xxep.$url.css('/assets/addons/cus/uniapp/goods/seckill-tip-bg.png');
+  const grouponBg = xxep.$url.css('/assets/addons/cus/uniapp/goods/groupon-tip-bg.png');
 
   const props = defineProps({
     data: {
@@ -45,7 +45,7 @@
   function onActivity(activity) {
     let type = activity.type;
     if (type === 'groupon_ladder') type = 'groupon';
-    sheep.$router.go(`/pages/goods/${type}`, {
+    xxep.$router.go(`/pages/goods/${type}`, {
       id: props.data.id,
       activity_id: activity.id,
     });

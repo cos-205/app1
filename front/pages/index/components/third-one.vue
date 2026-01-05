@@ -7,7 +7,7 @@
         <button
           class="ss-reset-button more-btn"
           @tap="
-            sheep.$router.go('/pages/goods/list', {
+            xxep.$router.go('/pages/goods/list', {
               categoryId: item.id,
             })
           "
@@ -20,12 +20,12 @@
         <view class="goods-item" v-for="i in item.children" :key="i">
           <view
             @tap="
-              sheep.$router.go('/pages/goods/list', {
+              xxep.$router.go('/pages/goods/list', {
                 categoryId: i.id,
               })
             "
           >
-            <image class="goods-img" :src="sheep.$url.cdn(i.image)" mode="aspectFill"></image>
+            <image class="goods-img" :src="xxep.$url.cdn(i.image)" mode="aspectFill"></image>
             <view class="ss-p-10">
               <view class="goods-title ss-line-1">{{ i.name }}</view>
             </view>
@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   const props = defineProps({
     data: {
       type: Object,

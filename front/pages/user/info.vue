@@ -13,7 +13,7 @@
             class="content-img"
             isPreview
             :current="0"
-            :src="sheep.$url.cdn(state.model.avatar)"
+            :src="xxep.$url.cdn(state.model.avatar)"
             :height="160"
             :width="160"
             :radius="80"
@@ -135,7 +135,7 @@
         <uni-list>
           <uni-list-item
             clickable
-            @tap="sheep.$router.go('/pages/user/address/list')"
+            @tap="xxep.$router.go('/pages/user/address/list')"
             title="地址管理"
             showArrow
             :border="false"
@@ -143,7 +143,7 @@
           ></uni-list-item>
           <uni-list-item
             clickable
-            @tap="sheep.$router.go('/pages/user/invoice/list')"
+            @tap="xxep.$router.go('/pages/user/invoice/list')"
             title="发票管理"
             showArrow
             :border="false"
@@ -153,34 +153,34 @@
       </view>
     </uni-forms>
 
-    <view v-if="sheep.$platform.name !== 'H5'">
+    <view v-if="xxep.$platform.name !== 'H5'">
       <view class="title-box ss-p-l-30">第三方账号绑定</view>
 
       <view class="account-list ss-flex ss-row-between">
-        <view v-if="'WechatOfficialAccount' === sheep.$platform.name" class="ss-flex ss-col-center">
+        <view v-if="'WechatOfficialAccount' === xxep.$platform.name" class="ss-flex ss-col-center">
           <image
             class="list-img"
             :src="
-              sheep.$url.static(
-                '/assets/addons/shopro/uniapp/platform/WechatOfficialAccount.png',
+              xxep.$url.static(
+                '/assets/addons/cus/uniapp/platform/WechatOfficialAccount.png',
               )
             "
           />
           <text class="list-name">微信公众号</text>
         </view>
-        <view v-if="'WechatMiniProgram' === sheep.$platform.name" class="ss-flex ss-col-center">
+        <view v-if="'WechatMiniProgram' === xxep.$platform.name" class="ss-flex ss-col-center">
           <image
             class="list-img"
             :src="
-              sheep.$url.static('/assets/addons/shopro/uniapp/platform/WechatMiniProgram.png')
+              xxep.$url.static('/assets/addons/cus/uniapp/platform/WechatMiniProgram.png')
             "
           />
           <text class="list-name">微信小程序</text>
         </view>
-        <view v-if="'App' === sheep.$platform.name" class="ss-flex ss-col-center">
+        <view v-if="'App' === xxep.$platform.name" class="ss-flex ss-col-center">
           <image
             class="list-img"
-            :src="sheep.$url.static('/assets/addons/shopro/uniapp/platform/wechat.png')"
+            :src="xxep.$url.static('/assets/addons/cus/uniapp/platform/wechat.png')"
           />
           <text class="list-name">微信开放平台</text>
         </view>
@@ -188,7 +188,7 @@
           <view class="info ss-flex ss-col-center" v-if="state.thirdOauthInfo">
             <image
               class="avatar ss-m-r-20"
-              :src="sheep.$url.cdn(state.thirdOauthInfo.avatar)"
+              :src="xxep.$url.cdn(state.thirdOauthInfo.avatar)"
             ></image>
             <text class="name">{{ state.thirdOauthInfo.nickname }}</text>
           </view>
@@ -216,10 +216,10 @@
 
 <script setup>
 import { computed, ref, reactive, onBeforeMount, unref } from 'vue';
-import { mobile, password, username } from '@/sheep/validate/form';
-import sheep from '@/sheep';
+import { mobile, password, username } from '@/xxep/validate/form';
+import xxep from '@/xxep';
 import { clone } from 'lodash';
-import { showAuthModal } from '@/sheep/hooks/useModal';
+import { showAuthModal } from '@/xxep/hooks/useModal';
 
 const state = reactive({
   model: {},
@@ -243,7 +243,7 @@ const genderRadioMap = [
   },
 ];
 
-const userInfo = computed(() => sheep.$store('user').userInfo);
+const userInfo = computed(() => xxep.$store('user').userInfo);
 
 // 选择性别
 function onChangeGender(e) {
@@ -276,7 +276,7 @@ function onChangeAvatar() {
 
 async function uploadAvatar(tempUrl) {
   if (!tempUrl) return;
-  let { url } = await sheep.$api.app.upload(tempUrl, 'ugc');
+  let { url } = await xxep.$api.app.upload(tempUrl, 'ugc');
   state.model.avatar = url;
 }
 
@@ -291,7 +291,7 @@ function onSetPassword() {
 
 // 绑定第三方账号
 async function bindThirdOauth() {
-  let result = await sheep.$platform.useProvider('wechat').bind();
+  let result = await xxep.$platform.useProvider('wechat').bind();
   if (result) {
     getUserInfo();
   }
@@ -306,7 +306,7 @@ function unBindThirdOauth() {
     confirmText: '确定',
     success: async function (res) {
       if (res.confirm) {
-        const result = await sheep.$platform.useProvider('wechat').unbind();
+        const result = await xxep.$platform.useProvider('wechat').unbind();
         if (result) {
           getUserInfo();
         }
@@ -317,7 +317,7 @@ function unBindThirdOauth() {
 
 // 保存信息
 async function onSubmit() {
-  const { code, data } = await sheep.$api.user.update({
+  const { code, data } = await xxep.$api.user.update({
     avatar: state.model.avatar,
     nickname: state.model.nickname,
     gender: state.model.gender,
@@ -328,11 +328,11 @@ async function onSubmit() {
 }
 
 const getUserInfo = async () => {
-  const userInfo = await sheep.$store('user').getInfo();
+  const userInfo = await xxep.$store('user').getInfo();
   state.model = clone(userInfo);
 
-  if (sheep.$platform.name !== 'H5') {
-    let { data, code } = await sheep.$api.user.thirdOauthInfo();
+  if (xxep.$platform.name !== 'H5') {
+    let { data, code } = await xxep.$api.user.thirdOauthInfo();
     if (code === 1) {
       state.thirdOauthInfo = data;
     }

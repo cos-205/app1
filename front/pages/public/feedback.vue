@@ -51,7 +51,7 @@
     </uni-forms>
     <su-fixed bottom placeholder>
       <view class="ss-flex ss-row-between ss-p-x-30 ss-p-y-10">
-        <button class="kefu-btn ss-reset-button" @tap="sheep.$router.go('/pages/chat/index')">
+        <button class="kefu-btn ss-reset-button" @tap="xxep.$router.go('/pages/chat/index')">
           联系客服
         </button>
         <button class="submit-btn ss-reset-button ui-BG-Main ui-Shadow-Main" @tap="onSubmit">
@@ -65,7 +65,7 @@
 <script setup>
   import { onLoad } from '@dcloudio/uni-app';
   import { computed, reactive, ref, unref } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
 
   const filesRef = ref(null);
   const state = reactive({
@@ -92,21 +92,21 @@
 
   async function onSubmit() {
     if (!state.formData.type) {
-      sheep.$helper.toast('请选择类型');
+      xxep.$helper.toast('请选择类型');
       return;
     }
     if (!state.formData.content) {
-      sheep.$helper.toast('请描述您遇到的问题');
+      xxep.$helper.toast('请描述您遇到的问题');
       return;
     }
     if (!state.formData.phone) {
-      sheep.$helper.toast('请输入您的联系方式');
+      xxep.$helper.toast('请输入您的联系方式');
       return;
     }
 
-    const { code } = await sheep.$api.app.feedback(state.formData);
+    const { code } = await xxep.$api.app.feedback(state.formData);
     if (code === 1) {
-      sheep.$router.back();
+      xxep.$router.back();
     }
   }
 

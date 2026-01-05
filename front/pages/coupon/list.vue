@@ -19,7 +19,7 @@
         <s-coupon-list
           :data="item"
           @tap="
-            sheep.$router.go('/pages/coupon/detail', {
+            xxep.$router.go('/pages/coupon/detail', {
               id: item.id,
             })
           "
@@ -43,7 +43,7 @@
           :data="item"
           type="user"
           @tap="
-            sheep.$router.go('/pages/coupon/detail', {
+            xxep.$router.go('/pages/coupon/detail', {
               id: item.coupon_id,
               user_coupon_id: item.id,
             })
@@ -61,7 +61,7 @@
               "
               :disabled="item.status != 'can_get' && item.status != 'can_use'"
               @click.stop="
-                sheep.$router.go('/pages/coupon/detail', {
+                xxep.$router.go('/pages/coupon/detail', {
                   id: item.coupon_id,
                   user_coupon_id: item.id,
                 })
@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
   import _ from 'lodash';
@@ -141,7 +141,7 @@
   }
   async function getData(page = 1, list_rows = 5) {
     state.loadStatus = 'loading';
-    const res = await sheep.$api.coupon.list({ list_rows, page });
+    const res = await xxep.$api.coupon.list({ list_rows, page });
     if (res.code === 1) {
       let couponlist = _.concat(state.pagination.data, res.data.data);
       state.pagination = {
@@ -158,7 +158,7 @@
 
   async function getCoupon(page = 1, list_rows = 5) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.coupon.userCoupon({
+    let res = await xxep.$api.coupon.userCoupon({
       type: state.type,
       list_rows,
       page,
@@ -177,7 +177,7 @@
     }
   }
   async function getBuy(id) {
-    const { code, msg } = await sheep.$api.coupon.get(id);
+    const { code, msg } = await xxep.$api.coupon.get(id);
     if (code === 1) {
       uni.showToast({
         title: msg,

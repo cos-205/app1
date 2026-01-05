@@ -49,14 +49,14 @@
         <view class="order-card-footer ss-flex ss-row-right ss-p-x-20">
           <button
             class="detail-btn ss-reset-button"
-            @tap="sheep.$router.go('/pages/order/detail', { id: order.my.order_id })"
+            @tap="xxep.$router.go('/pages/order/detail', { id: order.my.order_id })"
           >
             订单详情
           </button>
           <button
             class="tool-btn ss-reset-button"
             :class="{ 'ui-BG-Main-Gradient': order.status === 'ing' }"
-            @tap="sheep.$router.go('/pages/activity/groupon/detail', { id: order.id })"
+            @tap="xxep.$router.go('/pages/activity/groupon/detail', { id: order.id })"
           >
             {{ order.status === 'ing' ? '邀请拼团' : '拼团详情' }}
           </button>
@@ -77,7 +77,7 @@
 <script setup>
   import { computed, reactive } from 'vue';
   import { onLoad, onReachBottom, onPullDownRefresh } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import _ from 'lodash';
 
   const pagination = {
@@ -127,28 +127,28 @@
 
   // 订单详情
   function onDetail(orderSN) {
-    sheep.$router.go('/pages/order/detail', {
+    xxep.$router.go('/pages/order/detail', {
       orderSN,
     });
   }
 
   // 继续支付
   function onPay(orderSN) {
-    sheep.$router.go('/pages/pay/index', {
+    xxep.$router.go('/pages/pay/index', {
       orderSN,
     });
   }
 
   // 评价
   function onComment(orderSN) {
-    sheep.$router.go('/pages/order/comment/add', {
+    xxep.$router.go('/pages/order/comment/add', {
       orderSN,
     });
   }
 
   // 确认收货
   async function onConfirm(orderId) {
-    const { code, data } = await sheep.$api.order.confirm(orderId);
+    const { code, data } = await xxep.$api.order.confirm(orderId);
     if (code === 1) {
       let index = state.pagination.data.findIndex((order) => order.id === orderId);
       state.pagination.data[index] = data;
@@ -157,7 +157,7 @@
 
   // 取消订单
   async function onCancel(orderId) {
-    const { code, data } = await sheep.$api.order.cancel(orderId);
+    const { code, data } = await xxep.$api.order.cancel(orderId);
     if (code === 1) {
       let index = state.pagination.data.findIndex((order) => order.id === orderId);
       state.pagination.data[index] = data;
@@ -167,7 +167,7 @@
   // 获取订单列表
   async function getGrouponList(page = 1, list_rows = 5) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.activity.myGroupon({
+    let res = await xxep.$api.activity.myGroupon({
       type: tabMaps[state.currentTab].value,
     });
     if (res.code === 1) {

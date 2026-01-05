@@ -42,7 +42,7 @@
                   class="ss-reset-button apply-btn"
                   v-if="item.btns.includes('aftersale')"
                   @tap.stop="
-                    sheep.$router.go('/pages/order/aftersale/apply', {
+                    xxep.$router.go('/pages/order/aftersale/apply', {
                       item: JSON.stringify(item),
                     })
                   "
@@ -53,7 +53,7 @@
                   class="ss-reset-button apply-btn"
                   v-if="item.btns.includes('re_aftersale')"
                   @tap.stop="
-                    sheep.$router.go('/pages/order/aftersale/apply', {
+                    xxep.$router.go('/pages/order/aftersale/apply', {
                       item: JSON.stringify(item),
                     })
                   "
@@ -65,7 +65,7 @@
                   class="ss-reset-button apply-btn"
                   v-if="item.btns.includes('aftersale_info')"
                   @tap.stop="
-                    sheep.$router.go('/pages/order/aftersale/detail', {
+                    xxep.$router.go('/pages/order/aftersale/detail', {
                       id: item.ext.aftersale_id,
                     })
                   "
@@ -76,7 +76,7 @@
                   class="ss-reset-button apply-btn"
                   v-if="item.btns.includes('buy_again')"
                   @tap.stop="
-                    sheep.$router.go('/pages/goods/index', {
+                    xxep.$router.go('/pages/goods/index', {
                       id: item.goods_id,
                     })
                   "
@@ -102,7 +102,7 @@
             <view v-if="order.score_amount">+</view>
             <view class="discounts-money pay-color ss-flex ss-col-center" v-if="order.score_amount">
               <image
-                :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/score1.svg')"
+                :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/score1.svg')"
                 class="score-img"
               ></image>
               <view>{{ order.score_amount }}</view>
@@ -234,12 +234,12 @@
 <script setup>
   import { computed, reactive } from 'vue';
   import { onLoad, onReachBottom, onPullDownRefresh } from '@dcloudio/uni-app';
-  import { formatOrderColor } from '@/sheep/hooks/useGoods';
-  import sheep from '@/sheep';
+  import { formatOrderColor } from '@/xxep/hooks/useGoods';
+  import xxep from '@/xxep';
   import _ from 'lodash';
   import { isEmpty } from 'lodash';
 
-  const tradeManaged = computed(() => sheep.$store('app').has_wechat_trade_managed);
+  const tradeManaged = computed(() => xxep.$store('app').has_wechat_trade_managed);
 
   const pagination = {
     data: [],
@@ -297,35 +297,35 @@
 
   // 订单详情
   function onOrderDetail(orderSN) {
-    sheep.$router.go('/pages/order/detail', {
+    xxep.$router.go('/pages/order/detail', {
       orderSN,
     });
   }
 
   // 分享拼团
   function onOrderGroupon(order) {
-    sheep.$router.go('/pages/activity/groupon/detail', {
+    xxep.$router.go('/pages/activity/groupon/detail', {
       id: order.ext.groupon_id,
     });
   }
 
   // 查看发票
   function onOrderInvoice(invoiceId) {
-    sheep.$router.go('/pages/order/invoice', {
+    xxep.$router.go('/pages/order/invoice', {
       invoiceId,
     });
   }
 
   // 继续支付
   function onPay(orderSN) {
-    sheep.$router.go('/pages/pay/index', {
+    xxep.$router.go('/pages/pay/index', {
       orderSN,
     });
   }
 
   // 评价
   function onComment(orderSN) {
-    sheep.$router.go('/pages/goods/comment/add', {
+    xxep.$router.go('/pages/goods/comment/add', {
       orderSN,
     });
   }
@@ -337,7 +337,7 @@
     // 1.怎么检测是否开启了发货组件功能？如果没有开启的话就不能在这里return出去
     // 2.如果开启了走mpConfirm方法,需要在App.vue的show方法中拿到确认收货结果
     if (
-      sheep.$platform.name === 'WechatMiniProgram' &&
+      xxep.$platform.name === 'WechatMiniProgram' &&
       !isEmpty(order.wechat_extra_data) &&
       tradeManaged.value === 1 &&
       !ignore
@@ -347,7 +347,7 @@
     }
 
     // 正常的确认收货流程
-    const { code, data } = await sheep.$api.order.confirm(order.id);
+    const { code, data } = await xxep.$api.order.confirm(order.id);
     if (code === 1) {
       let index = state.pagination.data.findIndex((order) => order.id === orderId);
       state.pagination.data[index] = data;
@@ -360,7 +360,7 @@
   // 小程序确认收货组件
   function mpConfirm(order) {
     if (!wx.openBusinessView) {
-      sheep.$helper.toast(`请升级微信版本`);
+      xxep.$helper.toast(`请升级微信版本`);
       return;
     }
     wx.openBusinessView({
@@ -389,7 +389,7 @@
 
   // 查看物流
   async function onExpress(orderId) {
-    sheep.$router.go('/pages/order/express/list', {
+    xxep.$router.go('/pages/order/express/list', {
       orderId,
     });
   }
@@ -401,7 +401,7 @@
       content: '确定要取消订单吗?',
       success: async function (res) {
         if (res.confirm) {
-          const { code, data } = await sheep.$api.order.cancel(orderId);
+          const { code, data } = await xxep.$api.order.cancel(orderId);
           if (code === 1) {
             let index = state.pagination.data.findIndex((order) => order.id === orderId);
             state.pagination.data[index] = data;
@@ -418,7 +418,7 @@
       content: '确定要删除订单吗?',
       success: async function (res) {
         if (res.confirm) {
-          const { code, data } = await sheep.$api.order.delete(orderId);
+          const { code, data } = await xxep.$api.order.delete(orderId);
           if (code === 1) {
             let index = state.pagination.data.findIndex((order) => order.id === orderId);
             state.pagination.data.splice(index, 1);
@@ -436,9 +436,9 @@
       success: async function (res) {
         if (res.confirm) {
           // #ifdef MP
-          sheep.$platform.useProvider('wechat').subscribeMessage('order_refund');
+          xxep.$platform.useProvider('wechat').subscribeMessage('order_refund');
           // #endif
-          const { code, data } = await sheep.$api.order.applyRefund(orderId);
+          const { code, data } = await xxep.$api.order.applyRefund(orderId);
           if (code === 1) {
             let index = state.pagination.data.findIndex((order) => order.id === orderId);
             state.pagination.data[index] = data;
@@ -451,7 +451,7 @@
   // 获取订单列表
   async function getOrderList(page = 1, list_rows = 5) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.order.list({
+    let res = await xxep.$api.order.list({
       type: tabMaps[state.currentTab].value,
       list_rows,
       page,

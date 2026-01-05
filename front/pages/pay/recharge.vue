@@ -10,7 +10,7 @@
         <view class="num-title">当前余额（元）</view>
         <view class="wallet-num">{{ userInfo.money }}</view>
       </view>
-      <button class="ss-reset-button log-btn" @tap="sheep.$router.go('/pages/pay/recharge-log')">充值记录</button>
+      <button class="ss-reset-button log-btn" @tap="xxep.$router.go('/pages/pay/recharge-log')">充值记录</button>
     </view>
     <view class="recharge-box">
       <view class="recharge-card-box" v-if="state.data.status">
@@ -39,12 +39,12 @@
 
 <script setup>
 import { computed, reactive } from 'vue';
-import sheep from '@/sheep';
+import xxep from '@/xxep';
 import { onLoad } from '@dcloudio/uni-app';
 
-const userInfo = computed(() => sheep.$store('user').userInfo);
-const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
-const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/user/withdraw_bg.png');
+const userInfo = computed(() => xxep.$store('user').userInfo);
+const statusBarHeight = xxep.$platform.device.statusBarHeight * 2;
+const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/user/withdraw_bg.png');
 
 const state = reactive({
   recharge_money: '',
@@ -57,7 +57,7 @@ function onCard(e) {
   state.recharge_money = e;
 }
 async function getRechargeTabs() {
-  const res = await sheep.$api.trade.rechargeRules();
+  const res = await xxep.$api.trade.rechargeRules();
   if (res.code === 1) {
     state.data = res.data;
     state.data.status = res.data.status;
@@ -70,14 +70,14 @@ function onChange(e) {
 }
 
 async function onConfirm() {
-  const { code, data } = await sheep.$api.trade.recharge({
+  const { code, data } = await xxep.$api.trade.recharge({
     recharge_money: state.recharge_money,
   });
   if (code === 1) {
     // #ifdef MP
-    sheep.$platform.useProvider('wechat').subscribeMessage('money_change');
+    xxep.$platform.useProvider('wechat').subscribeMessage('money_change');
     // #endif
-    sheep.$router.go('/pages/pay/index', {
+    xxep.$router.go('/pages/pay/index', {
       orderSN: data.order_sn,
       type: 'recharge',
     });

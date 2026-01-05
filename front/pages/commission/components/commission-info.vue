@@ -5,7 +5,7 @@
     <view class="card-top ss-flex ss-row-between">
       <view class="ss-flex">
         <view class="head-img-box">
-          <image class="head-img" :src="sheep.$url.cdn(userInfo.avatar)" mode="aspectFill"></image>
+          <image class="head-img" :src="xxep.$url.cdn(userInfo.avatar)" mode="aspectFill"></image>
         </view>
         <view class="ss-flex-col">
           <view class="user-name">{{ userInfo.nickname }}</view>
@@ -14,7 +14,7 @@
               <image
                 v-if="agentInfo.level_info?.image"
                 class="tag-img"
-                :src="sheep.$url.cdn(agentInfo.level_info?.image)"
+                :src="xxep.$url.cdn(agentInfo.level_info?.image)"
                 mode="aspectFill"
               >
               </image>
@@ -30,12 +30,12 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { computed, reactive } from 'vue';
 
-  const userInfo = computed(() => sheep.$store('user').userInfo);
-  const agentInfo = computed(() => sheep.$store('user').agentInfo);
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/commission/background.png');
+  const userInfo = computed(() => xxep.$store('user').userInfo);
+  const agentInfo = computed(() => xxep.$store('user').agentInfo);
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/commission/background.png');
 
   const state = reactive({
     showMoney: false,

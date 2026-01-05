@@ -59,7 +59,7 @@
           :data="item"
           :topRadius="10"
           :bottomRadius="10"
-          @click="sheep.$router.go('/pages/goods/index', { id: item.id })"
+          @click="xxep.$router.go('/pages/goods/index', { id: item.id })"
         ></s-goods-column>
       </view>
     </view>
@@ -75,7 +75,7 @@
             :data="item"
             :topRadius="10"
             :bottomRadius="10"
-            @click="sheep.$router.go('/pages/goods/index', { id: item.id })"
+            @click="xxep.$router.go('/pages/goods/index', { id: item.id })"
             @getHeight="mountMasonry($event, 'left')"
           >
             <template v-slot:cart>
@@ -92,7 +92,7 @@
             :topRadius="10"
             :bottomRadius="10"
             :data="item"
-            @click="sheep.$router.go('/pages/goods/index', { id: item.id })"
+            @click="xxep.$router.go('/pages/goods/index', { id: item.id })"
             @getHeight="mountMasonry($event, 'right')"
           >
             <template v-slot:cart>
@@ -118,10 +118,10 @@
 <script setup>
   import { reactive } from 'vue';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import _ from 'lodash';
 
-  const sys_navBar = sheep.$platform.navbar;
+  const sys_navBar = xxep.$platform.navbar;
   const emits = defineEmits(['close', 'change']);
 
   const pagination = {
@@ -261,7 +261,7 @@
 
   async function getList(Sort, Order, categoryId, keyword, page = 1, list_rows = 6) {
     state.loadStatus = 'loading';
-    const res = await sheep.$api.goods.list({
+    const res = await xxep.$api.goods.list({
       sort: Sort,
       order: Order,
       category_id: !keyword ? categoryId : '',

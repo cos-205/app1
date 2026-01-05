@@ -15,7 +15,7 @@
 
 <script setup>
   import { computed, reactive } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onPageScroll } from '@dcloudio/uni-app';
 
   const page = reactive({
@@ -38,7 +38,7 @@
     }
     // #endif
 
-    const { code, data } = await sheep.$api.app.page(id);
+    const { code, data } = await xxep.$api.app.page(id);
     if (code === 1) {
       page.name = data.name;
       page.list = data.diypage?.page?.data;

@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
   import { reactive } from 'vue';
   import logItem from './log-item.vue';
@@ -38,7 +38,7 @@
     ],
   });
   async function getDetail(id) {
-    const { code, data } = await sheep.$api.order.aftersale.detail(id);
+    const { code, data } = await xxep.$api.order.aftersale.detail(id);
     if (code === 1) {
       state.info = data.logs;
     }

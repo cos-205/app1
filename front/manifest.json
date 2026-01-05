@@ -1,7 +1,7 @@
 {
-    "name" : "Shopro",
+    "name" : "Cus",
     "appid" : "__UNI__082C0BA",
-    "description" : "Shopro是由SheepJS团队开发，使用Uniapp+Vue3技术驱动的在线商城系统，内含诸多功能与丰富的活动，期待您的使用和反馈。",
+    "description" : "Cus是由SheepJS团队开发，使用Uniapp+Vue3技术驱动的在线商城系统，内含诸多功能与丰富的活动，期待您的使用和反馈。",
     "versionName" : "3.1.0",
     "versionCode" : 310,
     "transformPx" : false,
@@ -65,7 +65,7 @@
                     "<uses-permission android:name=\"android.permission.RECEIVE_USER_PRESENT\"/>"
                 ],
                 "minSdkVersion" : 21,
-                "schemes" : "shopro"
+                "schemes" : "cus"
             },
             "ios" : {
                 "urlschemewhitelist" : [ "baidumap", "iosamap" ],
@@ -76,10 +76,10 @@
                     "NSCameraUsageDescription" : "需要同意访问您的摄像头拍摄照片才能完善该条目",
                     "NSUserTrackingUsageDescription" : "开启追踪并不会获取您在其它站点的隐私信息,该行为仅用于标识设备,保障服务安全和提升浏览体验"
                 },
-                "urltypes" : "shopro",
+                "urltypes" : "cus",
                 "capabilities" : {
                     "entitlements" : {
-                        "com.apple.developer.associated-domains" : [ "applinks:shopro.sheepjs.com" ]
+                        "com.apple.developer.associated-domains" : [ "applinks:cus.sheepjs.com" ]
                     }
                 },
                 "idfa" : true
@@ -91,14 +91,14 @@
                     "apple" : {},
                     "weixin" : {
                         "appid" : "wxae7a0c156da9383b",
-                        "UniversalLinks" : "https://shopro.sheepjs.com/uni-universallinks/__UNI__082C0BA/"
+                        "UniversalLinks" : "https://cus.sheepjs.com/uni-universallinks/__UNI__082C0BA/"
                     }
                 },
                 "payment" : {
                     "weixin" : {
                         "__platform__" : [ "ios", "android" ],
                         "appid" : "wxae7a0c156da9383b",
-                        "UniversalLinks" : "https://shopro.sheepjs.com/uni-universallinks/__UNI__082C0BA/"
+                        "UniversalLinks" : "https://cus.sheepjs.com/uni-universallinks/__UNI__082C0BA/"
                     },
                     "alipay" : {
                         "__platform__" : [ "ios", "android" ]
@@ -107,7 +107,7 @@
                 "share" : {
                     "weixin" : {
                         "appid" : "wxae7a0c156da9383b",
-                        "UniversalLinks" : "https://shopro.sheepjs.com/uni-universallinks/__UNI__082C0BA/"
+                        "UniversalLinks" : "https://cus.sheepjs.com/uni-universallinks/__UNI__082C0BA/"
                     }
                 }
             },

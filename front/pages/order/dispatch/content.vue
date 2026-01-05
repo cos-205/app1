@@ -30,13 +30,13 @@
 <script setup>
   import { onLoad } from '@dcloudio/uni-app';
   import { reactive } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
 
   const state = reactive({
     data: [],
   });
   async function getDetail(id, item_id) {
-    const { code, data } = await sheep.$api.order.itemDetail({
+    const { code, data } = await xxep.$api.order.itemDetail({
       id: id,
       item_id: item_id,
     });

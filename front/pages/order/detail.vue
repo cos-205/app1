@@ -19,7 +19,7 @@
             state.orderInfo.status_code == 'nocomment'
           "
           class="state-img"
-          :src="sheep.$url.static('/assets/addons/shopro/uniapp/order/order_loading.png')"
+          :src="xxep.$url.static('/assets/addons/cus/uniapp/order/order_loading.png')"
         >
         </image>
         <image
@@ -28,19 +28,19 @@
             state.orderInfo.status_code == 'refund_agree'
           "
           class="state-img"
-          :src="sheep.$url.static('/assets/addons/shopro/uniapp/order/order_success.png')"
+          :src="xxep.$url.static('/assets/addons/cus/uniapp/order/order_success.png')"
         >
         </image>
         <image
           v-if="state.orderInfo.status_code == 'cancel' || state.orderInfo.status_code == 'closed'"
           class="state-img"
-          :src="sheep.$url.static('/assets/addons/shopro/uniapp/order/order_close.png')"
+          :src="xxep.$url.static('/assets/addons/cus/uniapp/order/order_close.png')"
         >
         </image>
         <image
           v-if="state.orderInfo.status_code == 'noget'"
           class="state-img"
-          :src="sheep.$url.static('/assets/addons/shopro/uniapp/order/order_express.png')"
+          :src="xxep.$url.static('/assets/addons/cus/uniapp/order/order_express.png')"
         >
         </image>
         <view class="ss-font-30">{{ state.orderInfo.status_text }}</view>
@@ -95,7 +95,7 @@
                   class="ss-reset-button apply-btn"
                   v-if="item.btns.includes('aftersale')"
                   @tap.stop="
-                    sheep.$router.go('/pages/order/aftersale/apply', {
+                    xxep.$router.go('/pages/order/aftersale/apply', {
                       item: JSON.stringify(item),
                     })
                   "
@@ -106,7 +106,7 @@
                   class="ss-reset-button apply-btn"
                   v-if="item.btns.includes('re_aftersale')"
                   @tap.stop="
-                    sheep.$router.go('/pages/order/aftersale/apply', {
+                    xxep.$router.go('/pages/order/aftersale/apply', {
                       item: JSON.stringify(item),
                     })
                   "
@@ -118,7 +118,7 @@
                   class="ss-reset-button apply-btn"
                   v-if="item.btns.includes('aftersale_info')"
                   @tap.stop="
-                    sheep.$router.go('/pages/order/aftersale/detail', {
+                    xxep.$router.go('/pages/order/aftersale/detail', {
                       id: item.ext.aftersale_id,
                     })
                   "
@@ -129,7 +129,7 @@
                   class="ss-reset-button apply-btn"
                   v-if="item.btns.includes('buy_again')"
                   @tap.stop="
-                    sheep.$router.go('/pages/goods/index', {
+                    xxep.$router.go('/pages/goods/index', {
                       id: item.goods_id,
                     })
                   "
@@ -180,7 +180,7 @@
           <view v-if="state.orderInfo.score_amount" class="detail">+</view>
           <view class="price-text ss-flex ss-col-center" v-if="state.orderInfo.score_amount">
             <image
-              :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/score1.svg')"
+              :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/score1.svg')"
               class="score-img"
             ></image>
             <view class="detail">{{ state.orderInfo.score_amount }}</view>
@@ -217,7 +217,7 @@
           "
         >
           <image
-            :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/score1.svg')"
+            :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/score1.svg')"
             class="score-img"
           ></image>
           <view class="detail all-price">{{ state.orderInfo.score_amount }}</view>
@@ -281,7 +281,7 @@
           class="ss-reset-button cancel-btn"
           v-if="state.orderInfo.btns?.includes('groupon')"
           @tap="
-            sheep.$router.go('/pages/activity/groupon/detail', {
+            xxep.$router.go('/pages/activity/groupon/detail', {
               id: state.orderInfo.ext.groupon_id,
             })
           "
@@ -332,14 +332,14 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
   import { isEmpty } from 'lodash';
 
-  const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/order/order_bg.png');
-  const tradeManaged = computed(() => sheep.$store('app').has_wechat_trade_managed);
+  const statusBarHeight = xxep.$platform.device.statusBarHeight * 2;
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/order/order_bg.png');
+  const tradeManaged = computed(() => xxep.$store('app').has_wechat_trade_managed);
 
   const state = reactive({
     orderInfo: {},
@@ -359,7 +359,7 @@
 
   // 复制
   const onCopy = () => {
-    sheep.$helper.copyText(state.orderInfo.order_sn);
+    xxep.$helper.copyText(state.orderInfo.order_sn);
   };
   //退款总额
   const refundFee = computed(() => {
@@ -371,13 +371,13 @@
   });
   // 去支付
   function onPay(orderSN) {
-    sheep.$router.go('/pages/pay/index', {
+    xxep.$router.go('/pages/pay/index', {
       orderSN,
     });
   }
 
   function onGoodsDetail(id) {
-    sheep.$router.go('/pages/goods/index', { id });
+    xxep.$router.go('/pages/goods/index', { id });
   }
 
   // 选择发票信息
@@ -385,16 +385,16 @@
     uni.$once('SELECT_INVOICE', (e) => {
       state.invoiceInfo = e.invoiceInfo;
     });
-    sheep.$router.go('/pages/user/invoice/list');
+    xxep.$router.go('/pages/user/invoice/list');
   }
 
   async function onConfirmInvoice() {
-    const { code } = await sheep.$api.order.applyInvoice({
+    const { code } = await xxep.$api.order.applyInvoice({
       id: state.orderInfo.id,
       invoice_id: state.invoiceInfo.id,
     });
     if (code === 1) {
-      sheep.$helper.toast('申请发票成功');
+      xxep.$helper.toast('申请发票成功');
       getOrderDetail(state.orderInfo.order_sn);
       state.showInvoicePopup = false;
     }
@@ -407,7 +407,7 @@
       content: '确定要取消订单吗?',
       success: async function (res) {
         if (res.confirm) {
-          const { code, data } = await sheep.$api.order.cancel(orderId);
+          const { code, data } = await xxep.$api.order.cancel(orderId);
           if (code === 1) {
             getOrderDetail(data.order_sn);
           }
@@ -423,7 +423,7 @@
       content: '确定要申请退款吗?',
       success: async function (res) {
         if (res.confirm) {
-          const { code, data } = await sheep.$api.order.applyRefund(orderId);
+          const { code, data } = await xxep.$api.order.applyRefund(orderId);
           if (code === 1) {
             getOrderDetail(data.order_sn);
           }
@@ -434,7 +434,7 @@
 
   // 查看物流
   async function onExpress(orderId) {
-    sheep.$router.go('/pages/order/express/list', {
+    xxep.$router.go('/pages/order/express/list', {
       orderId,
     });
   }
@@ -446,7 +446,7 @@
     // 1.怎么检测是否开启了发货组件功能？如果没有开启的话就不能在这里return出去
     // 2.如果开启了走mpConfirm方法,需要在App.vue的show方法中拿到确认收货结果
     if (
-      sheep.$platform.name === 'WechatMiniProgram' &&
+      xxep.$platform.name === 'WechatMiniProgram' &&
       !isEmpty(state.orderInfo.wechat_extra_data) &&
       tradeManaged.value === 1 &&
       !ignore
@@ -456,7 +456,7 @@
     }
 
     // 正常的确认收货流程
-    const { code, data } = await sheep.$api.order.confirm(orderId);
+    const { code, data } = await xxep.$api.order.confirm(orderId);
     if (code === 1) {
       getOrderDetail(data.order_sn);
     }
@@ -466,7 +466,7 @@
   // 小程序确认收货组件
   function mpConfirm(orderId) {
     if (!wx.openBusinessView) {
-      sheep.$helper.toast(`请升级微信版本`);
+      xxep.$helper.toast(`请升级微信版本`);
       return;
     }
     wx.openBusinessView({
@@ -496,14 +496,14 @@
 
   // 查看发票
   function onOrderInvoice(invoiceId) {
-    sheep.$router.go('/pages/order/invoice', {
+    xxep.$router.go('/pages/order/invoice', {
       invoiceId,
     });
   }
 
   // 配送方式详情
   function onDetail(item) {
-    sheep.$router.go('/pages/order/dispatch/content', {
+    xxep.$router.go('/pages/order/dispatch/content', {
       id: item.order_id,
       item_id: item.id,
     });
@@ -514,7 +514,7 @@
     uni.$once('SELECT_INVOICE', (e) => {
       state.invoiceInfo = e.invoiceInfo;
     });
-    sheep.$router.go('/pages/goods/comment/add', {
+    xxep.$router.go('/pages/goods/comment/add', {
       orderSN,
     });
   }
@@ -522,17 +522,17 @@
   async function getOrderDetail(id) {
     let res = {};
     if (state.comeinType === 'wechat') {
-      res = await sheep.$api.order.merchant({
+      res = await xxep.$api.order.merchant({
         id: id,
         merchant_trade_no: state.merchantTradeNo,
       });
     } else {
-      res = await sheep.$api.order.detail(id);
+      res = await xxep.$api.order.detail(id);
     }
     if (res.code === 1) {
       state.orderInfo = res.data;
     } else {
-      sheep.$router.back();
+      xxep.$router.back();
     }
   }
 

@@ -39,7 +39,7 @@
               <!-- 已签到日期 -->
               <view v-if="item.is_sign" class="is-sign ss-flex ss-row-center">
                 <view class="is-sign-num">{{ item.day < 10 ? '0' + item.day : item.day }}</view>
-                    <image class="is-sign-image" :src="sheep.$url.static('/assets/addons/shopro/uniapp/app/correct.png')">
+                    <image class="is-sign-image" :src="xxep.$url.static('/assets/addons/cus/uniapp/app/correct.png')">
                     </image>
                 </view>
                 <!-- 未签到日期 -->
@@ -123,11 +123,11 @@
 </template>
 
 <script setup>
-import sheep from '@/sheep';
+import xxep from '@/xxep';
 import { onLoad, onReady } from '@dcloudio/uni-app';
 import { computed, reactive } from 'vue';
 
-const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/app/sign.png');
+const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/app/sign.png');
 
 const state = reactive({
   data: {
@@ -176,7 +176,7 @@ const state = reactive({
   loading: true,
 });
 async function onSign() {
-  const { code, data } = await sheep.$api.activity.signAdd();
+  const { code, data } = await xxep.$api.activity.signAdd();
   if (code === 1) {
     state.showModel = true;
     state.signin = data;
@@ -195,7 +195,7 @@ function onConfirm() {
 }
 //补签
 async function onRetroactive() {
-  const { code, data } = await sheep.$api.activity.replenish({
+  const { code, data } = await xxep.$api.activity.replenish({
     date: state.date,
   });
   if (code === 1) {
@@ -205,7 +205,7 @@ async function onRetroactive() {
 }
 
 async function getData(mouth) {
-  const { code, data } = await sheep.$api.activity.signList(mouth);
+  const { code, data } = await xxep.$api.activity.signList(mouth);
   if (code === 1) {
     state.data = data;
   } else {

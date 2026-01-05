@@ -13,7 +13,7 @@
         </view>
         <view class="ss-flex ss-row-between ss-col-center ss-m-t-64">
           <view class="money-num">{{ state.showMoney ? userInfo.money : '*****' }}</view>
-          <button class="ss-reset-button topup-btn" @tap="sheep.$router.go('/pages/pay/recharge')">
+          <button class="ss-reset-button topup-btn" @tap="xxep.$router.go('/pages/pay/recharge')">
             充值
           </button>
         </view>
@@ -82,11 +82,11 @@
 <script setup>
   import { computed, watch, reactive } from 'vue';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import dayjs from 'dayjs';
   import _ from 'lodash';
 
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/user/wallet_card_bg.png');
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/user/wallet_card_bg.png');
 
   const pagination = {
     data: [],
@@ -120,7 +120,7 @@
       value: 'expense',
     },
   ];
-  const userInfo = computed(() => sheep.$store('user').userInfo);
+  const userInfo = computed(() => xxep.$store('user').userInfo);
 
   const dateFilterText = computed(() => {
     if (state.date[0] === state.date[1]) {
@@ -132,7 +132,7 @@
 
   async function getLogList(page = 1, list_rows = 8) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.user.wallet.log({
+    let res = await xxep.$api.user.wallet.log({
       type: 'money',
       tab: tabMaps[state.currentTab].value,
       list_rows,

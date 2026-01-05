@@ -48,7 +48,7 @@
       <!-- 服务状态 -->
       <view
         class="status-box ss-flex ss-col-center ss-row-between ss-m-x-20"
-        @tap="sheep.$router.go('/pages/order/aftersale/log', { id: state.aftersaleId })"
+        @tap="xxep.$router.go('/pages/order/aftersale/log', { id: state.aftersaleId })"
       >
         <view class="">
           <view class="status-text">{{ state.info.aftersale_status_desc }}</view>
@@ -115,7 +115,7 @@
           @tap="onDelete(state.info.id)"
           >删除</button
         > -->
-        <button class="ss-reset-button contcat-btn btn" @tap="sheep.$router.go('/pages/chat/index')"
+        <button class="ss-reset-button contcat-btn btn" @tap="xxep.$router.go('/pages/chat/index')"
           >联系客服</button
         >
       </view>
@@ -124,13 +124,13 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
   import { reactive } from 'vue';
   import { isEmpty } from 'lodash';
 
-  const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/order/order_bg.png');
+  const statusBarHeight = xxep.$platform.device.statusBarHeight * 2;
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/order/order_bg.png');
   const state = reactive({
     active: 0,
     aftersaleId: 0,
@@ -152,7 +152,7 @@
       content: '确定要取消此申请吗？',
       success: async function (res) {
         if (res.confirm) {
-          const { code } = await sheep.$api.order.aftersale.cancel(orderId);
+          const { code } = await xxep.$api.order.aftersale.cancel(orderId);
           if (code === 1) {
             getDetail(state.aftersaleId);
           }
@@ -167,19 +167,19 @@
       content: '确定要删除吗？',
       success: async function (res) {
         if (res.confirm) {
-          const { code } = await sheep.$api.order.aftersale.delete(orderId);
+          const { code } = await xxep.$api.order.aftersale.delete(orderId);
           if (code === 1) {
-            sheep.$router.back();
+            xxep.$router.back();
           }
         }
       },
     });
   }
   const onCopy = () => {
-    sheep.$helper.copyText(state.info.aftersale_sn);
+    xxep.$helper.copyText(state.info.aftersale_sn);
   };
   async function getDetail(id) {
-    const { code, data } = await sheep.$api.order.aftersale.detail(id);
+    const { code, data } = await xxep.$api.order.aftersale.detail(id);
 
     if (code === 1) {
       state.info = data;

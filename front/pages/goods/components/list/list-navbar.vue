@@ -44,15 +44,15 @@
 
 <script setup>
   import { reactive } from 'vue';
-  import sheep from '@/sheep';
-  import { showMenuTools } from '@/sheep/hooks/useModal';
+  import xxep from '@/xxep';
+  import { showMenuTools } from '@/xxep/hooks/useModal';
 
-  const sys_statusBar = sheep.$platform.device.statusBarHeight;
-  const sys_navBar = sheep.$platform.navbar;
+  const sys_statusBar = xxep.$platform.device.statusBarHeight;
+  const sys_navBar = xxep.$platform.navbar;
   const capsuleStyle = {
-    width: sheep.$platform.capsule.width + 'px',
-    height: sheep.$platform.capsule.height + 'px',
-    margin: '0 ' + (sheep.$platform.device.windowWidth - sheep.$platform.capsule.right) + 'px',
+    width: xxep.$platform.capsule.width + 'px',
+    height: xxep.$platform.capsule.height + 'px',
+    margin: '0 ' + (xxep.$platform.device.windowWidth - xxep.$platform.capsule.right) + 'px',
   };
 
   const state = reactive({
@@ -71,7 +71,7 @@
 
   // 返回
   const toBack = () => {
-    sheep.$router.back();
+    xxep.$router.back();
   };
 
   // 搜索

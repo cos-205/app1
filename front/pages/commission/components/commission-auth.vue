@@ -12,7 +12,7 @@
       <view class="img-wrap">
         <image
           class="notice-img"
-          :src="sheep.$url.static(state.event.image)"
+          :src="xxep.$url.static(state.event.image)"
           mode="aspectFill"
         ></image>
       </view>
@@ -24,13 +24,13 @@
       >
         {{ state.event.button }}
       </button>
-      <button class="ss-reset-button back-btn" @tap="sheep.$router.back()"> 返回 </button>
+      <button class="ss-reset-button back-btn" @tap="xxep.$router.back()"> 返回 </button>
     </view>
   </su-popup>
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { reactive, watch } from 'vue';
 
   const props = defineProps({
@@ -58,13 +58,13 @@
   async function onTap(eventName) {
     switch (eventName) {
       case 'back': // 返回
-        sheep.$router.back();
+        xxep.$router.back();
         break;
       case 'apply': // 需提交资料
-        sheep.$router.go('/pages/commission/apply');
+        xxep.$router.go('/pages/commission/apply');
         break;
       case 'reApply': // 直接重新申请
-        let { error } = await sheep.$api.commission.apply();
+        let { error } = await xxep.$api.commission.apply();
         if (code === 1) {
           emits('getAgentInfo');
         }
@@ -74,7 +74,7 @@
   const eventMap = {
     // 关闭
     101: {
-      image: '/assets/addons/shopro/uniapp/commission/close.png',
+      image: '/assets/addons/cus/uniapp/commission/close.png',
       title: '分销中心已关闭',
       subtitle: '该功能暂不可用',
       button: '知道了',
@@ -82,7 +82,7 @@
     },
     // 禁用
     102: {
-      image: '/assets/addons/shopro/uniapp/commission/forbidden.png',
+      image: '/assets/addons/cus/uniapp/commission/forbidden.png',
       title: '账户已被禁用',
       subtitle: '该功能暂不可用',
       button: '知道了',
@@ -90,7 +90,7 @@
     },
     // 补充信息
     103: {
-      image: '/assets/addons/shopro/uniapp/commission/apply.png',
+      image: '/assets/addons/cus/uniapp/commission/apply.png',
       title: '待完善信息',
       subtitle: '请补充您的信息后提交审核',
       button: '完善信息',
@@ -98,7 +98,7 @@
     },
     // 审核中
     104: {
-      image: '/assets/addons/shopro/uniapp/commission/pending.png',
+      image: '/assets/addons/cus/uniapp/commission/pending.png',
       title: '正在审核中',
       subtitle: '请耐心等候结果',
       button: '知道了',
@@ -106,7 +106,7 @@
     },
     // 重新提交
     105: {
-      image: '/assets/addons/shopro/uniapp/commission/reject.png',
+      image: '/assets/addons/cus/uniapp/commission/reject.png',
       title: '抱歉!您的申请信息未通过',
       subtitle: '请尝试修改后重新提交',
       button: '重新申请',
@@ -114,7 +114,7 @@
     },
     // 直接重新申请
     106: {
-      image: '/assets/addons/shopro/uniapp/commission/reject.png',
+      image: '/assets/addons/cus/uniapp/commission/reject.png',
       title: '抱歉!您的申请未通过',
       subtitle: '请尝试重新申请',
       button: '重新申请',
@@ -122,7 +122,7 @@
     },
     // 冻结
     107: {
-      image: '/assets/addons/shopro/uniapp/commission/freeze.png',
+      image: '/assets/addons/cus/uniapp/commission/freeze.png',
       title: '抱歉!您的账户已被冻结',
       subtitle: '如有疑问请联系客服',
       button: '联系客服',

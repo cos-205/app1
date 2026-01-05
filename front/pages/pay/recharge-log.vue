@@ -63,7 +63,7 @@
 
 <script setup>
   import { reactive } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import _ from 'lodash';
   const state = reactive({
@@ -77,7 +77,7 @@
     loadStatus: '',
   });
   async function getLogList(page = 1, list_rows = 5) {
-    const res = await sheep.$api.trade.orderLog({ type: 'recharge', list_rows, page });
+    const res = await xxep.$api.trade.orderLog({ type: 'recharge', list_rows, page });
     if (res.code === 1) {
       let logList = _.concat(state.pagination.data, res.data.data);
       state.pagination = {

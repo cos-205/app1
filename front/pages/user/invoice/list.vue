@@ -15,7 +15,7 @@
       <view class="footer-box ss-flex ss-row-between ss-p-20">
         <button
           class="add-btn ss-reset-button ui-Shadow-Main"
-          @tap="sheep.$router.go('/pages/user/invoice/edit')"
+          @tap="xxep.$router.go('/pages/user/invoice/edit')"
         >
           新增发票抬头
         </button>
@@ -32,7 +32,7 @@
 <script setup>
   import { reactive } from 'vue';
   import { onShow } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import _ from 'lodash';
   const state = reactive({
     list: [],
@@ -42,11 +42,11 @@
     uni.$emit('SELECT_INVOICE', {
       invoiceInfo,
     });
-    sheep.$router.back();
+    xxep.$router.back();
   };
 
   onShow(async () => {
-    state.list = (await sheep.$api.user.invoice.list()).data;
+    state.list = (await xxep.$api.user.invoice.list()).data;
     state.loading = false;
   });
 </script>

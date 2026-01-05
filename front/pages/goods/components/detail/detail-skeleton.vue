@@ -56,9 +56,9 @@
 
 <script setup>
   import { computed } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
 
-  const sys = computed(() => sheep.$store('sys'));
+  const sys = computed(() => xxep.$store('sys'));
 </script>
 
 <style lang="scss" scoped>

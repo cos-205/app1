@@ -12,7 +12,7 @@
             :key="index"
           >
             <view class="container-icon ss-flex ss-m-r-20">
-              <image :src="sheep.$url.static(item.icon)" />
+              <image :src="xxep.$url.static(item.icon)" />
             </view>
             <view class="ss-flex-1">{{ item.title }}</view>
 
@@ -34,7 +34,7 @@
 
 <script setup>
   import { reactive, onBeforeMount, nextTick } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
 
   const props = defineProps({
     modelValue: {
@@ -56,24 +56,24 @@
   });
   const typeList = [
     {
-      icon: '/assets/addons/shopro/uniapp/pay/wechat.png',
+      icon: '/assets/addons/cus/uniapp/pay/wechat.png',
       title: '微信零钱',
       value: 'wechat',
     },
     {
-      icon: '/assets/addons/shopro/uniapp/pay/alipay.png',
+      icon: '/assets/addons/cus/uniapp/pay/alipay.png',
       title: '支付宝账户',
       value: 'alipay',
     },
     {
-      icon: '/assets/addons/shopro/uniapp/pay/bank.png',
+      icon: '/assets/addons/cus/uniapp/pay/bank.png',
       title: '银行卡转账',
       value: 'bank',
     },
   ];
   const getWalletAccountInfo = async () => {
     return new Promise(async (resolve, reject) => {
-      let res = await sheep.$api.user.account.info({
+      let res = await xxep.$api.user.account.info({
         type: state.currentValue,
       });
       if (res.code === 1) {
@@ -102,7 +102,7 @@
 
   const onConfirm = async () => {
     if (state.currentValue === '') {
-      sheep.$helper.toast('请选择提现方式');
+      xxep.$helper.toast('请选择提现方式');
       return;
     }
     await getWalletAccountInfo();

@@ -130,10 +130,10 @@
 
 <script setup>
   import { computed, watch, ref, reactive, unref } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onPageScroll } from '@dcloudio/uni-app';
   import _ from 'lodash';
-  import { realName, mobile, taxNo, taxName } from '@/sheep/validate/form';
+  import { realName, mobile, taxNo, taxName } from '@/xxep/validate/form';
 
   const invoiceFormRef = ref(null);
   const invoiceTypeList = [
@@ -178,12 +178,12 @@
 
     let res = null;
     if (state.model.id) {
-      res = await sheep.$api.user.invoice.update(state.model.id, state.model);
+      res = await xxep.$api.user.invoice.update(state.model.id, state.model);
     } else {
-      res = await sheep.$api.user.invoice.create(state.model);
+      res = await xxep.$api.user.invoice.create(state.model);
     }
     if (res.code === 1) {
-      sheep.$router.back();
+      xxep.$router.back();
     }
   };
   const onDelete = () => {
@@ -192,9 +192,9 @@
       content: '确认删除此发票信息吗？',
       success: async function (res) {
         if (res.confirm) {
-          const { code } = await sheep.$api.user.invoice.delete(state.model.id);
+          const { code } = await xxep.$api.user.invoice.delete(state.model.id);
           if (res.code === 1) {
-            sheep.$router.back();
+            xxep.$router.back();
           }
         }
       },
@@ -202,7 +202,7 @@
   };
   onLoad(async (options) => {
     if (options.id) {
-      let res = await sheep.$api.user.invoice.detail(options.id);
+      let res = await xxep.$api.user.invoice.detail(options.id);
       if (res.code === 1) {
         state.model = {
           ...state.model,

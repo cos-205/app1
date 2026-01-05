@@ -4,7 +4,7 @@
     type="bottom"
     round="10"
     :isMaskClick="false"
-    :backgroundImage="sheep.$url.css('/assets/addons/shopro/uniapp/commission/become-agent.png')"
+    :backgroundImage="xxep.$url.css('/assets/addons/cus/uniapp/commission/become-agent.png')"
     @close="show = false"
     backgroundColor="var(--ui-BG-Main)"
   >
@@ -18,7 +18,7 @@
         >
           <view v-if="errorData.type === 'goods'">
             <view class="item-box ss-m-b-20" v-for="item in errorData.value" :key="item.id">
-              <s-goods-item :title="item.title" :img="item.image" :price="item.price[0]" priceColor="#E1212B" @tap="sheep.$router.go('/pages/goods/index', { id: item.id })">
+              <s-goods-item :title="item.title" :img="item.image" :price="item.price[0]" priceColor="#E1212B" @tap="xxep.$router.go('/pages/goods/index', { id: item.id })">
                 <template #groupon>
                   <view class="item-box-subtitle">{{ item.subtitle }}</view>
                 </template>
@@ -29,7 +29,7 @@
           <s-goods-item
             title="累计消费满"
             price=""
-            :img="sheep.$url.static('/assets/addons/shopro/uniapp/commission/consume.png')"
+            :img="xxep.$url.static('/assets/addons/cus/uniapp/commission/consume.png')"
             v-else-if="errorData.type === 'consume'"
           >
             <template #groupon>
@@ -55,14 +55,14 @@
           >* 满足累计消费即可成为分销商</view
         >
       </view>
-      <button class="ss-reset-button go-btn ui-BG-Main-Gradient" @tap="sheep.$router.back()">
+      <button class="ss-reset-button go-btn ui-BG-Main-Gradient" @tap="xxep.$router.back()">
         返回
       </button>
     </view>
   </su-popup>
 </template>
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { computed, reactive, watch } from 'vue';
 
   const props = defineProps({
@@ -76,7 +76,7 @@
     },
   });
 
-  const userInfo = computed(() => sheep.$store('user').userInfo);
+  const userInfo = computed(() => xxep.$store('user').userInfo);
 
   const state = reactive({
     percent: computed(() => {

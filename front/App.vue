@@ -1,6 +1,6 @@
 <script setup>
   import { onLaunch, onShow, onError } from '@dcloudio/uni-app';
-  import { ShoproInit } from './sheep';
+  import { CusInit } from './xxep';
 
   onLaunch(() => {
     // 隐藏原生导航栏 使用自定义底部导航
@@ -8,8 +8,8 @@
       fail: () => {},
     });
 
-    // 加载Shopro底层依赖
-    ShoproInit();
+    // 加载Cus底层依赖
+    CusInit();
   });
 
   onError((err) => {
@@ -32,5 +32,5 @@
 </script>
 
 <style lang="scss">
-  @import '@/sheep/scss/index.scss';
+  @import '@/xxep/scss/index.scss';
 </style>

@@ -94,10 +94,10 @@
 
 <script setup>
   import { computed, watch, ref, reactive, unref } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onPageScroll } from '@dcloudio/uni-app';
   import _ from 'lodash';
-  import { consignee, mobile, address, region } from '@/sheep/validate/form';
+  import { consignee, mobile, address, region } from '@/xxep/validate/form';
 
   const addressFormRef = ref(null);
   const state = reactive({
@@ -136,7 +136,7 @@
   };
   const getAreaData = () => {
     if (_.isEmpty(uni.getStorageSync('areaData'))) {
-      sheep.$api.data.area().then((res) => {
+      xxep.$api.data.area().then((res) => {
         if (res.code === 1) {
           uni.setStorageSync('areaData', res.data);
         }
@@ -153,12 +153,12 @@
 
     let res = null;
     if (state.model.id) {
-      res = await sheep.$api.user.address.update(state.model.id, state.model);
+      res = await xxep.$api.user.address.update(state.model.id, state.model);
     } else {
-      res = await sheep.$api.user.address.create(state.model);
+      res = await xxep.$api.user.address.create(state.model);
     }
     if (res.code === 1) {
-      sheep.$router.back();
+      xxep.$router.back();
     }
   };
 
@@ -168,9 +168,9 @@
       content: '确认删除此收货地址吗？',
       success: async function (res) {
         if (res.confirm) {
-          const { code } = await sheep.$api.user.address.delete(state.model.id);
+          const { code } = await xxep.$api.user.address.delete(state.model.id);
           if (res.code === 1) {
-            sheep.$router.back();
+            xxep.$router.back();
           }
         }
       },
@@ -179,7 +179,7 @@
   onLoad(async (options) => {
     getAreaData();
     if (options.id) {
-      let res = await sheep.$api.user.address.detail(options.id);
+      let res = await xxep.$api.user.address.detail(options.id);
       if (res.code === 1) {
         state.model = {
           ...state.model,

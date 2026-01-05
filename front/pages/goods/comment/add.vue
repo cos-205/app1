@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
 
@@ -78,11 +78,11 @@
   };
 
   async function onSubmit() {
-    const { code } = await sheep.$api.order.comment(state.orderInfo.id, {
+    const { code } = await xxep.$api.order.comment(state.orderInfo.id, {
       comments: state.commentList,
     });
     if (code === 1) {
-      sheep.$router.back();
+      xxep.$router.back();
     }
   }
 
@@ -95,7 +95,7 @@
       id = options.id;
     }
 
-    const { data, code } = await sheep.$api.order.detail(id);
+    const { data, code } = await xxep.$api.order.detail(id);
     if (code === 1) {
       if (data.btns.includes('comment')) {
         state.orderInfo = data;
@@ -112,7 +112,7 @@
         return;
       }
     }
-    sheep.$helper.toast('无待评价订单');
+    xxep.$helper.toast('无待评价订单');
   });
 </script>
 

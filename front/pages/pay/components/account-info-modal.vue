@@ -107,8 +107,8 @@
 
 <script setup>
   import { ref, reactive, unref, watchPostEffect, watch } from 'vue';
-  import sheep from '@/sheep';
-  import { realName, bankName, bankCode, alipayAccount } from '@/sheep/validate/form';
+  import xxep from '@/xxep';
+  import { realName, bankName, bankCode, alipayAccount } from '@/xxep/validate/form';
 
   const form = ref(null);
   const props = defineProps({
@@ -187,7 +187,7 @@
       account_name: state[props.modelValue.type].model.account_name,
       account_no: state[props.modelValue.type].model.account_no,
     };
-    let res = await sheep.$api.user.account.save(data);
+    let res = await xxep.$api.user.account.save(data);
     if (res.code === 1) {
       emits('update:modelValue', res.data);
       hideModal();

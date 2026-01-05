@@ -1,4 +1,4 @@
-// yyyy-MM-dd hh:mm:ss.SSS 所有支持的类型
+// yyyy-MM-dd hh:mm:ss.XXS 所有支持的类型
 function pad(str, length = 2) {
 	str += ''
 	while (str.length < length) {
@@ -44,7 +44,7 @@ const parser = {
 	s: (dateObj) => {
 		return dateObj.second
 	},
-	SSS: (dateObj) => {
+	XXS: (dateObj) => {
 		return pad(dateObj.millisecond, 3)
 	},
 	S: (dateObj) => {
@@ -85,7 +85,7 @@ export function formatDate(date, format = 'yyyy/MM/dd hh:mm:ss') {
 		second: date.getSeconds(),
 		millisecond: date.getMilliseconds()
 	}
-	const tokenRegExp = /yyyy|yy|MM|M|dd|d|hh|h|mm|m|ss|s|SSS|SS|S/
+	const tokenRegExp = /yyyy|yy|MM|M|dd|d|hh|h|mm|m|ss|s|XXS|SS|S/
 	let flag = true
 	let result = format
 	while (flag) {

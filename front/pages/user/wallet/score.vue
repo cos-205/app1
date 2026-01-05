@@ -73,7 +73,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
   import _ from 'lodash';
@@ -81,9 +81,9 @@
   import { onPageScroll } from '@dcloudio/uni-app';
   onPageScroll(() => {});
 
-  const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
-  const userInfo = computed(() => sheep.$store('user').userInfo);
-  const sys_navBar = sheep.$platform.navbar;
+  const statusBarHeight = xxep.$platform.device.statusBarHeight * 2;
+  const userInfo = computed(() => xxep.$store('user').userInfo);
+  const sys_navBar = xxep.$platform.navbar;
 
   const pagination = {
     data: [],
@@ -128,7 +128,7 @@
 
   async function getLogList(page = 1, list_rows = 8) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.user.wallet.log({
+    let res = await xxep.$api.user.wallet.log({
       type: 'score',
       list_rows,
       page,

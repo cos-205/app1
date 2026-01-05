@@ -75,7 +75,7 @@
             isPreview
             :previewList="state.jointImage"
             :current="0"
-            :src="sheep.$url.static('/assets/addons/shopro/uniapp/order/invoice_thumb.png')"
+            :src="xxep.$url.static('/assets/addons/cus/uniapp/order/invoice_thumb.png')"
             :height="110"
             mode="scaleToFill"
             v-if="state.jointImage[0].substr(-4) != '.pdf'"
@@ -83,7 +83,7 @@
           <!-- TODO: 发票为多个pdf时 -->
           <view v-if="state.jointImage[0].substr(-4) == '.pdf'" @tap="onInvoice">
             <image
-              :src="sheep.$url.static('/assets/addons/shopro/uniapp/order/invoice_thumb.png')"
+              :src="xxep.$url.static('/assets/addons/cus/uniapp/order/invoice_thumb.png')"
               class="invoice-img"
             ></image>
           </view>
@@ -121,12 +121,12 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
 
-  const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/order/invoice_bg.png');
+  const statusBarHeight = xxep.$platform.device.statusBarHeight * 2;
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/order/invoice_bg.png');
   const state = reactive({
     info: [
       {
@@ -173,14 +173,14 @@
     // #endif
   }
   async function getInvoiceDetail(id) {
-    const { data } = await sheep.$api.order.invoice(id);
+    const { data } = await xxep.$api.order.invoice(id);
     state.data = data;
     state.data.download_urls?.forEach((i, index) => {
       state.numImage = index + 1;
       if (i.substr(-4) != '.pdf') {
-        state.jointImage.push(sheep.$url.static(i));
+        state.jointImage.push(xxep.$url.static(i));
       } else {
-        state.jointImage.push(sheep.$url.static(i));
+        state.jointImage.push(xxep.$url.static(i));
       }
     });
   }

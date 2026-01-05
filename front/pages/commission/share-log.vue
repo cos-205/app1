@@ -8,7 +8,7 @@
           <view class="log-avatar-wrap">
             <image
               class="log-avatar"
-              :src="sheep.$url.cdn(item.user?.avatar)"
+              :src="xxep.$url.cdn(item.user?.avatar)"
               mode="aspectFill"
             ></image>
           </view>
@@ -17,7 +17,7 @@
             <view class="name">{{ item.user?.nickname }}</view>
             <view class="content ss-flex">
               <view v-if="item.ext?.image" class="content-img-wrap">
-                <image class="content-img" :src="sheep.$url.cdn(item.ext?.image)" mode="aspectFill">
+                <image class="content-img" :src="xxep.$url.cdn(item.ext?.image)" mode="aspectFill">
                 </image>
               </view>
 
@@ -52,7 +52,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
   import _ from 'lodash';
@@ -70,7 +70,7 @@
 
   async function getShareLog(page = 1, list_rows = 8) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.user.share.list({
+    let res = await xxep.$api.user.share.list({
       list_rows,
       page,
     });

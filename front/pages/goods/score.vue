@@ -33,7 +33,7 @@
               <view v-if="goodsPrice.price > 0" class="price-text"> ￥{{ goodsPrice.price }} </view>
               <text v-if="goodsPrice.price > 0 && goodsPrice.score > 0">+</text>
               <image
-                :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/score1.svg')"
+                :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/score1.svg')"
                 class="score-img"
               ></image>
               <view class="score-text ss-m-r-16">
@@ -101,9 +101,9 @@
 <script setup>
   import { reactive, computed } from 'vue';
   import { onLoad, onPageScroll } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { isEmpty } from 'lodash';
-  import { formatExchange, formatGoodsSwiper } from '@/sheep/hooks/useGoods';
+  import { formatExchange, formatGoodsSwiper } from '@/xxep/hooks/useGoods';
   import detailNavbar from './components/detail/detail-navbar.vue';
   import detailCellSku from './components/detail/detail-cell-sku.vue';
   import detailCellService from './components/detail/detail-cell-service.vue';
@@ -112,9 +112,9 @@
   import detailSkeleton from './components/detail/detail-skeleton.vue';
   import detailCommentCard from './components/detail/detail-comment-card.vue';
   import detailContentCard from './components/detail/detail-content-card.vue';
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/goods/score-bg.png');
-  const seckillBg = sheep.$url.css('/assets/addons/shopro/uniapp/goods/seckill-tip-bg.png');
-  const grouponBg = sheep.$url.css('/assets/addons/shopro/uniapp/goods/seckill-tip-bg.png');
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/goods/score-bg.png');
+  const seckillBg = xxep.$url.css('/assets/addons/cus/uniapp/goods/seckill-tip-bg.png');
+  const grouponBg = xxep.$url.css('/assets/addons/cus/uniapp/goods/seckill-tip-bg.png');
 
   onPageScroll(() => {});
 
@@ -157,11 +157,11 @@
   }
   // 添加购物车
   function onAddCart(e) {
-    sheep.$store('cart').add(e);
+    xxep.$store('cart').add(e);
   }
   // 立即购买
   function onBuy(e) {
-    sheep.$router.go('/pages/order/confirm', {
+    xxep.$router.go('/pages/order/confirm', {
       data: JSON.stringify({
         order_type: 'score',
         goods_list: [
@@ -183,7 +183,7 @@
     }
     state.goodsId = options.id;
     // 加载商品信息
-    sheep.$api.app.scoreShop.detail(state.goodsId).then((res) => {
+    xxep.$api.app.scoreShop.detail(state.goodsId).then((res) => {
       state.skeletonLoading = false;
       if (res.code === 1) {
         state.goodsInfo = res.data;

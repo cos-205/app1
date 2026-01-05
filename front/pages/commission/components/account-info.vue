@@ -16,7 +16,7 @@
             ></uni-icons>
           </button>
         </view>
-        <view class="ss-flex" @tap="sheep.$router.go('/pages/user/wallet/commission')">
+        <view class="ss-flex" @tap="xxep.$router.go('/pages/user/wallet/commission')">
           <view class="header-title ss-m-r-4">查看明细</view>
           <text class="cicon-play-arrow"></text>
         </view>
@@ -47,11 +47,11 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { computed, reactive } from 'vue';
 
-  const userInfo = computed(() => sheep.$store('user').userInfo);
-  const agentInfo = computed(() => sheep.$store('user').agentInfo);
+  const userInfo = computed(() => xxep.$store('user').userInfo);
+  const agentInfo = computed(() => xxep.$store('user').agentInfo);
 
   const state = reactive({
     showMoney: false,

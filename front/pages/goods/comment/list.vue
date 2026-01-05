@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
   import _ from 'lodash';
@@ -58,14 +58,14 @@
     getList(state.commentId, e.code);
   }
   async function getType(id) {
-    const { code, data } = await sheep.$api.goods.getType(id);
+    const { code, data } = await xxep.$api.goods.getType(id);
     if (code === 1) {
       state.type = data;
     }
   }
   async function getList(id, code, page = 1, list_rows = 6) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.goods.comment(id, {
+    let res = await xxep.$api.goods.comment(id, {
       type: code,
       list_rows,
       page,

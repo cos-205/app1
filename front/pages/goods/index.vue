@@ -143,8 +143,8 @@
 <script setup>
   import { reactive, computed } from 'vue';
   import { onLoad, onPageScroll } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
-  import { formatSales, formatGoodsSwiper, formatPrice } from '@/sheep/hooks/useGoods';
+  import xxep from '@/xxep';
+  import { formatSales, formatGoodsSwiper, formatPrice } from '@/xxep/hooks/useGoods';
   import detailNavbar from './components/detail/detail-navbar.vue';
   import detailCellSku from './components/detail/detail-cell-sku.vue';
   import detailCellService from './components/detail/detail-cell-service.vue';
@@ -182,12 +182,12 @@
 
   // 添加购物车
   function onAddCart(e) {
-    sheep.$store('cart').add(e);
+    xxep.$store('cart').add(e);
   }
 
   // 立即购买
   function onBuy(e) {
-    sheep.$router.go('/pages/order/confirm', {
+    xxep.$router.go('/pages/order/confirm', {
       data: JSON.stringify({
         order_type: 'goods',
         goods_list: [
@@ -208,7 +208,7 @@
 
   //立即领取
   async function onGet(id) {
-    const { code, msg } = await sheep.$api.coupon.get(id);
+    const { code, msg } = await xxep.$api.coupon.get(id);
     if (code === 1) {
       uni.showToast({
         title: msg,
@@ -221,10 +221,10 @@
 
   const shareInfo = computed(() => {
     if (isEmpty(state.goodsInfo)) return {};
-    return sheep.$platform.share.getShareInfo(
+    return xxep.$platform.share.getShareInfo(
       {
         title: state.goodsInfo.title,
-        image: sheep.$url.cdn(state.goodsInfo.image),
+        image: xxep.$url.cdn(state.goodsInfo.image),
         desc: state.goodsInfo.subtitle,
         params: {
           page: '2',
@@ -234,7 +234,7 @@
       {
         type: 'goods', // 商品海报
         title: state.goodsInfo.title, // 商品标题
-        image: sheep.$url.cdn(state.goodsInfo.image), // 商品主图
+        image: xxep.$url.cdn(state.goodsInfo.image), // 商品主图
         price: state.goodsInfo.price[0], // 商品价格
         original_price: state.goodsInfo.original_price, // 商品原价
       },
@@ -249,7 +249,7 @@
     }
     state.goodsId = options.id;
     // 加载商品信息
-    sheep.$api.goods.detail(state.goodsId).then((res) => {
+    xxep.$api.goods.detail(state.goodsId).then((res) => {
       state.skeletonLoading = false;
       if (res.code === 1) {
         state.goodsInfo = res.data;
@@ -259,7 +259,7 @@
         state.goodsInfo = null;
       }
     });
-    const { code, data } = await sheep.$api.coupon.listByGoods(state.goodsId);
+    const { code, data } = await xxep.$api.coupon.listByGoods(state.goodsId);
     if (code === 1) {
       state.couponInfo = data;
     }

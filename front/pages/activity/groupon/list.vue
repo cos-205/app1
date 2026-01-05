@@ -38,7 +38,7 @@
             :data="item"
             :grouponTag="true"
             @click="
-              sheep.$router.go('/pages/goods/groupon', {
+              xxep.$router.go('/pages/goods/groupon', {
                 id: item.id,
                 activity_id: state.activityId,
               })
@@ -64,16 +64,16 @@
 <script setup>
   import { reactive, computed } from 'vue';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import _ from 'lodash';
-  import { useDurationTime } from '@/sheep/hooks/useGoods';
+  import { useDurationTime } from '@/xxep/hooks/useGoods';
 
-  const { screenHeight, safeAreaInsets, screenWidth, safeArea } = sheep.$platform.device;
-  const sys_navBar = sheep.$platform.navbar;
-  const statusBarHeight = sheep.$platform.device.statusBarHeight * 2;
+  const { screenHeight, safeAreaInsets, screenWidth, safeArea } = xxep.$platform.device;
+  const sys_navBar = xxep.$platform.navbar;
+  const statusBarHeight = xxep.$platform.device.statusBarHeight * 2;
   const pageHeight =
     (safeArea.height + safeAreaInsets.bottom) * 2 + statusBarHeight - sys_navBar - 350;
-  const headerBg = sheep.$url.css('/assets/addons/shopro/uniapp/goods/groupon-header.png');
+  const headerBg = xxep.$url.css('/assets/addons/cus/uniapp/goods/groupon-header.png');
 
   const state = reactive({
     activityId: 0,
@@ -105,7 +105,7 @@
 
   async function getList(activityId, page = 1, list_rows = 4) {
     state.loadStatus = 'loading';
-    const res = await sheep.$api.goods.activityList({
+    const res = await xxep.$api.goods.activityList({
       list_rows,
       activity_id: activityId,
       page,
@@ -141,7 +141,7 @@
     }
     state.activityId = options.id;
     getList(state.activityId);
-    const { code, data } = await sheep.$api.activity.activity(options.id);
+    const { code, data } = await xxep.$api.activity.activity(options.id);
     if (code === 1) {
       state.activityInfo = data;
     } else {

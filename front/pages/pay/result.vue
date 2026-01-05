@@ -6,12 +6,12 @@
       <image
         class="pay-img ss-m-b-30"
         v-if="payResult === 'success'"
-        :src="sheep.$url.static('/assets/addons/shopro/uniapp/order/order_pay_success.gif')"
+        :src="xxep.$url.static('/assets/addons/cus/uniapp/order/order_pay_success.gif')"
       ></image>
       <image
         class="pay-img ss-m-b-30"
         v-if="['failed', 'closed'].includes(payResult)"
-        :src="sheep.$url.static('/assets/addons/shopro/uniapp/order/order_paty_fail.gif')"
+        :src="xxep.$url.static('/assets/addons/cus/uniapp/order/order_paty_fail.gif')"
       ></image>
       <view class="tip-text ss-m-b-30" v-if="payResult == 'success'">{{
         state.orderInfo.pay_mode === 'offline' ? '下单成功' : '支付成功'
@@ -24,20 +24,20 @@
         <view v-if="state.orderInfo.score_amount">+</view>
         <view class="price-text ss-flex ss-col-center" v-if="state.orderInfo.score_amount">
           <image
-            :src="sheep.$url.static('/assets/addons/shopro/uniapp/goods/score1.svg')"
+            :src="xxep.$url.static('/assets/addons/cus/uniapp/goods/score1.svg')"
             class="score-img"
           ></image>
           <view>{{ state.orderInfo.score_amount }}</view>
         </view>
       </view>
       <view class="btn-box ss-flex ss-row-center ss-m-t-50">
-        <button class="back-btn ss-reset-button" @tap="sheep.$router.go('/pages/index/index')">
+        <button class="back-btn ss-reset-button" @tap="xxep.$router.go('/pages/index/index')">
           返回首页
         </button>
         <button
           class="check-btn ss-reset-button"
           v-if="payResult === 'failed'"
-          @tap="sheep.$router.redirect('/pages/pay/index', { orderSN: state.orderId })"
+          @tap="xxep.$router.redirect('/pages/pay/index', { orderSN: state.orderId })"
         >
           重新支付
         </button>
@@ -50,7 +50,7 @@
             payResult === 'success' &&
             ['groupon', 'groupon_ladder'].includes(state.orderInfo.activity_type)
           "
-          @tap="sheep.$router.redirect('/pages/activity/groupon/order')"
+          @tap="xxep.$router.redirect('/pages/activity/groupon/order')"
         >
           我的拼团
         </button>
@@ -59,7 +59,7 @@
       <view class="subscribe-box ss-flex ss-m-t-44">
         <image
           class="subscribe-img"
-          :src="sheep.$url.static('/assets/addons/shopro/uniapp/order/cargo.png')"
+          :src="xxep.$url.static('/assets/addons/cus/uniapp/order/cargo.png')"
         ></image>
         <view class="subscribe-title ss-m-r-48 ss-m-l-16">获取实时发货信息与订单状态</view>
         <view class="subscribe-start" @tap="subscribeMessage">立即订阅</view>
@@ -73,7 +73,7 @@
   import { onLoad, onHide, onShow } from '@dcloudio/uni-app';
   import { reactive, computed } from 'vue';
   import { isEmpty } from 'lodash';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
 
   const state = reactive({
     orderId: 0,
@@ -121,9 +121,9 @@
     let checkPayResult;
     state.counter++;
     if (state.orderType === 'recharge') {
-      checkPayResult = sheep.$api.trade.order;
+      checkPayResult = xxep.$api.trade.order;
     } else {
-      checkPayResult = sheep.$api.order.detail;
+      checkPayResult = xxep.$api.order.detail;
     }
     const { data, code } = await checkPayResult(orderId);
     if (code === 1) {
@@ -154,9 +154,9 @@
 
   function onOrder() {
     if (state.orderType === 'recharge') {
-      sheep.$router.redirect('/pages/pay/recharge-log');
+      xxep.$router.redirect('/pages/pay/recharge-log');
     } else {
-      sheep.$router.redirect('/pages/order/list');
+      xxep.$router.redirect('/pages/order/list');
     }
   }
 
@@ -167,7 +167,7 @@
       event.push('groupon_finish');
       event.push('groupon_fail');
     }
-    sheep.$platform.useProvider('wechat').subscribeMessage(event);
+    xxep.$platform.useProvider('wechat').subscribeMessage(event);
   }
   // #endif
 

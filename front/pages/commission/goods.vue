@@ -10,7 +10,7 @@
         :price="item.price[0]"
         :originPrice="item.original_price"
         priceColor="#333"
-        @tap="sheep.$router.go('/pages/goods/index', { id: item.id })"
+        @tap="xxep.$router.go('/pages/goods/index', { id: item.id })"
       >
         <template #rightBottom>
           <view class="ss-flex ss-row-between">
@@ -43,12 +43,12 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
-  import $share from '@/sheep/platform/share';
+  import xxep from '@/xxep';
+  import $share from '@/xxep/platform/share';
   import { onLoad, onReachBottom } from '@dcloudio/uni-app';
   import { computed, reactive } from 'vue';
   import _ from 'lodash';
-  import { showShareModal } from '@/sheep/hooks/useModal';
+  import { showShareModal } from '@/xxep/hooks/useModal';
 
   const state = reactive({
     pagination: {
@@ -65,7 +65,7 @@
     state.shareInfo = $share.getShareInfo(
       {
         title: goodsInfo.title,
-        image: sheep.$url.cdn(goodsInfo.image),
+        image: xxep.$url.cdn(goodsInfo.image),
         desc: goodsInfo.subtitle,
         params: {
           page: '2',
@@ -75,7 +75,7 @@
       {
         type: 'goods', // 商品海报
         title: goodsInfo.title, // 商品标题
-        image: sheep.$url.cdn(goodsInfo.image), // 商品主图
+        image: xxep.$url.cdn(goodsInfo.image), // 商品主图
         price: goodsInfo.price[0], // 商品价格
         original_price: goodsInfo.original_price, // 商品原价
       },
@@ -85,7 +85,7 @@
 
   async function getGoodsList(page = 1, list_rows = 8) {
     state.loadStatus = 'loading';
-    let res = await sheep.$api.commission.goods({
+    let res = await xxep.$api.commission.goods({
       list_rows,
       page,
     });

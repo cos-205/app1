@@ -3,9 +3,9 @@
   <view>
     <view class="ss-flex flex-wrap">
       <view class="goods-box" v-for="item in pagination?.data" :key="item.id">
-        <view @click="sheep.$router.go('/pages/goods/index', { id: item.id })">
+        <view @click="xxep.$router.go('/pages/goods/index', { id: item.id })">
           <view class="goods-img">
-            <image class="goods-img" :src="sheep.$url.cdn(item.image)" mode="aspectFit"></image>
+            <image class="goods-img" :src="xxep.$url.cdn(item.image)" mode="aspectFit"></image>
           </view>
           <view class="goods-content">
             <view class="goods-title ss-line-1 ss-m-b-28">{{ item.title }}</view>
@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   const props = defineProps({
     data: {
       type: Object,

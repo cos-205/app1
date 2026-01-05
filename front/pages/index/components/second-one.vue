@@ -12,12 +12,12 @@
         v-for="item in props.data.children[activeMenu].children"
         :key="item.id"
         @tap="
-          sheep.$router.go('/pages/goods/list', {
+          xxep.$router.go('/pages/goods/list', {
             categoryId: item.id,
           })
         "
       >
-        <image class="goods-img" :src="sheep.$url.cdn(item.image)" mode="aspectFill"></image>
+        <image class="goods-img" :src="xxep.$url.cdn(item.image)" mode="aspectFill"></image>
         <view class="ss-p-10">
           <view class="goods-title ss-line-1">{{ item.name }}</view>
         </view>
@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   const props = defineProps({
     data: {
       type: Object,

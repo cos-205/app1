@@ -1,6 +1,6 @@
 <template>
   <view class="goods ss-flex">
-    <image class="image" :src="sheep.$url.cdn(goodsData.image)" mode="aspectFill"> </image>
+    <image class="image" :src="xxep.$url.cdn(goodsData.image)" mode="aspectFill"> </image>
     <view class="ss-flex-1">
       <view class="title ss-line-2">
         {{ goodsData.title }}
@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import { isArray } from 'lodash';
 
   const props = defineProps({

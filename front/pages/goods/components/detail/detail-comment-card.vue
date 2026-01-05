@@ -8,7 +8,7 @@
       </view>
       <view
         class="ss-flex ss-col-center"
-        @tap="sheep.$router.go('/pages/goods/comment/list', { id: goodsId })"
+        @tap="xxep.$router.go('/pages/goods/comment/list', { id: goodsId })"
         v-if="state.commentList?.length > 0"
       >
         <button class="ss-reset-button more-btn">查看全部</button>
@@ -31,7 +31,7 @@
 
 <script setup>
   import { reactive, onBeforeMount } from 'vue';
-  import sheep from '@/sheep';
+  import xxep from '@/xxep';
   import commentItem from './comment-item.vue';
   const props = defineProps({
     goodsId: {
@@ -44,7 +44,7 @@
     total: 0,
   });
   async function getComment(id) {
-    const { data } = await sheep.$api.goods.comment(id, {
+    const { data } = await xxep.$api.goods.comment(id, {
       list_rows: 3,
     });
     state.commentList = data.data;
