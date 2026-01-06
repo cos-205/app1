@@ -1,0 +1,7 @@
+vue@3.2.45
+element-plus@2.2.21
+icons-vue@2.0.10
+sortable@1.15.0
+vuedraggable@4.1.0
+clipboard@2.0.11
+echarts@5.4.0

@@ -345,4 +345,233 @@ class User extends Api
             $this->error($this->auth->getError());
         }
     }
+
+    /**
+     * 获取邀请信息
+     * 
+     * @ApiMethod (GET)
+     */
+    public function getInviteInfo()
+    {
+        $user = $this->auth->getUserinfo();
+        
+        // 从数据库获取完整用户信息
+        $userModel = model('app\common\model\User');
+        $userInfo = $userModel->where('id', $user['id'])->find();
+        
+        // 获取邀请码和链接
+        $inviteCode = $userInfo['invite_code'] ?? '';
+        $inviteUrl = request()->domain() . '/pages/auth/register?invite_code=' . $inviteCode;
+        
+        // 获取用户统计信息
+        $statistics = model('app\common\model\fuka\FukaUserStatistics')
+            ->where('user_id', $user['id'])
+            ->find();
+        
+        if (!$statistics) {
+            // 创建统计记录
+            $statistics = model('app\common\model\fuka\FukaUserStatistics')->create([
+                'user_id' => $user['id'],
+                'createtime' => time(),
+                'updatetime' => time(),
+            ]);
+        }
+        
+        // 获取各层级邀请人数
+        $shareModel = model('app\common\model\CusShare');
+        $level1Count = $shareModel->where('share_id', $user['id'])->where('level', 1)->count();
+        $level2Count = $shareModel->where('share_id', $user['id'])->where('level', 2)->count();
+        $level3Count = $shareModel->where('share_id', $user['id'])->where('level', 3)->count();
+        $totalCount = $level1Count + $level2Count + $level3Count;
+        
+        // 获取会员等级配置
+        $memberLevelModel = model('app\common\model\fuka\FukaMemberLevel');
+        $memberLevels = $memberLevelModel->order('level', 'asc')->select();
+        
+        // 格式化会员等级数据
+        $levelList = [];
+        foreach ($memberLevels as $level) {
+            $levelList[] = [
+                'level' => (int)$level['level'],
+                'name' => $level['name'],
+                'desc' => $this->formatLevelDesc($level),
+                'inviteCount' => (int)$level['invite_count'],
+                'icon' => $this->getLevelIcon($level['level']),
+                'color' => $this->getLevelColor($level['level']),
+            ];
+        }
+        
+        $data = [
+            'inviteCode' => $inviteCode,
+            'inviteUrl' => $inviteUrl,
+            'userLevel' => isset($userInfo['member_level']) ? (int)$userInfo['member_level'] : 0,
+            'stats' => [
+                'level1' => $level1Count,
+                'level2' => $level2Count,
+                'level3' => $level3Count,
+                'total' => $totalCount,
+            ],
+            'memberLevels' => $levelList,
+        ];
+        
+        $this->success('获取成功', $data);
+    }
+    
+    /**
+     * 格式化等级描述
+     */
+    private function formatLevelDesc($level)
+    {
+        $desc = "邀请{$level['invite_count']}位实名认证，可领取财富金卡";
+        if ($level['dividend_money'] > 0) {
+            $desc .= "\n每月可领取支付宝分红{$level['dividend_money']}万";
+        }
+        return $desc;
+    }
+    
+    /**
+     * 获取等级图标
+     */
+    private function getLevelIcon($level)
+    {
+        $icons = [
+            0 => 'person',
+            1 => 'medal-filled',
+            2 => 'star-filled',
+            3 => 'fire-filled',
+            4 => 'flag-filled',
+            5 => 'gift-filled',
+        ];
+        return $icons[$level] ?? 'medal-filled';
+    }
+    
+    /**
+     * 获取等级颜色
+     */
+    private function getLevelColor($level)
+    {
+        $colors = [
+            0 => 'linear-gradient(135deg, #D1D5DB, #9CA3AF)',
+            1 => 'linear-gradient(135deg, #9CA3AF, #6B7280)',
+            2 => 'linear-gradient(135deg, #FBBF24, #F59E0B)',
+            3 => 'linear-gradient(135deg, #60A5FA, #3B82F6)',
+            4 => 'linear-gradient(135deg, #4B5563, #1F2937)',
+            5 => 'linear-gradient(135deg, #A855F7, #9333EA)',
+        ];
+        return $colors[$level] ?? 'linear-gradient(135deg, #9CA3AF, #6B7280)';
+    }
+
+    /**
+     * 获取团队信息
+     * 
+     * @ApiMethod (GET)
+     */
+    public function getTeamInfo()
+    {
+        $user = $this->auth->getUserinfo();
+        
+        // 从数据库获取完整用户信息
+        $userModel = model('app\common\model\User');
+        $userInfo = $userModel->where('id', $user['id'])->find();
+        
+        // 获取各层级邀请人数
+        $shareModel = model('app\common\model\CusShare');
+        $level1Count = $shareModel->where('share_id', $user['id'])->where('level', 1)->count();
+        $level2Count = $shareModel->where('share_id', $user['id'])->where('level', 2)->count();
+        $level3Count = $shareModel->where('share_id', $user['id'])->where('level', 3)->count();
+        $totalCount = $level1Count + $level2Count + $level3Count;
+        
+        // 获取会员等级配置
+        $memberLevelModel = model('app\common\model\fuka\FukaMemberLevel');
+        $memberLevels = $memberLevelModel->order('level', 'asc')->select();
+        
+        // 格式化会员等级数据
+        $levelList = [];
+        foreach ($memberLevels as $level) {
+            $levelList[] = [
+                'level' => (int)$level['level'],
+                'name' => $level['name'],
+                'inviteCount' => (int)$level['invite_count'],
+                'dividendMoney' => (float)$level['dividend_money'],
+            ];
+        }
+        
+        // 获取当前等级配置
+        $currentLevel = isset($userInfo['member_level']) ? (int)$userInfo['member_level'] : 0;
+        $currentLevelConfig = $memberLevelModel->where('level', $currentLevel)->find();
+        
+        $data = [
+            'userLevel' => $currentLevel,
+            'stats' => [
+                'level1' => $level1Count,
+                'level2' => $level2Count,
+                'level3' => $level3Count,
+                'total' => $totalCount,
+            ],
+            'memberLevels' => $levelList,
+            'currentLevelConfig' => $currentLevelConfig ? [
+                'level' => (int)$currentLevelConfig['level'],
+                'name' => $currentLevelConfig['name'],
+                'inviteCount' => (int)$currentLevelConfig['invite_count'],
+                'dividendMoney' => (float)$currentLevelConfig['dividend_money'],
+            ] : null,
+        ];
+        
+        $this->success('获取成功', $data);
+    }
+
+    /**
+     * 获取团队成员列表
+     * 
+     * @ApiMethod (GET)
+     * @ApiParams (name="level", type="integer", required=false, description="层级筛选:0=全部,1=1级,2=2级,3=3级")
+     * @ApiParams (name="page", type="integer", required=false, description="页码")
+     * @ApiParams (name="limit", type="integer", required=false, description="每页数量")
+     */
+    public function getTeamMembers()
+    {
+        $user = $this->auth->getUserinfo();
+        $level = $this->request->get('level/d', 0);
+        $page = $this->request->get('page/d', 1);
+        $limit = $this->request->get('limit/d', 10);
+        
+        // 获取团队成员
+        $shareModel = model('app\common\model\CusShare');
+        $userModel = model('app\common\model\User');
+        
+        $where = ['share_id' => $user['id']];
+        if ($level > 0) {
+            $where['level'] = $level;
+        }
+        
+        $shares = $shareModel->where($where)
+            ->order('createtime', 'desc')
+            ->page($page, $limit)
+            ->select();
+        
+        $members = [];
+        foreach ($shares as $share) {
+            $member = $userModel->where('id', $share['user_id'])->find();
+            if ($member) {
+                $members[] = [
+                    'name' => $member['nickname'] ?: $member['mobile'],
+                    'avatar' => $member['avatar'] ?: '',
+                    'level' => (int)$share['level'],
+                    'isRealname' => (int)$member['is_realname'] === 1,
+                    'createTime' => date('Y-m-d H:i', $share['createtime']),
+                ];
+            }
+        }
+        
+        $total = $shareModel->where($where)->count();
+        
+        $data = [
+            'members' => $members,
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+        ];
+        
+        $this->success('获取成功', $data);
+    }
 }

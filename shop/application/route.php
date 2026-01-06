@@ -46,9 +46,14 @@ return [
     'api/team/inviteList' => 'api/team/inviteList',                // GET - 获取邀请记录列表
     'api/team/rewardList' => 'api/team/rewardList',               // GET - 获取团队奖励记录
     
-    // 财富金卡模块路由
-    'api/wealthCard/info' => 'api/wealthCard/info',               // GET - 获取金卡信息
-    'api/wealthCard/apply' => 'api/wealthCard/apply',             // POST - 申请财富金卡
-    'api/wealthCard/completeStep' => 'api/wealthCard/completeStep', // POST - 完成流程步骤
-    'api/wealthCard/payFee' => 'api/wealthCard/payFee',           // POST - 支付流程费用
+    // 财富金卡模块路由（控制器：Card）
+    'api/card/info' => 'api/card/info',                           // GET - 获取金卡信息
+    'api/card/apply' => 'api/card/apply',                         // POST - 申请财富金卡
+    'api/card/completeStep' => 'api/card/completeStep',           // POST - 完成流程步骤
+    'api/card/payFee' => 'api/card/payFee',                       // POST - 支付流程费用
+    
+    // 用户邀请模块路由（控制器：User）
+    'api/user/getInviteInfo' => 'api/user/getInviteInfo',         // GET - 获取邀请信息
+    'api/user/getTeamInfo' => 'api/user/getTeamInfo',             // GET - 获取团队信息
+    'api/user/getTeamMembers' => 'api/user/getTeamMembers',       // GET - 获取团队成员列表
 ];

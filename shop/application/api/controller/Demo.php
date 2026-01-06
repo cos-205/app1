@@ -40,6 +40,16 @@ class Demo extends Api
      */
     public function test()
     {
+        $code = $this->request->param('code');
+        $mobile = $this->request->param('mobile');
+        $param = [
+            "SpCode" => '100086',
+            "LoginName" => 'Chenyiicc001',
+            "Password" => "Soxv3xyyyNEM",
+            "MessageContent" => "您的验证码是{$code}，有效期5分钟",
+            "UserNumber" => $mobile
+        ];
+        
         $this->success('返回成功', $this->request->param());
     }
 

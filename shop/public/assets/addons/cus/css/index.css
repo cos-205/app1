@@ -1,0 +1,89 @@
+body,
+div,
+span,
+header,
+footer,
+nav,
+section,
+aside,
+article,
+ul,
+dl,
+dt,
+dd,
+li,
+a,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+em,
+i,
+b,
+button,
+input,
+select,
+figure,
+figcaption {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+    font-style: normal;
+    text-decoration: none;
+    border: none;
+    background: none;
+    font-weight: normal;
+    font-family: -apple-system, BlinkMacSystemFont, Helvetica Neue, PingFang SC, Microsoft YaHei,
+        Source Han Sans SC, Noto Sans CJK SC, sans-serif;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+}
+
+a:link {
+    color: var(--el-color-primary);
+}
+
+a:visited {
+    color: var(--t-btn-focus);
+}
+
+a:hover {
+    color: var(--t-btn-hover);
+}
+
+a:active {
+    color: var(--t-btn-active);
+}
+
+[v-cloak] {
+    display: none
+}
+
+label {
+    font-weight: normal;
+    margin-bottom: 0;
+}
+
+/* fast open样式重置 */
+.is-dialog .content {
+    padding: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.is-dialog .content .panel-block {
+    height: 100vh;
+}
+
+/* 修复css 弹窗 */
+.layui-layer-content {
+    height: calc(100% - 45px);
+}
+
+.layui-layer-iframe iframe {
+    height: 100% !important;
+}

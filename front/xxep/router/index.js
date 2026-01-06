@@ -59,7 +59,10 @@ const _go = (
 
   // 页面登录拦截
   if (nextRoute.meta?.auth && !$store('user').isLogin) {
-    showAuthModal();
+    // showAuthModal();
+    uni.redirectTo({
+      url: '/pages/auth/login',
+    });
     return;
   }
 

@@ -1,0 +1,1069 @@
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_2385137_b8qygb2jne.css?v={$site.version|htmlentities}">
+<link rel="stylesheet" href="__CDN__/assets/addons/cus/css/index.css?v={$site.version|htmlentities}">
+__DARK__
+
+<style>
+  #sa-chat {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1000;
+  }
+
+  #sa-chat .chat-button {
+    width: 40px;
+    height: 40px;
+    background: var(--sa-background-assist);
+    box-shadow: 0px 1px 16px #e4e4e4;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  #sa-chat .chat-button:hover {
+    background: var(--sa-table-header-bg);
+  }
+
+  #sa-chat .chat-icon {
+    font-size: 20px;
+    color: var(--el-color-primary);
+  }
+
+  .sa-cus-drawer {
+    top: 50px !important;
+    width: 380px !important;
+    height: calc(100% - 50px) !important;
+  }
+
+  .sa-cus-drawer .el-drawer__body {
+    padding: 0;
+  }
+
+  .sa-cus-drawer .chat-container {
+    height: 100%;
+    flex-direction: column;
+  }
+
+  .sa-cus-drawer .chat-header {
+    height: 50px;
+    background: var(--t-btn-hover);
+    padding: 0 12px;
+    color: var(--sa-background-assist);
+    position: relative;
+  }
+
+  .sa-cus-drawer .chat-header .circle-close-filled {
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .sa-cus-drawer .chat-header .circle-close-filled:hover {
+    color: var(--el-color-primary);
+  }
+
+  .sa-cus-drawer .drawer-tabs {
+    width: fit-content;
+    flex: unset;
+    height: 36px;
+    padding: 0 2px;
+    border-radius: 8px;
+    background: var(--t-bg-focus);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .sa-cus-drawer .drawer-tabs .bg {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 118px;
+    height: 32px;
+    background: var(--sa-background-assist);
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .sa-cus-drawer .drawer-tabs-item {
+    width: 118px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    padding: 0 7px;
+    font-size: 14px;
+    color: var(--el-color-primary);
+    cursor: pointer;
+  }
+
+  .sa-cus-drawer .chat-main {
+    --el-main-padding: 0;
+  }
+
+  .sa-cus-drawer .notification-item-more {
+    width: 100%;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--sa-subfont);
+  }
+
+  .sa-cus-drawer .empty-icon {
+    width: 150px;
+    height: 150px;
+  }
+
+  .sa-cus-drawer .empty-description {
+    width: 200px;
+    font-size: 16px;
+    color: var(--sa-subfont);
+  }
+
+  .sa-chat-drawer .avatar {
+    position: relative;
+    width: 36px;
+    height: 36px;
+  }
+
+  .sa-chat-drawer .avatar .avatar-bage {
+    position: absolute;
+    right: 0;
+    bottom: 2px;
+    height: 10px;
+    width: 10px;
+    padding: 0;
+    background: #fff;
+    border-radius: 50%;
+  }
+
+  .sa-chat-drawer .avatar .avatar-bage img {
+    width: 100%;
+  }
+
+  .status-popover {
+    width: 104px !important;
+    min-width: 104px !important;
+  }
+
+  .status-popover img {
+    width: 12px;
+    height: 12px;
+  }
+
+  .customer-service {
+    width: 122px;
+    color: var(--sa-background-assist);
+  }
+
+  .customer-service .customer-service-name {
+    height: 16px;
+    line-height: 16px;
+    font-size: 14px;
+    font-weight: 400;
+    margin-bottom: 4px;
+  }
+
+  .customer-service .customer-service-room-name {
+    height: 14px;
+    line-height: 14px;
+    font-weight: 400;
+    font-size: 12px;
+  }
+
+  .customer-service .customer-service-icon {
+    font-size: 12px;
+    margin-left: 5px;
+
+    @media only screen and (max-width: 768px) {
+      font-size: 16px;
+    }
+  }
+
+  .sa-chat-drawer .chat-header .drawer-tabs .bg {
+    width: 50px;
+  }
+
+  .sa-chat-drawer .chat-header .drawer-tabs .drawer-tabs-item {
+    width: 50px;
+    font-size: 12px;
+  }
+
+  .sa-chat-drawer .chat-main {
+    display: flex;
+    overflow: hidden;
+  }
+
+  .sa-chat-drawer .chat-main .content-left {
+    flex-shrink: 0;
+    height: 100%;
+    border-right: 1px solid var(--sa-space);
+  }
+
+  .sa-chat-drawer .chat-session-item {
+    width: 60px;
+    transition: all 0.3s linear;
+    padding: 10px 0;
+  }
+
+  .sa-chat-drawer .chat-session-item:hover {
+    background-color: var(--t-bg-active);
+    transition: all 0.3s linear;
+  }
+
+  .sa-chat-drawer .chat-session-item:hover .chat-session-icon {
+    transform: scale(1);
+    margin-left: 0;
+    transition: all 0.2s linear;
+  }
+
+  .sa-chat-drawer .chat-session-item:hover .chat-session-icon:active {
+    transform: translate(1px, 1px);
+  }
+
+  .sa-chat-drawer .chat-session-item:focus {
+    background-color: var(--t-bg-active);
+  }
+
+  .sa-chat-drawer .chat-session-item.is-active {
+    background-color: var(--t-bg-active);
+    transition: all 0.3s linear;
+  }
+
+  .sa-chat-drawer .chat-session-item .chat-session-icon {
+    height: 12px;
+    font-size: 12px;
+    color: var(--el-color-primary);
+    margin-right: 4px;
+    margin-left: -16px;
+    transform: scale(0) translate(0, 0);
+    transition: all 0.2s linear;
+  }
+
+  .sa-chat-drawer .chat-session-item .chat-session-icon .chat-session-circle-close-filled {
+    display: none;
+  }
+
+  .sa-chat-drawer .chat-session-item .chat-session-icon:hover .chat-session-close {
+    display: none;
+  }
+
+  .sa-chat-drawer .chat-session-item .chat-session-icon:hover .chat-session-circle-close-filled {
+    display: block;
+  }
+
+  .sa-chat-drawer .chat-main .content-right {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sa-chat-drawer .current-customer {
+    width: 100%;
+    height: 40px;
+    background-color: var(--sa-card-background);
+    border-bottom: 1px solid var(--sa-space);
+    padding: 0 10px;
+  }
+
+  .sa-chat-drawer .current-customer .el-input__inner {
+    border: none;
+    height: 38px;
+    width: 140px;
+    color: #8c8c8c;
+  }
+
+  .sa-chat-drawer .current-customer .current-customer-name {
+    font-size: 14px;
+    color: var(--sa-font);
+  }
+
+  .sa-chat-drawer .current-customer .current-customer-transfer {
+    flex-shrink: 0;
+    width: 120px;
+  }
+
+  .sa-chat-drawer .current-customer .customer-from {
+    font-size: 14px;
+    color: #999999;
+  }
+
+  .sa-chat-drawer .current-customer .access-btn {
+    color: var(--el-color-primary);
+    font-size: 12px;
+    padding: 10px 20px;
+  }
+
+  .sa-chat-drawer .chat-message {
+    padding: 0 16px;
+  }
+
+  .sa-chat-drawer .message-item {
+    margin-bottom: 20px;
+  }
+
+  .sa-chat-drawer .message-date {
+    color: var(--sa-subfont);
+    font-size: 12px;
+  }
+
+  .sa-chat-drawer .message-item .message-item-wrap {
+    max-width: 80%;
+    padding: 12px;
+    font-size: 14px;
+    color: var(--sa-font);
+    white-space: normal;
+    word-break: break-all;
+    word-wrap: break-word;
+  }
+
+  .sa-chat-drawer .message-item.sa-row-right .message-item-wrap {
+    background: var(--t-bg-active);
+    border-radius: 8px 2px 8px 8px;
+    color: var(--sa-font);
+  }
+
+  .sa-chat-drawer .message-item.sa-row-left .message-item-wrap {
+    background: var(--sa-table-header-bg);
+    border-radius: 2px 8px 8px 8px;
+    color: var(--sa-font);
+  }
+
+  .sa-chat-drawer .message-item .message-emoji {
+    width: 24px !important;
+    height: 24px;
+    margin-right: 4px;
+  }
+
+  .sa-chat-drawer .message-item .message-emoji:last-of-type {
+    margin-right: 0;
+  }
+
+  .sa-chat-drawer .message-item img {
+    width: 100% !important;
+  }
+
+  .sa-chat-drawer .message-item .goods-item .el-image {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+  }
+
+  .sa-chat-drawer .message-item .order-sn {
+    font-size: 12px;
+    color: var(--el-color-primary);
+  }
+
+  .sa-chat-drawer .message-item .order-goods {
+    padding: 8px;
+    background: var(--sa-background-assist);
+    border-radius: 4px;
+  }
+
+  .sa-chat-drawer .message-item .order-goods .el-image {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+  }
+
+  .sa-chat-drawer .message-item .order-goods .order-goods-price,
+  .sa-chat-drawer .message-item .order-goods .order-goods-total {
+    font-size: 12px;
+    color: var(--sa-subfont);
+  }
+
+  .sa-chat-drawer .chat-footer {
+    --el-footer-padding: 0;
+    --el-footer-height: 140px;
+    border-top: 1px solid var(--sa-space);
+  }
+
+  .sa-chat-drawer .chat-footer .chat-footer-input {
+    width: 100%;
+    height: 84px;
+    overflow-y: auto;
+    padding: 10px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--sa-font);
+    border: none;
+    outline: none;
+    margin-bottom: 10px;
+  }
+
+  .sa-chat-drawer .chat-footer .chat-footer-bottom {
+    padding: 0 12px;
+  }
+
+  .sa-chat-drawer .chat-footer .chat-footer-bottom .iconfont {
+    font-size: 18px;
+  }
+
+  .emoji-popover {
+    padding: 12px 0 0 12px !important;
+  }
+
+  .emoji-popover .emoji-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+  }
+
+  .emoji-popover .emoji-icon img {
+    width: 100%;
+  }
+
+  .common-words-popover {
+    padding: 0 !important;
+  }
+
+  .common-words-popover .common-words-title {
+    font-size: 14px;
+    color: #8c8c8c;
+    height: 40px;
+    line-height: 40px;
+    padding-left: 17px;
+    border-bottom: 1px solid var(--sa-border);
+  }
+
+  .common-words-popover .common-words-item {
+    color: var(--sa-font);
+    font-size: 14px;
+    height: 40px;
+    line-height: 40px;
+    border-bottom: 1px solid var(--sa-border);
+    padding-left: 20px;
+  }
+
+  .common-words-popover .common-words-item:hover {
+    background: rgba(128, 106, 246, 0.08);
+  }
+
+  .sa-chat-drawer .connect-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--sa-subtitle);
+  }
+
+  .sa-chat-drawer .connect-status .chat-reconnect-failed {
+    width: 150px;
+    height: 150px;
+    margin-bottom: 30px;
+  }
+
+  .sa-chat-drawer .connect-status .connect-status-dot {
+    font-family: simsun;
+    display: inline-block;
+    width: 1.5em;
+    vertical-align: bottom;
+    overflow: hidden;
+    animation: dot 3s infinite step-start;
+  }
+
+  @-webkit-keyframes dot {
+    0% {
+      width: 0;
+      margin-right: 1.5em;
+    }
+
+    33% {
+      width: 0.5em;
+      margin-right: 1em;
+    }
+
+    66% {
+      width: 1em;
+      margin-right: 0.5em;
+    }
+
+    100% {
+      width: 1.5em;
+      margin-right: 0;
+    }
+  }
+
+  .sa-chat-drawer .connect-status .reconnect-button {
+    color: var(--el-color-primary);
+    cursor: pointer;
+  }
+
+  .sa-notification-drawer .chat-header .circle-close-filled {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    margin-top: -8px;
+    font-size: 16px;
+  }
+
+  .sa-notification-drawer .notification-item {
+    width: 100%;
+    padding: 16px;
+    border-bottom: 1px solid var(--sa-space);
+  }
+
+  .sa-notification-drawer .notification-item .notification-item-time {
+    font-family: PingFang SC;
+    font-size: 12px;
+    color: var(--sa-subfont);
+  }
+
+  .sa-notification-drawer .notification-item .notification-item-top {
+    display: flex;
+    width: inherit;
+    overflow: hidden;
+  }
+
+  .sa-notification-drawer .notification-item .text {
+    font-size: 14px;
+    color: var(--sa-font);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: justify;
+    position: relative;
+    line-height: 1.5;
+    max-height: 3em;
+    transition: 0.3s max-height;
+    white-space: normal;
+    word-break: break-all;
+  }
+
+  .sa-notification-drawer .notification-item .text::before {
+    content: '';
+    height: calc(100% - 21px);
+    float: right;
+  }
+
+  .sa-notification-drawer .notification-item .text::after {
+    content: '';
+    width: 999vw;
+    height: 999vw;
+    position: absolute;
+    box-shadow: inset calc(100px - 999vw) calc(21px - 999vw) 0 0 var(--el-bg-color);
+    margin-left: -100px;
+  }
+
+  .sa-notification-drawer .notification-item .notification-item-button {
+    position: relative;
+    float: right;
+    clear: both;
+    margin-left: 20px;
+    line-height: 1.5;
+    padding: 0 8px;
+    font-size: 12px;
+    color: var(--el-color-primary);
+    cursor: pointer;
+  }
+
+  .sa-notification-drawer .notification-item .notification-item-button::after {
+    content: '展开';
+  }
+
+  .sa-notification-drawer .notification-item .exp {
+    display: none;
+  }
+
+  .sa-notification-drawer .notification-item .exp:checked+.text {
+    max-height: none;
+  }
+
+  .sa-notification-drawer .notification-item .exp:checked+.text::after {
+    visibility: hidden;
+  }
+
+  .sa-notification-drawer .notification-item .exp:checked+.text .notification-item-button::before {
+    visibility: hidden;
+  }
+
+  .sa-notification-drawer .notification-item .exp:checked+.text .notification-item-button::after {
+    content: '收起';
+  }
+
+  .sa-notification-drawer .notification-item .notification-item-button::before {
+    content: '...';
+    position: absolute;
+    left: -5px;
+    color: var(--sa-font);
+    transform: translateX(-100%);
+  }
+
+  .sa-notification-drawer .notification-item.is-read .text,
+  .sa-notification-drawer .notification-item.is-read .notification-item-time,
+  .sa-notification-drawer .notification-item.is-read .notification-item-button::before {
+    color: var(--sa-place);
+  }
+
+  .sa-notification-drawer .chat-footer {
+    --el-footer-height: 40px;
+    border-top: 1px solid var(--sa-space);
+  }
+</style>
+
+<script type="text/x-template" id="saChatTemplate">
+  <div id="sa-chat">
+    <div class="chat-button mb-2" @click="onShowNotification">
+        <el-badge is-dot :hidden="!isNotificationUnreadNum">
+            <i class="iconfont iconNotification1 chat-icon"></i>
+        </el-badge>
+    </div>
+    <div class="chat-button" @click="onShowChat">
+        <el-badge is-dot :hidden="chat.state.connection.status != 'connect' || !isChatUnreadNum">
+            <i v-if="chat.state.connection.status === 'reconnect_failed'" class="iconfont iconChat1 chat-icon"></i>
+            <i v-else class="iconfont iconChat chat-icon"></i>
+        </el-badge>
+    </div>
+    <el-drawer v-model="showChat" direction="rtl" custom-class="sa-chat-drawer sa-cus-drawer"
+        modal-class="sa-chat-drawer-overlay" :show-close="false" :with-header="false">
+        <el-container class="chat-container">
+            <!-- 连接成功 -->
+            <template v-if="chat.state.connection.status == 'connect'">
+                <el-header class="chat-header sa-flex sa-row-between">
+                    <!-- 客服 -->
+                    <div class="sa-flex">
+                        <el-popover v-if="chat.state.currentCustomerService.name" placement="bottom-start" trigger="click"
+                            popper-class="status-popover" :show-arrow="false">
+                            <div class="sa-flex sa-row-center cursor-pointer"
+                                v-for="(value,key) in customerServiceStatus"
+                                @click="onChangeCustomerServiceStatus(key)">
+                                <img :src="`/assets/addons/cus/img/chat/status-${key}.png`" />
+                                <span class="ml-2">{{value}}</span>
+                            </div>
+                            <template #reference>
+                                <div class="avatar mr-2 cursor-pointer">
+                                    <el-avatar :size="36" :src="Fast.api.cdnurl(chat.state.currentCustomerService.avatar)">
+                                        <img src="/assets/addons/cus/img/default-avatar.png" />
+                                    </el-avatar>
+                                    <div class="avatar-bage sa-flex sa-row-center">
+                                        <img
+                                            :src="`/assets/addons/cus/img/chat/status-${chat.state.currentCustomerService.status}.png`" />
+                                    </div>
+                                </div>
+                            </template>
+                        </el-popover>
+                        <div v-if="chat.state.customerServiceIdentityList.length==0" class="customer-service sa-flex">
+                            <div class="sa-flex-col">
+                                <div class="customer-service-name sa-table-line-1">
+                                    {{ chat.state.currentCustomerService.name }}
+                                </div>
+                                <div class="customer-service-room-name sa-table-line-1">{{
+                                    chat.state.currentCustomerService.room_name }}</div>
+                            </div>
+                        </div>
+                        <el-dropdown v-if="chat.state.customerServiceIdentityList.length > 0" trigger="click">
+                            <div class="customer-service sa-flex">
+                                <div class="sa-flex-col cursor-pointer">
+                                    <div class="customer-service-name sa-table-line-1">
+                                        {{ chat.state.currentCustomerService.name }}
+                                    </div>
+                                    <div class="customer-service-room-name sa-table-line-1">{{
+                                        chat.state.currentCustomerService.room_name }}
+                                    </div>
+                                </div>
+                                <el-icon class="customer-service-icon">
+                                    <arrow-down />
+                                </el-icon>
+                            </div>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item v-for="item in chat.state.customerServiceIdentityList"
+                                        :key="item.value" @click="onChangeCustomerServiceIdentity(item.value)">{{
+                                        item.label }}
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                    </div>
+                    <!-- 聊天类型 -->
+                    <div class="sa-flex">
+                        <div class="drawer-tabs sa-flex sa-col-center">
+                            <div class="bg" :style="{ left: sessionTypeList[chat.state.sessionType]?.left }">
+                            </div>
+                            <el-badge v-for="(value,key) in sessionTypeList" :is-dot="key=='waiting'"
+                                :hidden="!chat.state.customerWaitingList.length">
+                                <div class="drawer-tabs-item" @click="onChangeSessionType(key)">
+                                    {{value.label}}
+                                </div>
+                            </el-badge>
+                        </div>
+                        <el-icon class="circle-close-filled ml-2" @click="showChat=false">
+                            <circle-close-filled />
+                        </el-icon>
+                    </div>
+                </el-header>
+                <el-main class="chat-main">
+                    <div class="chat-content sa-flex sa-flex-1">
+                        <!-- 会话列表 -->
+                        <div class="content-left">
+                            <el-scrollbar class="chat-session" :min-size="10">
+                                <div class="sa-flex-col sa-row-center sa-col-center">
+                                    <div class="chat-session-item sa-flex sa-col-center sa-row-center" :class="{
+                                'is-active': currentSessionTypeIndexs[chat.state.sessionType] == index,
+                              }" v-for="(item, index) in chat.state.sessionList"
+                                        @click="onChangeCurrentSessionTypeIndex(index)">
+                                        <template v-if="chat.state.sessionType == 'ing'">
+                                            <el-popconfirm width="fit-content" title="确定结束当前会话吗？"
+                                                @confirm="onDeleteSession(item.session_id, index, chat.state.sessionType)">
+                                                <template #reference>
+                                                    <div class="chat-session-icon cursor-pointer">
+                                                        <el-icon class="chat-session-close">
+                                                            <close />
+                                                        </el-icon>
+                                                        <el-icon class="chat-session-circle-close-filled">
+                                                            <circle-close-filled />
+                                                        </el-icon>
+                                                    </div>
+                                                </template>
+                                            </el-popconfirm>
+                                        </template>
+                                        <template v-if="chat.state.sessionType == 'history'">
+                                            <el-popover popper-class="sa-popper"
+                                                v-model:visible="historyDeletePopover.flag[index]" placement="bottom"
+                                                trigger="click">
+                                                <div class="sa-flex">
+                                                    <el-icon class="sa-color--warning mr-1">
+                                                        <question-filled />
+                                                    </el-icon>确定删除此顾客吗？
+                                                </div>
+                                                <el-checkbox v-model="historyDeletePopover.is_del_record"
+                                                    :true-label="1" :false-label="0" label="删除聊天记录"></el-checkbox>
+                                                <div class="sa-flex sa-row-right">
+                                                    <el-button size="small" link
+                                                        @click="onCancelHistoryDeletePopover(index)">取消</el-button>
+                                                    <el-button type="primary" size="small"
+                                                        @click="onConfirmHistoryDeletePopover(item.session_id, index, chat.state.sessionType)">
+                                                        确定</el-button>
+                                                </div>
+                                                <template #reference>
+                                                    <div class="chat-session-icon cursor-pointer">
+                                                        <el-icon class="chat-session-close">
+                                                            <close />
+                                                        </el-icon>
+                                                        <el-icon class="chat-session-circle-close-filled">
+                                                            <circle-close-filled />
+                                                        </el-icon>
+                                                    </div>
+                                                </template>
+                                            </el-popover>
+                                        </template>
+                                        <el-tooltip :content="item.nickname" placement="right" effect="dark">
+                                            <el-badge class="avatar cursor-pointer" type="danger"
+                                                :value="item.unread_num" :max="99" :hidden="!item.unread_num">
+                                                <el-avatar :size="36" :src="Fast.api.cdnurl(item.avatar)">
+                                                    <img src="/assets/addons/cus/img/default-avatar.png" />
+                                                </el-avatar>
+                                                <div class="avatar-bage sa-flex sa-row-center">
+                                                    <img
+                                                        :src="`/assets/addons/cus/img/chat/status-${item.status?'online':'disconnect'}.png`" />
+                                                </div>
+                                            </el-badge>
+                                        </el-tooltip>
+                                    </div>
+                                </div>
+                            </el-scrollbar>
+                        </div>
+                        <div class="content-right">
+                            <!-- 当前顾客 -->
+                            <div v-if="chat.state.currentCustomer"
+                                class="current-customer sa-flex sa-col-center sa-p-l-17">
+                                <div v-if="chat.state.currentCustomer?.session_id"
+                                    class="sa-flex sa-flex-1 sa-row-between">
+                                    <div class="current-customer-name sa-flex sa-flex-1" @click="toDetail">
+                                        {{ chat.state.currentCustomer?.nickname || '' }}
+                                    </div>
+                                    <div v-if="chat.state.sessionType == 'ing' && avaliableCustomerServicesList.length"
+                                        class="current-customer-transfer sa-flex">
+                                        <el-dropdown trigger="click" @command="onTransferCommand">
+                                            <div class="el-dropdown-link sa-flex">
+                                                <div class="sa-line-1">
+                                                    {{
+                                                    avaliableCustomerServicesList.find((item) => item.value ==
+                                                    transferCustomer)
+                                                    ?.label || '选择转接的客服'
+                                                    }}
+                                                </div>
+                                                <el-icon class="el-icon--right">
+                                                    <arrow-down />
+                                                </el-icon>
+                                            </div>
+                                            <template #dropdown>
+                                                <el-dropdown-menu>
+                                                    <el-dropdown-item v-for="item in avaliableCustomerServicesList"
+                                                        :key="item.value" :command="item.value"
+                                                        :disabled="item.disabled">
+                                                        {{ item.label }}
+                                                    </el-dropdown-item>
+                                                </el-dropdown-menu>
+                                            </template>
+                                        </el-dropdown>
+                                        <el-button v-if="transferCustomer" class="ml-1" type="primary" link size="small"
+                                            @click="onTransferCustomer">
+                                            转接
+                                        </el-button>
+                                    </div>
+                                    <el-button v-if="chat.state.sessionType == 'waiting'" type="primary" link
+                                        @click="onAccessCustomer">
+                                        立即接入
+                                    </el-button>
+                                </div>
+                            </div>
+                            <el-alert v-if="!chat.state.currentCustomer" type="warning" center>
+                                <template #title>暂无顾客会话</template>
+                            </el-alert>
+                            <el-scrollbar class="chat-message" ref="chatScrollRef">
+                                <template v-if="chat.state.sessionList.length && chat.state.chatList.length">
+                                    <!-- 加载状态 -->
+                                    <div class="notification-item-more">
+                                        <el-button
+                                            v-if="chat.state.historyPagination.page < chat.state.historyPagination.lastPage"
+                                            type="info" link size="small" @click="onLoadMore">
+                                            {{loadingMap[chat.state.historyPagination.loadStatus].title}}
+                                        </el-button>
+                                        <div v-else>
+                                            {{ loadingMap[chat.state.historyPagination.loadStatus].title}}
+                                            <i class="ml-1"
+                                                :class="loadingMap[chat.state.historyPagination.loadStatus].icon"></i>
+                                        </div>
+                                    </div>
+                                    <template v-for="(item,index) in chat.state.chatList">
+                                        <div class="sa-flex sa-row-center">
+                                            <div v-if="item.sender_identify == 'system'" class="message-system mb-4">
+                                                {{ item.content.text }}
+                                            </div>
+                                            <div v-if="item.sender_identify != 'system' && showTime(item, index)"
+                                                class="message-date mb-4">
+                                                {{ formatTime(item.createtime) }}
+                                            </div>
+                                        </div>
+                                        <div class="message-item sa-flex" :class="[
+                                              item.sender_identify == 'customer_service'
+                                                  ? 'sa-row-right'
+                                                  : item.sender_identify == 'customer'
+                                                  ? 'sa-row-left'
+                                                  : '',
+                                          ]">
+                                            <div class="message-item-wrap">
+                                                <!-- 文本 -->
+                                                <template v-if="item.message_type=='text'">
+                                                    <div v-html="replaceEmoji(item.message)"></div>
+                                                </template>
+                                                <!-- 图片 -->
+                                                <template v-if="item.message_type=='image'">
+                                                    <img :src="Fast.api.cdnurl(item.message)" />
+                                                </template>
+                                                <!-- 商品 -->
+                                                <template v-if="item.message_type=='goods'">
+                                                    <div class="goods-item sa-flex cursor-pointer"
+                                                        @click="onOpenGoodsDetail(item.message.id)">
+                                                        <el-image class="mr-2"
+                                                            :src="Fast.api.cdnurl(item.message.image)">
+                                                        </el-image>
+                                                        <div>
+                                                            <div class="sa-table-line-1">{{item.message.title}}
+                                                            </div>
+                                                            <div class="sa-color--danger">
+                                                                ¥{{item.message.price.join(',')}}</div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                <!-- 订单 -->
+                                                <template v-if="item.message_type=='order'">
+                                                    <div class="order-item cursor-pointer"
+                                                        @click="onOpenOrderDetail(item.message.id)">
+                                                        <div class="order-sn mb-2">{{item.message.order_sn}}</div>
+                                                        <div class="order-goods sa-flex">
+                                                            <el-image class="mr-2"
+                                                                :src="Fast.api.cdnurl(item.message.items[0]?.goods_image)">
+                                                            </el-image>
+                                                            <div>
+                                                                <div class="sa-table-line-1">
+                                                                    {{item.message.items[0]?.goods_title}}
+                                                                </div>
+                                                                <div class="sa-flex sa-row-between">
+                                                                    <div class="order-goods-price">
+                                                                        共{{item.message.items.length}}件商品
+                                                                    </div>
+                                                                    <div class="order-goods-total">合计
+                                                                        ¥{{item.message.pay_fee}}</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <!-- 置空页 -->
+                                <el-empty v-if="!chat.state.chatList.length">
+                                    <template #image>
+                                        <img class="empty-icon" src="/assets/addons/cus/img/chat/chat-empty.png" />
+                                    </template>
+                                    <template #description>
+                                        <div class="empty-description">暂时没有会话哦！</div>
+                                    </template>
+                                </el-empty>
+                            </el-scrollbar>
+                        </div>
+                    </div>
+                </el-main>
+                <el-footer v-if="chat.state.currentCustomer" class="chat-footer">
+                        <div class="chat-footer-input" ref="messageInputRef" contenteditable="true" @input="getMessageInput"
+                            placeholder="请输入内容，按Enter直接发送消息" @keydown="onKeyDown" @dragover.prevent></div>
+                    <div class="chat-footer-bottom sa-flex sa-row-between">
+                        <!-- 会话工具栏 -->
+                        <div class="sa-flex">
+                            <!-- 表情 -->
+                            <el-popover placement="top-start" :width="260" trigger="click" popper-class="emoji-popover">
+                                <div class="sa-flex sa-flex-wrap">
+                                    <div class="sa-flex sa-row-center sa-col-center emoji-icon"
+                                        @click="onSelectToolbar('emoji',item)" @mousedown.prevent
+                                        v-for="(item, index) in emojiList" :key="index">
+                                        <img :src="`/assets/addons/cus/img/chat/emoji/${item.file}`" />
+                                    </div>
+                                </div>
+                                <template #reference>
+                                    <el-button link>
+                                        <i class="iconfont iconbiaoqing"></i>
+                                    </el-button>
+                                </template>
+                            </el-popover>
+
+                            <!-- 常用语 -->
+                            <el-popover placement="top-start" :width="200" trigger="click"
+                                popper-class="common-words-popover">
+                                <div class="common-words-title">常用语</div>
+                                <div class="common-words-item sa-line-1" v-for="item in chat.state.commonWords"
+                                    :key="item.id" @click="onSelectToolbar('text',item.content)">
+                                    {{ item.name }}
+                                </div>
+                                <template #reference>
+                                    <el-button link>
+                                        <i class="iconfont iconchangyongyu-011"></i>
+                                    </el-button>
+                                </template>
+                            </el-popover>
+
+                            <!-- 商品 -->
+                            <el-button link @click="onSelectToolbar('goods')">
+                                <i class="iconfont iconshangpin"></i>
+                            </el-button>
+
+                            <!-- 文件 -->
+                            <el-button link @click="onSelectToolbar('image')">
+                                <i class="iconfont iconwenjian-01"></i>
+                            </el-button>
+                        </div>
+                        <el-button class="send-btn" type="primary"
+                            :disabled="!messageInput || !chat.state.currentCustomer" @click="onSendMessage">发送
+                        </el-button>
+                    </div>
+                </el-footer>
+            </template>
+
+            <!-- 未连接 -->
+            <el-main v-if="chat.state.connection.status != 'connect'" class="connect-status">
+                <img class="chat-reconnect-failed" src="/assets/addons/cus/img/chat/chat-reconnect-failed.png" />
+                <div v-if="chat.state.connection.status === 'error'">请检查您的网络连接</div>
+                <div v-if="chat.state.connection.status === 'connecting'">
+                    正在连接Websocket服务
+                    <span class="connect-status-dot">...</span>
+                </div>
+                <div v-if="chat.state.connection.status === 'reconnecting'">
+                    ({{ chat.state.connection.attempts }}/{{
+                    chat.state.connection.reconnectionAttempts
+                    }})正在重新连接Websocket服务
+                    <span class="connect-status-dot">...</span>
+                </div>
+                <template v-if="chat.state.connection.status === 'reconnect_error'">
+                    <div>
+                        ({{ chat.state.connection.attempts }}/{{ chat.state.connection.reconnectionAttempts }})
+                        WebSocket服务连接失败
+                    </div>
+                    <div class="mt-1">
+                        {{ chat.state.connection.delay }} 秒后尝试重新连接
+                        <span class="connect-status-dot">...</span>
+                    </div>
+                </template>
+                <template v-if="chat.state.connection.status === 'reconnect_failed'">
+                    <div>Websocket服务连接失败,请检查您的环境后点击 </div>
+                    <div class="reconnect-button mt-1" @click="onReconnect">重新连接</div>
+                </template>
+            </el-main>
+        </el-container>
+    </el-drawer>
+    <el-drawer v-model="showNotification" direction="rtl" custom-class="sa-notification-drawer sa-cus-drawer"
+        :show-close="false" :with-header="false">
+        <el-container class="chat-container">
+            <el-header class="chat-header sa-flex sa-row-center">
+                <div class="sa-flex">
+                    <div class="drawer-tabs sa-flex sa-col-center">
+                        <div class="bg" :style="{left:chat.state.notificationType=='shop'?'120px':''}">
+                        </div>
+                        <div class="drawer-tabs-item" v-for="item in chat.state.notificationTypeList"
+                            @click="onChangeNotificationType(item.value)">
+                            <el-badge is-dot :hidden="!item.unread_num">
+                                {{ item.label }}
+                            </el-badge>
+                        </div>
+                    </div>
+                    <el-icon class="circle-close-filled ml-2" @click="showNotification=false">
+                        <circle-close-filled />
+                    </el-icon>
+                </div>
+            </el-header>
+            <el-main class="chat-main">
+                <el-scrollbar height="100%">
+                    <template v-if="chat.state.notificationList.length">
+                        <div class="notification-item" :class="item.read_time ? 'is-read' : ''"
+                            v-for="(item, index) in chat.state.notificationList" @click="onReadNotification(item.id, index)">
+                            <div class="notification-item-top">
+                                <input :id="`exp-${index}`" class="exp" type="checkbox" @click.stop />
+                                <div class="text">
+                                    <label class="notification-item-button" :for="`exp-${index}`" @click.stop></label>
+                                    【{{ item.data.message_title }}】{{ item.data.message_text }}
+                                </div>
+                            </div>
+                            <span class="notification-item-time">{{ item.createtime }}</span>
+                        </div>
+
+                        <!-- 加载状态 -->
+                        <div class="notification-item-more">
+                            <el-button v-if="pagination.page < pagination.lastPage" type="info" link size="small"
+                                @click="onLoadMoreNotification">
+                                {{loadingMap[pagination.loadStatus].title}}
+                            </el-button>
+                            <div v-else>
+                                {{ loadingMap[pagination.loadStatus].title}}
+                                <i class="ml-1" :class="loadingMap[pagination.loadStatus].icon"></i>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 置空页 -->
+                    <el-empty v-if="!chat.state.notificationList.length">
+                        <template #image>
+                            <img class="empty-icon" src="/assets/addons/cus/img/chat/notification-empty.png" />
+                        </template>
+                        <template #description>
+                            <div class="empty-description"> 您的工作效率很高哦， 现在还没有新的待办消息！ </div>
+                        </template>
+                    </el-empty>
+                </el-scrollbar>
+            </el-main>
+            <el-footer class="chat-footer sa-flex sa-row-center">
+                <el-button link size="small" @click="onClearNotification">清空 已读消息</el-button>
+            </el-footer>
+        </el-container>
+    </el-drawer>
+  </div>
+</script>
