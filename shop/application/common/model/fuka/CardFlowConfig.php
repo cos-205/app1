@@ -35,7 +35,7 @@ class CardFlowConfig extends Model
      */
     public function flowLogs()
     {
-        return $this->hasMany('app\common\model\fuka\FukaCardFlowLog', 'flow_step', 'step');
+        return $this->hasMany('app\common\model\fuka\CardFlowLog', 'flow_step', 'step');
     }
 }
 

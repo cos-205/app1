@@ -39,7 +39,7 @@ class SigninRewardLog extends Model
      */
     public function rule()
     {
-        return $this->belongsTo('app\common\model\fuka\FukaSigninRewardRule', 'rule_id');
+        return $this->belongsTo('app\common\model\fuka\SigninRewardRule', 'rule_id');
     }
 
     /**

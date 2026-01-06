@@ -152,6 +152,18 @@ export default {
       method: 'POST',
       data,
     }),
+  // 提交实名认证
+  submitRealname: (data) =>
+    request({
+      url: '/api/user/submitRealname',
+      method: 'POST',
+      data,
+      custom: {
+        showLoading: true,
+        loadingMsg: '认证中',
+        auth: true,
+      },
+    }),
 
   address: {
     default: () =>

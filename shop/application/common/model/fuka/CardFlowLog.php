@@ -43,7 +43,7 @@ class CardFlowLog extends Model
      */
     public function card()
     {
-        return $this->belongsTo('app\common\model\fuka\FukaWealthCard', 'card_id');
+        return $this->belongsTo('app\common\model\fuka\WealthCard', 'card_id');
     }
 
     /**

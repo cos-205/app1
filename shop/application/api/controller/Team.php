@@ -4,10 +4,10 @@ namespace app\api\controller;
 
 use app\common\controller\Api;
 use app\common\model\User;
-use app\common\model\fuka\FukaUserStatistics;
-use app\common\model\fuka\FukaUserInvite;
-use app\common\model\fuka\FukaTeamRelation;
-use app\common\model\fuka\FukaTeamReward;
+use app\common\model\fuka\UserStatistics;
+use app\common\model\fuka\UserInvite;
+use app\common\model\fuka\TeamRelation;
+use app\common\model\fuka\TeamReward;
 use think\Db;
 
 /**

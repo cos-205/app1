@@ -45,7 +45,7 @@ class ExchangeRecord extends Model
      */
     public function prize()
     {
-        return $this->belongsTo('app\common\model\fuka\FukaPrize', 'prize_id');
+        return $this->belongsTo('app\common\model\fuka\Prize', 'prize_id');
     }
 
     /**

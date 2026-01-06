@@ -33,7 +33,7 @@ class Type extends Model
      */
     public function userCards()
     {
-        return $this->hasMany('app\common\model\fuka\FukaUserCard', 'fuka_type_id');
+        return $this->hasMany('app\common\model\fuka\UserCard', 'fuka_type_id');
     }
 }
 

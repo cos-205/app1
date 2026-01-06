@@ -33,7 +33,7 @@ class SigninRewardRule extends Model
      */
     public function rewardLogs()
     {
-        return $this->hasMany('app\common\model\fuka\FukaSigninRewardLog', 'rule_id');
+        return $this->hasMany('app\common\model\fuka\SigninRewardLog', 'rule_id');
     }
 }
 

@@ -122,6 +122,19 @@
         "title": "我的团队",
         "group": "福卡系统"
       }
+    },
+    {
+      "path": "pages/user/realname",
+      "style": {
+        "navigationBarTitleText": "实名认证",
+        "navigationStyle": "custom"
+      },
+      "meta": {
+        "auth": true,
+        "sync": false,
+        "title": "实名认证",
+        "group": "用户中心"
+      }
     }
   ],
   "subPackages": [

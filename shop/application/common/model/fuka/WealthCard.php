@@ -49,7 +49,7 @@ class WealthCard extends Model
      */
     public function flowLogs()
     {
-        return $this->hasMany('app\common\model\fuka\FukaCardFlowLog', 'card_id');
+        return $this->hasMany('app\common\model\fuka\CardFlowLog', 'card_id');
     }
 }
 

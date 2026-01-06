@@ -36,7 +36,7 @@ class UserCard extends Model
      */
     public function fukaType()
     {
-        return $this->belongsTo('app\common\model\fuka\FukaType', 'fuka_type_id');
+        return $this->belongsTo('app\common\model\fuka\Type', 'fuka_type_id');
     }
 
     /**

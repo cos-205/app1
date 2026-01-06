@@ -3,14 +3,14 @@
 namespace app\api\controller;
 
 use app\common\controller\Api;
-use app\common\model\fuka\FukaType;
-use app\common\model\fuka\FukaUserCard;
-use app\common\model\fuka\FukaUserStatistics;
-use app\common\model\fuka\FukaChanceLog;
-use app\common\model\fuka\FukaRank;
-use app\common\model\fuka\FukaExchangeRecord;
-use app\common\model\fuka\FukaPrize;
-use app\common\validate\fuka\Fuka as FukaValidate;
+use app\common\model\fuka\Type;
+use app\common\model\fuka\UserCard;
+use app\common\model\fuka\UserStatistics;
+use app\common\model\fuka\ChanceLog;
+use app\common\model\fuka\Rank;
+use app\common\model\fuka\ExchangeRecord;
+use app\common\model\fuka\Prize;
+use app\common\validate\fuka\ as FukaValidate;
 use think\Db;
 
 /**

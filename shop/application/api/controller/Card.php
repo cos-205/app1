@@ -5,9 +5,9 @@ namespace app\api\controller;
 use app\common\controller\Api;
 use app\common\model\User;
 use app\common\model\CusUserWalletLog;
-use app\common\model\fuka\FukaWealthCard;
-use app\common\model\fuka\FukaCardFlowConfig;
-use app\common\model\fuka\FukaCardFlowLog;
+use app\common\model\fuka\WealthCard;
+use app\common\model\fuka\CardFlowConfig;
+use app\common\model\fuka\CardFlowLog;
 use app\common\validate\fuka\WealthCard as WealthCardValidate;
 use think\Db;
 
@@ -127,7 +127,7 @@ class Card extends Api
         }
 
         // 检查邀请人数（需要2位有效邀请）
-        $userStats = \app\common\model\fuka\FukaUserStatistics::where('user_id', $user->id)->find();
+        $userStats = \app\common\model\fuka\UserStatistics::where('user_id', $user->id)->find();
         if (!$userStats || $userStats->valid_invite_count < 2) {
             $this->error('需要邀请2位好友完成实名认证才能申请财富金卡');
         }

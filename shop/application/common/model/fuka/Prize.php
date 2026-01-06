@@ -38,7 +38,7 @@ class Prize extends Model
      */
     public function exchangeRecords()
     {
-        return $this->hasMany('app\common\model\fuka\FukaExchangeRecord', 'prize_id');
+        return $this->hasMany('app\common\model\fuka\ExchangeRecord', 'prize_id');
     }
 }
 
