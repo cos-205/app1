@@ -90,6 +90,13 @@ class Sms
      */
     public static function check($mobile, $code, $event = 'default')
     {
+        // 开发环境下，使用固定测试验证码 123456
+        if (config('app_debug')) {
+            if ($code == '123456') {
+                return true;
+            }
+        }
+        
         $time = time() - self::$expire;
         $sms = \app\common\model\Sms::where(['mobile' => $mobile, 'event' => $event])
             ->order('id', 'DESC')

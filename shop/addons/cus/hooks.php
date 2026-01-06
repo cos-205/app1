@@ -113,7 +113,8 @@ $defaultHooks = [
 // 分销相关钩子
 $commissionHooks = [
   'user_register_after' => [    // 新用户注册成功
-    'addons\\cus\listener\\Commission'
+    'addons\\cus\listener\\Commission',
+    'addons\\cus\\listener\\Fuka'  // 福卡系统初始化
   ],
   'user_share_after' => [               // 用户分享后
     'addons\\cus\\listener\\Commission'
@@ -132,6 +133,9 @@ $commissionHooks = [
   ],
   'order_finish' => [   // 订单完成事件
     'addons\\cus\\listener\\Commission'
+  ],
+  'user_realname_after' => [   // 用户完成实名认证后
+    'addons\\cus\\listener\\Fuka'
   ],
 ];
 

@@ -7,7 +7,7 @@ use think\Model;
 /**
  * 签到奖励领取记录模型
  */
-class FukaSigninRewardLog extends Model
+class SigninRewardLog extends Model
 {
     protected $name = 'fuka_signin_reward_log';
     

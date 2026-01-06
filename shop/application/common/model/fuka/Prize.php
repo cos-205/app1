@@ -7,7 +7,7 @@ use think\Model;
 /**
  * 奖品模型
  */
-class FukaPrize extends Model
+class Prize extends Model
 {
     protected $name = 'fuka_prize';
     

@@ -24,7 +24,6 @@ class User extends Api
         if (!Config::get('fastadmin.usercenter')) {
             $this->error(__('User center already closed'));
         }
-
     }
 
     /**
@@ -354,20 +353,20 @@ class User extends Api
     public function getInviteInfo()
     {
         $user = $this->auth->getUserinfo();
-        
+
         // 从数据库获取完整用户信息
         $userModel = model('app\common\model\User');
         $userInfo = $userModel->where('id', $user['id'])->find();
-        
+
         // 获取邀请码和链接
         $inviteCode = $userInfo['invite_code'] ?? '';
         $inviteUrl = request()->domain() . '/pages/auth/register?invite_code=' . $inviteCode;
-        
+
         // 获取用户统计信息
         $statistics = model('app\common\model\fuka\FukaUserStatistics')
             ->where('user_id', $user['id'])
             ->find();
-        
+
         if (!$statistics) {
             // 创建统计记录
             $statistics = model('app\common\model\fuka\FukaUserStatistics')->create([
@@ -376,18 +375,18 @@ class User extends Api
                 'updatetime' => time(),
             ]);
         }
-        
+
         // 获取各层级邀请人数
         $shareModel = model('app\common\model\CusShare');
         $level1Count = $shareModel->where('share_id', $user['id'])->where('level', 1)->count();
         $level2Count = $shareModel->where('share_id', $user['id'])->where('level', 2)->count();
         $level3Count = $shareModel->where('share_id', $user['id'])->where('level', 3)->count();
         $totalCount = $level1Count + $level2Count + $level3Count;
-        
+
         // 获取会员等级配置
         $memberLevelModel = model('app\common\model\fuka\FukaMemberLevel');
         $memberLevels = $memberLevelModel->order('level', 'asc')->select();
-        
+
         // 格式化会员等级数据
         $levelList = [];
         foreach ($memberLevels as $level) {
@@ -400,7 +399,7 @@ class User extends Api
                 'color' => $this->getLevelColor($level['level']),
             ];
         }
-        
+
         $data = [
             'inviteCode' => $inviteCode,
             'inviteUrl' => $inviteUrl,
@@ -413,10 +412,10 @@ class User extends Api
             ],
             'memberLevels' => $levelList,
         ];
-        
+
         $this->success('获取成功', $data);
     }
-    
+
     /**
      * 格式化等级描述
      */
@@ -428,7 +427,7 @@ class User extends Api
         }
         return $desc;
     }
-    
+
     /**
      * 获取等级图标
      */
@@ -444,7 +443,7 @@ class User extends Api
         ];
         return $icons[$level] ?? 'medal-filled';
     }
-    
+
     /**
      * 获取等级颜色
      */
@@ -469,22 +468,39 @@ class User extends Api
     public function getTeamInfo()
     {
         $user = $this->auth->getUserinfo();
-        
+
         // 从数据库获取完整用户信息
         $userModel = model('app\common\model\User');
         $userInfo = $userModel->where('id', $user['id'])->find();
-        
-        // 获取各层级邀请人数
-        $shareModel = model('app\common\model\CusShare');
-        $level1Count = $shareModel->where('share_id', $user['id'])->where('level', 1)->count();
-        $level2Count = $shareModel->where('share_id', $user['id'])->where('level', 2)->count();
-        $level3Count = $shareModel->where('share_id', $user['id'])->where('level', 3)->count();
+
+        // 获取各层级邀请人数（循环获取）
+        $shareModel = model('app\admin\model\cus\Share');
+
+        // 1级：直接邀请的人（share_id = 当前用户ID）
+        $level1Users = $shareModel->where('share_id', $user['id'])->column('user_id');
+        $level1Count = count($level1Users);
+
+        // 2级：1级成员邀请的人（share_id 在 1级用户ID 中）
+        $level2Count = 0;
+        $level2Users = [];
+        if ($level1Count > 0) {
+            $level2Users = $shareModel->where('share_id', 'in', $level1Users)->column('user_id');
+            $level2Count = count($level2Users);
+        }
+
+        // 3级：2级成员邀请的人（share_id 在 2级用户ID 中）
+        $level3Count = 0;
+        if ($level2Count > 0) {
+            $level3Users = $shareModel->where('share_id', 'in', $level2Users)->column('user_id');
+            $level3Count = count($level3Users);
+        }
+
         $totalCount = $level1Count + $level2Count + $level3Count;
-        
+
         // 获取会员等级配置
-        $memberLevelModel = model('app\common\model\fuka\FukaMemberLevel');
+        $memberLevelModel = model('app\common\model\fuka\MemberLevel');
         $memberLevels = $memberLevelModel->order('level', 'asc')->select();
-        
+
         // 格式化会员等级数据
         $levelList = [];
         foreach ($memberLevels as $level) {
@@ -495,11 +511,11 @@ class User extends Api
                 'dividendMoney' => (float)$level['dividend_money'],
             ];
         }
-        
+
         // 获取当前等级配置
         $currentLevel = isset($userInfo['member_level']) ? (int)$userInfo['member_level'] : 0;
         $currentLevelConfig = $memberLevelModel->where('level', $currentLevel)->find();
-        
+
         $data = [
             'userLevel' => $currentLevel,
             'stats' => [
@@ -516,13 +532,13 @@ class User extends Api
                 'dividendMoney' => (float)$currentLevelConfig['dividend_money'],
             ] : null,
         ];
-        
+
         $this->success('获取成功', $data);
     }
 
     /**
      * 获取团队成员列表
-     * 
+     *
      * @ApiMethod (GET)
      * @ApiParams (name="level", type="integer", required=false, description="层级筛选:0=全部,1=1级,2=2级,3=3级")
      * @ApiParams (name="page", type="integer", required=false, description="页码")
@@ -534,44 +550,90 @@ class User extends Api
         $level = $this->request->get('level/d', 0);
         $page = $this->request->get('page/d', 1);
         $limit = $this->request->get('limit/d', 10);
-        
+
         // 获取团队成员
-        $shareModel = model('app\common\model\CusShare');
+        $shareModel = model('app\admin\model\cus\Share');
         $userModel = model('app\common\model\User');
-        
-        $where = ['share_id' => $user['id']];
-        if ($level > 0) {
-            $where['level'] = $level;
+
+        // 根据层级获取对应的 user_id 列表
+        $targetUserIds = [];
+        $memberLevel = []; // 记录每个用户的层级
+
+        if ($level == 1 || $level == 0) {
+            // 1级成员：share_id = 当前用户ID
+            $level1Users = $shareModel->where('share_id', $user['id'])->column('user_id');
+            foreach ($level1Users as $userId) {
+                $targetUserIds[] = $userId;
+                $memberLevel[$userId] = 1;
+            }
         }
-        
-        $shares = $shareModel->where($where)
-            ->order('createtime', 'desc')
-            ->page($page, $limit)
-            ->select();
-        
+
+        if ($level == 2 || $level == 0) {
+            // 2级成员：share_id IN (1级user_id)
+            $level1Users = $shareModel->where('share_id', $user['id'])->column('user_id');
+            if (!empty($level1Users)) {
+                $level2Users = $shareModel->where('share_id', 'in', $level1Users)->column('user_id');
+                foreach ($level2Users as $userId) {
+                    $targetUserIds[] = $userId;
+                    $memberLevel[$userId] = 2;
+                }
+            }
+        }
+
+        if ($level == 3 || $level == 0) {
+            // 3级成员：share_id IN (2级user_id)
+            $level1Users = $shareModel->where('share_id', $user['id'])->column('user_id');
+            if (!empty($level1Users)) {
+                $level2Users = $shareModel->where('share_id', 'in', $level1Users)->column('user_id');
+                if (!empty($level2Users)) {
+                    $level3Users = $shareModel->where('share_id', 'in', $level2Users)->column('user_id');
+                    foreach ($level3Users as $userId) {
+                        $targetUserIds[] = $userId;
+                        $memberLevel[$userId] = 3;
+                    }
+                }
+            }
+        }
+
+        // 去重
+        $targetUserIds = array_unique($targetUserIds);
+        $total = count($targetUserIds);
+
+        // 分页
+        $offset = ($page - 1) * $limit;
+        $pagedUserIds = array_slice($targetUserIds, $offset, $limit);
+
+        // 获取成员详细信息
         $members = [];
-        foreach ($shares as $share) {
-            $member = $userModel->where('id', $share['user_id'])->find();
-            if ($member) {
+        if (!empty($pagedUserIds)) {
+            $users = $userModel->where('id', 'in', $pagedUserIds)->select();
+
+            // 获取创建时间
+            $shareInfos = $shareModel->where('user_id', 'in', $pagedUserIds)
+                ->column('createtime', 'user_id');
+
+            foreach ($users as $member) {
                 $members[] = [
+                    'id' => (int)$member['id'],
                     'name' => $member['nickname'] ?: $member['mobile'],
                     'avatar' => $member['avatar'] ?: '',
-                    'level' => (int)$share['level'],
+                    'mobile' => $member['mobile'] ?: '',
+                    'level' => $memberLevel[$member['id']] ?? 0,
                     'isRealname' => (int)$member['is_realname'] === 1,
-                    'createTime' => date('Y-m-d H:i', $share['createtime']),
+                    'createTime' => isset($shareInfos[$member['id']])
+                        ? date('Y-m-d H:i', $shareInfos[$member['id']])
+                        : '',
                 ];
             }
         }
-        
-        $total = $shareModel->where($where)->count();
-        
+
         $data = [
             'members' => $members,
             'total' => $total,
             'page' => $page,
             'limit' => $limit,
         ];
-        
+
         $this->success('获取成功', $data);
     }
 }

@@ -7,7 +7,7 @@ use think\Model;
 /**
  * 用户统计模型
  */
-class FukaUserStatistics extends Model
+class UserStatistics extends Model
 {
     protected $name = 'fuka_user_statistics';
     

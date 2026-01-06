@@ -83,6 +83,11 @@ class UserAuth
             'group_id' => $userDefaultConfig['group_id'] ?? 1
         ];
 
+        // 如果有邀请人ID，添加到扩展参数中
+        if (!empty($params['parent_user_id'])) {
+            $extend['parent_user_id'] = $params['parent_user_id'];
+        }
+
         $ret = $this->auth->register($username, $password, $email, $mobile, $extend);
         if ($ret) {
             $user = $this->auth->getUser();

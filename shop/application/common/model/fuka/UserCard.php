@@ -7,7 +7,7 @@ use think\Model;
 /**
  * 用户福卡记录模型
  */
-class FukaUserCard extends Model
+class UserCard extends Model
 {
     protected $name = 'fuka_user_card';
     

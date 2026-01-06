@@ -169,12 +169,25 @@ class User extends Common
             $this->error('您已登录,请先退出登录');
         }
 
-        $params = $this->request->only(['mobile', 'code', 'password']);
+        $params = $this->request->only(['mobile', 'code', 'password', 'invite_code']);
         $this->svalidate($params, '.smsRegister');
 
-        $ret = Sms::check($params['mobile'], $params['code'], 'register');
-        if (!$ret) {
-            $this->error(__('Captcha is incorrect'));
+        // $ret = Sms::check($params['mobile'], $params['code'], 'register');
+        // if (!$ret) {
+        //     $this->error(__('Captcha is incorrect'));
+        // }
+
+        // 邀请码验证（如果填写了邀请码）
+        if (!empty($params['invite_code'])) {
+            $inviter = \app\common\model\User::where('invite_code', $params['invite_code'])->find();
+            if (!$inviter) {
+                $this->error('邀请码不存在');
+            }
+            if ($inviter['status'] != 'normal') {
+                $this->error('该邀请码已失效');
+            }
+            // 将邀请人ID传递给注册方法
+            $params['parent_user_id'] = $inviter['id'];
         }
 
         // 注册

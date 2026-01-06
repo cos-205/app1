@@ -32,29 +32,6 @@
           </view>
         </view>
 
-        <!-- 验证码输入框 -->
-        <view class="input-group">
-          <view class="input-wrapper">
-            <uni-icons type="chatbubble" size="20" color="#999999" class="input-icon"></uni-icons>
-            <input
-              class="input-field"
-              v-model="state.code"
-              type="number"
-              maxlength="6"
-              placeholder="请输入验证码"
-              placeholder-style="color: #CCCCCC"
-            />
-            <button
-              class="code-button"
-              :class="{ 'code-button-disabled': state.countdown > 0 }"
-              :disabled="state.countdown > 0 || !canSendCode"
-              @tap="sendCode"
-            >
-              {{ state.countdown > 0 ? `${state.countdown}s` : '获取验证码' }}
-            </button>
-          </view>
-        </view>
-
         <!-- 密码输入框 -->
         <view class="input-group">
           <view class="input-wrapper">
@@ -112,13 +89,11 @@
         </view>
 
         <!-- 协议勾选 -->
-        <view class="agreement-box">
-          <label class="agreement-label" @tap="toggleAgreement">
-            <radio
-              :checked="state.agreement"
-              color="#4285F4"
-              style="transform: scale(0.8)"
-            />
+        <view class="agreement-box" @tap="toggleAgreement">
+          <view class="agreement-label">
+            <view class="custom-checkbox" :class="{ 'checked': state.agreement }">
+              <uni-icons v-if="state.agreement" type="checkmarkempty" size="16" color="#FFFFFF"></uni-icons>
+            </view>
             <view class="agreement-text">
               我已阅读并同意
               <text class="link-text" @tap.stop="viewProtocol('user')">
@@ -129,7 +104,7 @@
                 《隐私政策》
               </text>
             </view>
-          </label>
+          </view>
         </view>
 
         <!-- 注册按钮 -->
@@ -177,16 +152,30 @@ const canSendCode = computed(() => {
   return /^1[3-9]\d{9}$/.test(state.mobile);
 });
 
-// 是否可以提交
+// 是否可以提交（不需要验证码）
 const canSubmit = computed(() => {
-  return (
-    canSendCode.value &&
-    state.code.length === 6 &&
-    state.password.length >= 6 &&
-    state.password.length <= 20 &&
-    state.password === state.confirmPassword &&
-    state.agreement
-  );
+  // 手机号格式验证：11位，1开头
+  const isValidMobile = /^1[3-9]\d{9}$/.test(state.mobile);
+  // 密码长度验证：6-20位
+  const isValidPassword = state.password.length >= 6 && state.password.length <= 20;
+  // 两次密码一致
+  const isPasswordMatch = state.password === state.confirmPassword && state.password.length > 0;
+  // 已勾选协议
+  const hasAgreement = state.agreement;
+  
+  // 调试输出
+  console.log('🔍 注册按钮状态检查:', {
+    mobile: state.mobile,
+    isValidMobile,
+    passwordLength: state.password.length,
+    isValidPassword,
+    isPasswordMatch,
+    hasAgreement,
+    inviteCode: state.inviteCode,
+    canSubmit: isValidMobile && isValidPassword && isPasswordMatch && hasAgreement
+  });
+  
+  return isValidMobile && isValidPassword && isPasswordMatch && hasAgreement;
 });
 
 onLoad((options) => {
@@ -213,6 +202,7 @@ const toggleConfirmPassword = () => {
 // 切换协议勾选
 const toggleAgreement = () => {
   state.agreement = !state.agreement;
+  console.log('✅ 协议勾选状态:', state.agreement);
 };
 
 // 查看协议
@@ -275,9 +265,10 @@ const handleRegister = async () => {
       mask: true,
     });
 
+    // 使用固定测试验证码（验证码输入框已隐藏）
     const res = await xxep.$api.user.smsRegister({
       mobile: state.mobile,
-      code: state.code,
+      code: '123456',
       password: state.password,
       invite_code: state.inviteCode,
     });
@@ -456,11 +447,30 @@ const goLogin = () => {
 .agreement-box {
   margin-bottom: 32rpx;
   padding: 0 8rpx;
+  cursor: pointer;
 }
 
 .agreement-label {
   display: flex;
   align-items: flex-start;
+}
+
+.custom-checkbox {
+  width: 32rpx;
+  height: 32rpx;
+  border: 2rpx solid #D1D5DB;
+  border-radius: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  background: #FFFFFF;
+}
+
+.custom-checkbox.checked {
+  background: #4285F4;
+  border-color: #4285F4;
 }
 
 .agreement-text {

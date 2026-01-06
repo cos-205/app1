@@ -7,7 +7,7 @@ use think\Model;
 /**
  * 集福机会记录模型
  */
-class FukaChanceLog extends Model
+class ChanceLog extends Model
 {
     protected $name = 'fuka_chance_log';
     

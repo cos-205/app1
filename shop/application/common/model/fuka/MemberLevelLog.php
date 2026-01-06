@@ -5,11 +5,11 @@ namespace app\common\model\fuka;
 use think\Model;
 
 /**
- * 集福排行榜模型
+ * 会员升级记录模型
  */
-class FukaRank extends Model
+class MemberLevelLog extends Model
 {
-    protected $name = 'fuka_rank';
+    protected $name = 'fuka_member_level_log';
     
     // 自动写入时间戳字段
     protected $autoWriteTimestamp = 'int';
@@ -20,9 +20,9 @@ class FukaRank extends Model
     protected $type = [
         'id' => 'integer',
         'user_id' => 'integer',
-        'fuka_count' => 'integer',
-        'rank' => 'integer',
-        'update_time' => 'timestamp',
+        'old_level' => 'integer',
+        'new_level' => 'integer',
+        'invite_count' => 'integer',
         'weigh' => 'integer',
         'createtime' => 'timestamp',
         'updatetime' => 'timestamp',

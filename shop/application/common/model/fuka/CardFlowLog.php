@@ -7,7 +7,7 @@ use think\Model;
 /**
  * 金卡流程记录模型
  */
-class FukaCardFlowLog extends Model
+class CardFlowLog extends Model
 {
     protected $name = 'fuka_card_flow_log';
     

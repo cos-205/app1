@@ -7,7 +7,7 @@ use think\Model;
 /**
  * 金卡流程状态配置模型
  */
-class FukaCardFlowConfig extends Model
+class CardFlowConfig extends Model
 {
     protected $name = 'fuka_card_flow_config';
     

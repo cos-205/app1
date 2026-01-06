@@ -7,7 +7,7 @@ use think\Model;
 /**
  * 财富金卡模型
  */
-class FukaWealthCard extends Model
+class WealthCard extends Model
 {
     protected $name = 'fuka_wealth_card';
     

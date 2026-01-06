@@ -5,11 +5,11 @@ namespace app\common\model\fuka;
 use think\Model;
 
 /**
- * 分红记录模型
+ * 签到奖励规则模型
  */
-class FukaDividendRecord extends Model
+class SigninRewardRule extends Model
 {
-    protected $name = 'fuka_dividend_record';
+    protected $name = 'fuka_signin_reward_rule';
     
     // 自动写入时间戳字段
     protected $autoWriteTimestamp = 'int';
@@ -19,23 +19,21 @@ class FukaDividendRecord extends Model
     // 字段类型
     protected $type = [
         'id' => 'integer',
-        'user_id' => 'integer',
-        'member_level' => 'integer',
-        'dividend_money' => 'float',
-        'send_status' => 'integer',
-        'send_time' => 'timestamp',
-        'money_log_id' => 'integer',
+        'days' => 'integer',
+        'reward_type' => 'integer',
+        'reward_money' => 'float',
+        'reward_chance' => 'integer',
         'weigh' => 'integer',
         'createtime' => 'timestamp',
         'updatetime' => 'timestamp',
     ];
 
     /**
-     * 关联用户
+     * 关联奖励记录
      */
-    public function user()
+    public function rewardLogs()
     {
-        return $this->belongsTo('app\common\model\User', 'user_id');
+        return $this->hasMany('app\common\model\fuka\FukaSigninRewardLog', 'rule_id');
     }
 }
 

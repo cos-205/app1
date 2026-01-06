@@ -5,11 +5,11 @@ namespace app\common\model\fuka;
 use think\Model;
 
 /**
- * 团队关系模型
+ * 分红记录模型
  */
-class FukaTeamRelation extends Model
+class DividendRecord extends Model
 {
-    protected $name = 'fuka_team_relation';
+    protected $name = 'fuka_dividend_record';
     
     // 自动写入时间戳字段
     protected $autoWriteTimestamp = 'int';
@@ -19,13 +19,12 @@ class FukaTeamRelation extends Model
     // 字段类型
     protected $type = [
         'id' => 'integer',
-        'team_id' => 'integer',
-        'leader_id' => 'integer',
         'user_id' => 'integer',
-        'level' => 'integer',
-        'parent_id' => 'integer',
-        'is_realname' => 'integer',
-        'join_time' => 'timestamp',
+        'member_level' => 'integer',
+        'dividend_money' => 'float',
+        'send_status' => 'integer',
+        'send_time' => 'timestamp',
+        'money_log_id' => 'integer',
         'weigh' => 'integer',
         'createtime' => 'timestamp',
         'updatetime' => 'timestamp',
@@ -37,14 +36,6 @@ class FukaTeamRelation extends Model
     public function user()
     {
         return $this->belongsTo('app\common\model\User', 'user_id');
-    }
-
-    /**
-     * 关联队长
-     */
-    public function leader()
-    {
-        return $this->belongsTo('app\common\model\User', 'leader_id');
     }
 }
 

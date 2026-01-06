@@ -7,7 +7,7 @@ use think\Model;
 /**
  * 兑换记录模型
  */
-class FukaExchangeRecord extends Model
+class ExchangeRecord extends Model
 {
     protected $name = 'fuka_exchange_record';
     
