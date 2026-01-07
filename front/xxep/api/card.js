@@ -7,20 +7,7 @@ export default {
   // ========== 金卡相关API ==========
   
   /**
-   * 获取金卡信息（包含流程配置）
-   * @returns {Promise}
-   */
-  getCardInfo: () => $request({
-    url: '/api/card/info',
-    method: 'GET',
-    custom: {
-      showLoading: false,
-      auth: true,
-    },
-  }),
-
-  /**
-   * 获取流程配置（新版）
+   * 获取流程配置
    * @returns {Promise}
    */
   flowConfig: () => $request({
@@ -112,24 +99,7 @@ export default {
   }),
 
   /**
-   * 完成某个流程步骤（旧版）
-   * @param {Object} data { step: 步骤ID }
-   * @returns {Promise}
-   */
-  completeStep: (data) => $request({
-    url: '/api/card/completeStep',
-    method: 'POST',
-    data,
-    custom: {
-      showLoading: true,
-      loadingMsg: '处理中...',
-      showSuccess: true,
-      auth: true,
-    },
-  }),
-
-  /**
-   * 完成某个流程步骤V2（支持额外数据）
+   * 完成某个流程步骤（支持额外数据）
    * @param {Object} data { step: 步骤ID, extra_data: 额外数据 }
    * @returns {Promise}
    */
@@ -170,23 +140,6 @@ export default {
     params,
     custom: {
       showLoading: false,
-      auth: true,
-    },
-  }),
-
-  /**
-   * 支付费用（旧版）
-   * @param {Object} data { step: 步骤ID }
-   * @returns {Promise}
-   */
-  payFee: (data) => $request({
-    url: '/api/card/payFee',
-    method: 'POST',
-    data,
-    custom: {
-      showLoading: true,
-      loadingMsg: '支付中...',
-      showSuccess: true,
       auth: true,
     },
   }),

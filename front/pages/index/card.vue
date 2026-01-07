@@ -57,8 +57,11 @@
                 <text class="step-num">1</text>
               </view>
               <view class="step-content">
-                <view class="step-label">成为白金会员</view>
-                <view class="step-detail">邀请2位好友</view>
+                <view class="step-label">成为铂金会员</view>
+                <view class="step-detail">
+                  邀请<text class="invite-progress">({{ state.inviteProgress.current }}/{{ state.inviteProgress.target }})</text>位好友 
+                  
+                </view>
                 <view class="step-action" v-if="!state.conditions.memberLevel">
                   <button class="step-btn" @tap="goToInvite">
                     <text>去邀请</text>
@@ -357,7 +360,7 @@
 
 <script setup>
 import { reactive, computed } from 'vue';
-import { onShow, onPullDownRefresh } from '@dcloudio/uni-app';
+import { onShow, onPullDownRefresh, onLoad } from '@dcloudio/uni-app';
 import xxep from '@/xxep';
 
 // 页面状态
@@ -377,6 +380,11 @@ const state = reactive({
     memberLevel: false,
     realName: false,
     address: false
+  },
+  inviteProgress: {
+    current: 0,
+    target: 2,
+    completed: false
   },
   functions: [
     {
@@ -496,38 +504,60 @@ async function loadData() {
 
 // 加载金卡信息（包含流程配置）
 async function loadCardInfo() {
-  const res = await xxep.$api.card.getCardInfo();
+  const res = await xxep.$api.card.flowConfig();
   if (res.code === 1) {
     // 金卡信息
-    if (res.data.card) {
+    if (res.data.card_status) {
       Object.assign(state.cardData, {
-        isReceived: res.data.card.apply_status >= 2,
-        status: getCardStatus(res.data.card),
-        statusText: getCardStatusText(res.data.card),
-        holderName: res.data.card.holder_name || '',
-        idCard: res.data.card.holder_idcard || '',
-        balance: res.data.card.balance || '0',
+        isReceived: res.data.card_status.apply_status >= 2,
+        status: getCardStatus(res.data.card_status),
+        statusText: getCardStatusText(res.data.card_status),
+        holderName: res.data.card_status.holder_name || '',
+        idCard: res.data.card_status.holder_idcard || '',
+        balance: res.data.card_status.balance || '0',
         agreementSigned: false
       });
     }
     
     // 流程配置列表（映射为 functions）
-    if (res.data.flow_config && Array.isArray(res.data.flow_config)) {
-      state.functions = res.data.flow_config.map((item, index) => ({
+    if (res.data.steps && Array.isArray(res.data.steps)) {
+      state.functions = res.data.steps.map((item, index) => ({
         id: item.step,
         name: item.step_name,
         desc: item.step_desc,
-        completed: item.is_completed === 1,
+        completed: item.flow_status === 3, // 3=已完成
         enabled: index === 0 || state.functions[index - 1]?.completed,
         needFee: item.need_fee === 1,
         feeAmount: item.fee_amount,
-        feeName: item.fee_name,
-        isPaid: item.is_pay_fee === 1
+        feeName: item.fee_receiver,
+        isPaid: item.flow_status >= 2 // 2=已支付待审核, 3=已完成
       }));
     }
     
-    // 领取条件（根据用户信息判断）
-    checkApplyConditions();
+    // 使用接口返回的申领条件
+    if (res.data.apply_conditions && Array.isArray(res.data.apply_conditions)) {
+      res.data.apply_conditions.forEach(condition => {
+        if (condition.name === '铂金会员') {
+          state.conditions.memberLevel = condition.completed;
+        } else if (condition.name === '实名认证') {
+          state.conditions.realName = condition.completed;
+        } else if (condition.name === '收货地址') {
+          state.conditions.address = condition.completed;
+        }
+      });
+    } else {
+      // 兜底：如果没有返回条件数据，使用旧的检查方式
+      checkApplyConditions();
+    }
+    
+    // 更新邀请进度
+    if (res.data.invite_progress) {
+      state.inviteProgress = {
+        current: res.data.invite_progress.current || 0,
+        target: res.data.invite_progress.target || 2,
+        completed: res.data.invite_progress.completed || false
+      };
+    }
   }
 }
 
@@ -642,10 +672,13 @@ async function handleFunctionClick(item) {
       success: async (res) => {
         if (res.confirm) {
           state.isSubmitting = true;
-          const payRes = await xxep.$api.card.payFee({ step: item.id });
+          const payRes = await xxep.$api.card.createOrder({ step: item.id });
           
-          if (payRes.code === 1) {
-            await loadCardInfo();
+          if (payRes.code === 1 && payRes.data.order) {
+            // 跳转到支付页面
+            uni.navigateTo({
+              url: `/pages/card/payment?order_id=${payRes.data.order.id}`
+            });
           }
           
           state.isSubmitting = false;
@@ -656,7 +689,7 @@ async function handleFunctionClick(item) {
   }
   
   state.isSubmitting = true;
-  const res = await xxep.$api.card.completeStep({ step: item.id });
+  const res = await xxep.$api.card.completeStepV2({ step: item.id, extra_data: {} });
   
   if (res.code === 1) {
     await loadCardInfo();
@@ -674,18 +707,14 @@ function handleSignAgreement() {
     content: '签署协议需支付登记费用300元，该费用将在协议签署完成1个月后自动退还。',
     success: async (res) => {
       if (res.confirm) {
-        state.isSubmitting = true;
-        const result = await xxep.$api.card.payFee({
-          step: 1  // 假设协议签署是第1步
+        // 直接跳转到协议签署页面
+        uni.navigateTo({
+          url: '/pages/card/agreement?step=1'
         });
-        
-        if (result.code === 1) {
-          await loadCardInfo();
         }
         
         state.isSubmitting = false;
       }
-    }
   });
 }
 
@@ -717,6 +746,9 @@ onPullDownRefresh(() => {
 
 // 页面加载
 onShow(() => {
+  loadData();
+});
+onLoad(() => {
   loadData();
 });
 </script>
@@ -1067,6 +1099,12 @@ onShow(() => {
   color: #9CA3AF;
   line-height: 1.3;
   margin-bottom: 8rpx;
+}
+
+.invite-progress {
+  color: #3B82F6;
+  font-weight: 600;
+  margin-left: 8rpx;
 }
 
 .step-action {
