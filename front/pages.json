@@ -135,6 +135,96 @@
         "title": "实名认证",
         "group": "用户中心"
       }
+    },
+    {
+      "path": "pages/index/fuka",
+      "style": {
+        "navigationBarTitleText": "我的福卡",
+        "enablePullDownRefresh": true
+      },
+      "meta": {
+        "auth": true,
+        "sync": true,
+        "title": "我的福卡",
+        "group": "福卡系统"
+      }
+    },
+    {
+      "path": "pages/card/draw",
+      "style": {
+        "navigationBarTitleText": "集福卡",
+        "enablePullDownRefresh": false
+      },
+      "meta": {
+        "auth": true,
+        "sync": false,
+        "title": "集福卡",
+        "group": "福卡系统"
+      }
+    },
+    {
+      "path": "pages/card/exchange",
+      "style": {
+        "navigationBarTitleText": "福卡兑换",
+        "enablePullDownRefresh": false
+      },
+      "meta": {
+        "auth": true,
+        "sync": false,
+        "title": "福卡兑换",
+        "group": "福卡系统"
+      }
+    },
+    {
+      "path": "pages/card/rank",
+      "style": {
+        "navigationBarTitleText": "集福排行榜",
+        "enablePullDownRefresh": true
+      },
+      "meta": {
+        "auth": false,
+        "sync": false,
+        "title": "集福排行榜",
+        "group": "福卡系统"
+      }
+    },
+    {
+      "path": "pages/exchange/index",
+      "style": {
+        "navigationBarTitleText": "奖品兑换",
+        "enablePullDownRefresh": true
+      },
+      "meta": {
+        "auth": true,
+        "sync": true,
+        "title": "奖品兑换",
+        "group": "奖品兑换"
+      }
+    },
+    {
+      "path": "pages/exchange/records",
+      "style": {
+        "navigationBarTitleText": "兑换记录",
+        "enablePullDownRefresh": true
+      },
+      "meta": {
+        "auth": true,
+        "sync": true,
+        "title": "兑换记录",
+        "group": "奖品兑换"
+      }
+    },
+    {
+      "path": "pages/exchange/detail",
+      "style": {
+        "navigationBarTitleText": "兑换详情"
+      },
+      "meta": {
+        "auth": true,
+        "sync": true,
+        "title": "兑换详情",
+        "group": "奖品兑换"
+      }
     }
   ],
   "subPackages": [
@@ -816,6 +906,102 @@
             "sync": true,
             "title": "秒杀活动",
             "group": "营销活动"
+          }
+        }
+      ]
+    },
+    {
+      "root": "pages/card",
+      "pages": [
+        {
+          "path": "payment",
+          "style": {
+            "navigationBarTitleText": "支付订单",
+            "enablePullDownRefresh": false
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "支付订单",
+            "group": "金卡流程"
+          }
+        },
+        {
+          "path": "payment-result",
+          "style": {
+            "navigationBarTitleText": "支付结果",
+            "enablePullDownRefresh": false
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "支付结果",
+            "group": "金卡流程"
+          }
+        },
+        {
+          "path": "agreement",
+          "style": {
+            "navigationBarTitleText": "协议签署",
+            "enablePullDownRefresh": false
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "协议签署",
+            "group": "金卡流程"
+          }
+        },
+        {
+          "path": "password",
+          "style": {
+            "navigationBarTitleText": "设置卡片密码",
+            "enablePullDownRefresh": false
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "设置卡片密码",
+            "group": "金卡流程"
+          }
+        },
+        {
+          "path": "payment-function",
+          "style": {
+            "navigationBarTitleText": "大额收付款功能",
+            "enablePullDownRefresh": false
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "大额收付款功能",
+            "group": "金卡流程"
+          }
+        },
+        {
+          "path": "step-confirm",
+          "style": {
+            "navigationBarTitleText": "步骤确认",
+            "enablePullDownRefresh": false
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "步骤确认",
+            "group": "金卡流程"
+          }
+        },
+        {
+          "path": "agreement-list",
+          "style": {
+            "navigationBarTitleText": "协议处理进度",
+            "enablePullDownRefresh": true
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "协议处理进度",
+            "group": "金卡流程"
           }
         }
       ]

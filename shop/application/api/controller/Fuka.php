@@ -3,14 +3,13 @@
 namespace app\api\controller;
 
 use app\common\controller\Api;
-use app\common\model\fuka\Type;
-use app\common\model\fuka\UserCard;
-use app\common\model\fuka\UserStatistics;
-use app\common\model\fuka\ChanceLog;
-use app\common\model\fuka\Rank;
-use app\common\model\fuka\ExchangeRecord;
-use app\common\model\fuka\Prize;
-use app\common\validate\fuka\ as FukaValidate;
+use app\common\model\fuka\Type as FukaType;
+use app\common\model\fuka\UserCard as FukaUserCard;
+use app\common\model\fuka\UserStatistics as FukaUserStatistics;
+use app\common\model\fuka\ChanceLog as FukaChanceLog;
+use app\common\model\fuka\Rank as FukaRank;
+use app\common\model\fuka\ExchangeRecord as FukaExchangeRecord;
+use app\common\model\fuka\Prize as FukaPrize;
 use think\Db;
 
 /**
@@ -90,6 +89,121 @@ class Fuka extends Api
     }
 
     /**
+     * 获取用户福卡统计信息
+     * 
+     * @ApiMethod (GET)
+     * @ApiRoute  (/api/fuka/statistics)
+     * @ApiReturn ({'code':'1','msg':'获取成功','data':{'set_count':0,'total_count':0,'fuka_chance':0}})
+     */
+    public function statistics()
+    {
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录');
+        }
+
+        // 获取用户统计信息
+        $userStats = FukaUserStatistics::where('user_id', $user->id)->find();
+        if (!$userStats) {
+            $this->success('获取成功', [
+                'set_count' => 0,
+                'total_count' => 0,
+                'fuka_chance' => 0,
+                'current_fuka_count' => 0
+            ]);
+            return;
+        }
+
+        // 获取用户未使用的福卡
+        $userCards = FukaUserCard::where('user_id', $user->id)
+            ->where('is_used', 0)
+            ->where('status', 'normal')
+            ->select();
+
+        // 计算可以组成多少套五福卡
+        $setCount = 0;
+        if (!empty($userCards) && count($userCards) > 0) {
+            $setCount = $this->calculateSetCount($userCards);
+        }
+
+        $this->success('获取成功', [
+            'set_count' => $setCount,
+            'total_count' => $userStats->total_fuka_count,
+            'current_count' => $userStats->current_fuka_count,
+            'fuka_chance' => $userStats->fuka_chance
+        ]);
+    }
+
+    /**
+     * 计算可以组成多少套五福卡
+     * 
+     * @param array $cards 用户福卡列表
+     * @return int
+     */
+    private function calculateSetCount($cards)
+    {
+        // 统计各类型福卡数量
+        $typeCount = [];
+        foreach ($cards as $card) {
+            $typeCode = $card->type_code;
+            if (!isset($typeCount[$typeCode])) {
+                $typeCount[$typeCode] = 0;
+            }
+            $typeCount[$typeCode]++;
+        }
+
+        // 检查是否有万能福
+        $universalCount = isset($typeCount['wanneng']) ? $typeCount['wanneng'] : 0;
+
+        // 五福卡需要的类型
+        $requiredTypes = ['aiguo', 'youshan', 'jingye', 'hexie', 'fuqiang'];
+        
+        // 计算可以组成多少套
+        $setCount = 0;
+        $tempTypeCount = $typeCount;
+        $tempUniversalCount = $universalCount;
+        
+        while (true) {
+            $canMakeSet = true;
+            $usedUniversal = 0;
+            
+            foreach ($requiredTypes as $type) {
+                $count = isset($tempTypeCount[$type]) ? $tempTypeCount[$type] : 0;
+                if ($count > 0) {
+                    $tempTypeCount[$type]--;
+                } else if ($tempUniversalCount > 0) {
+                    $tempUniversalCount--;
+                    $usedUniversal++;
+                } else {
+                    $canMakeSet = false;
+                    break;
+                }
+            }
+            
+            if ($canMakeSet) {
+                $setCount++;
+            } else {
+                break;
+            }
+        }
+
+        return $setCount;
+    }
+
+    /**
+     * 抽取福卡(前端调用draw)
+     * 
+     * @ApiMethod (POST)
+     * @ApiRoute  (/api/fuka/draw)
+     * @ApiParams (name="fuka_type_id", type="integer", required=false, description="指定福卡类型ID，不传则随机")
+     * @ApiReturn ({'code':'1','msg':'集福成功','data':{'card':{}}})
+     */
+    public function draw()
+    {
+        return $this->useChance();
+    }
+
+    /**
      * 使用集福机会
      * 
      * @ApiMethod (POST)
@@ -106,9 +220,7 @@ class Fuka extends Api
 
         // 参数验证（可选参数，不强制）
         $params = $this->request->only(['fuka_type_id']);
-        if (!empty($params['fuka_type_id'])) {
-            $this->validate($params, FukaValidate::class . '.useChance');
-        }
+        // 参数验证可以在这里添加
 
         // 获取用户统计信息
         $userStats = FukaUserStatistics::where('user_id', $user->id)->find();
@@ -183,7 +295,7 @@ class Fuka extends Api
             ->where('is_universal', 0)
             ->select();
         
-        if ($types->isEmpty()) {
+        if (empty($types) || count($types) == 0) {
             throw new \Exception('暂无可用福卡类型');
         }
 
@@ -224,10 +336,10 @@ class Fuka extends Api
         }
 
         // 参数验证
-        $params = $this->request->only(['prize_id']);
-        $this->validate($params, FukaValidate::class . '.exchange');
-        
         $prizeId = $this->request->param('prize_id/d', 0);
+        if (!$prizeId) {
+            $this->error('请选择要兑换的奖品');
+        }
 
         // 获取奖品信息
         $prize = FukaPrize::get($prizeId);
@@ -250,7 +362,7 @@ class Fuka extends Api
         }
 
         // 检查是否可以组成足够的五福卡
-        $canExchange = $this->checkCanExchange($userCards, $prize->need_fuka_set);
+        $canExchange = $this->checkCanExchangeWithCards($userCards, $prize->need_fuka_set);
         if (!$canExchange) {
             $this->error('无法组成足够的五福卡套数');
         }
@@ -305,13 +417,13 @@ class Fuka extends Api
     }
 
     /**
-     * 检查是否可以兑换
+     * 检查是否可以兑换(内部方法)
      * 
      * @param array $cards 用户福卡列表
      * @param int $needSets 需要的套数
      * @return bool
      */
-    private function checkCanExchange($cards, $needSets)
+    private function checkCanExchangeWithCards($cards, $needSets)
     {
         // 统计各类型福卡数量
         $typeCount = [];
@@ -393,12 +505,82 @@ class Fuka extends Api
     }
 
     /**
+     * 获取集福机会数量
+     * 
+     * @ApiMethod (GET)
+     * @ApiRoute  (/api/fuka/chanceCount)
+     * @ApiReturn ({'code':'1','msg':'获取成功','data':{'chance_count':0}})
+     */
+    public function chanceCount()
+    {
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录');
+        }
+
+        // 获取用户统计信息
+        $userStats = FukaUserStatistics::where('user_id', $user->id)->find();
+        $chanceCount = $userStats ? $userStats->fuka_chance : 0;
+
+        $this->success('获取成功', ['chance_count' => $chanceCount]);
+    }
+
+    /**
+     * 获取奖品列表
+     * 
+     * @ApiMethod (GET)
+     * @ApiRoute  (/api/fuka/prizeList)
+     * @ApiReturn ({'code':'1','msg':'获取成功','data':{'list':[]}})
+     */
+    public function prizeList()
+    {
+        $list = FukaPrize::where('status', 'normal')
+            ->where('stock', '>', 0)
+            ->order('weigh desc,id asc')
+            ->select();
+
+        $this->success('获取成功', $list);
+    }
+
+    /**
+     * 检查是否可以兑换
+     * 
+     * @ApiMethod (GET)
+     * @ApiRoute  (/api/fuka/checkCanExchange)
+     * @ApiReturn ({'code':'1','msg':'获取成功','data':{'can_exchange':true,'set_count':0}})
+     */
+    public function checkCanExchange()
+    {
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录');
+        }
+
+        // 获取用户未使用的福卡
+        $userCards = FukaUserCard::where('user_id', $user->id)
+            ->where('is_used', 0)
+            ->where('status', 'normal')
+            ->select();
+
+        $setCount = 0;
+        if (!empty($userCards) && count($userCards) > 0) {
+            $setCount = $this->calculateSetCount($userCards);
+        }
+
+        $this->success('获取成功', [
+            'can_exchange' => $setCount > 0,
+            'set_count' => $setCount
+        ]);
+    }
+
+    /**
      * 获取兑换记录列表
      * 
      * @ApiMethod (GET)
      * @ApiRoute  (/api/fuka/exchangeList)
      * @ApiParams (name="page", type="integer", required=false, description="页码")
      * @ApiParams (name="limit", type="integer", required=false, description="每页数量")
+     * @ApiParams (name="status", type="string", required=false, description="状态筛选")
      * @ApiReturn ({'code':'1','msg':'获取成功','data':{'list':[],'total':0}})
      */
     public function exchangeList()
@@ -408,12 +590,56 @@ class Fuka extends Api
             $this->error('请先登录');
         }
 
-        $list = FukaExchangeRecord::where('user_id', $user->id)
-            ->with(['prize'])
-            ->order('createtime desc')
-            ->paginate();
+        $status = $this->request->param('status', '');
+        
+        $query = FukaExchangeRecord::where('user_id', $user->id);
+        
+        // 状态筛选
+        if ($status !== '') {
+            if (strpos($status, ',') !== false) {
+                // 多个状态
+                $statusArr = explode(',', $status);
+                $query->where('exchange_status', 'in', $statusArr);
+            } else {
+                // 单个状态
+                $query->where('exchange_status', $status);
+            }
+        }
+        
+        $list = $query->order('createtime desc')->paginate();
 
         $this->success('获取成功', $list);
+    }
+
+    /**
+     * 获取兑换记录详情
+     * 
+     * @ApiMethod (GET)
+     * @ApiRoute  (/api/fuka/exchangeDetail)
+     * @ApiParams (name="id", type="integer", required=true, description="兑换记录ID")
+     * @ApiReturn ({'code':'1','msg':'获取成功','data':{}})
+     */
+    public function exchangeDetail()
+    {
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录');
+        }
+
+        $id = $this->request->param('id/d', 0);
+        if (!$id) {
+            $this->error('参数错误');
+        }
+
+        $record = FukaExchangeRecord::where('id', $id)
+            ->where('user_id', $user->id)
+            ->find();
+
+        if (!$record) {
+            $this->error('兑换记录不存在');
+        }
+
+        $this->success('获取成功', $record);
     }
 
     /**

@@ -22,6 +22,8 @@ class CardFlowLog extends Model
         'user_id' => 'integer',
         'card_id' => 'integer',
         'flow_step' => 'integer',
+        'flow_status' => 'integer',
+        'order_id' => 'integer',
         'is_completed' => 'integer',
         'complete_time' => 'timestamp',
         'need_fee' => 'integer',
@@ -33,6 +35,8 @@ class CardFlowLog extends Model
         'is_refund_fee' => 'integer',
         'refund_fee_time' => 'timestamp',
         'refund_wallet_log_id' => 'integer',
+        'audit_time' => 'timestamp',
+        'auditor_id' => 'integer',
         'weigh' => 'integer',
         'createtime' => 'timestamp',
         'updatetime' => 'timestamp',
@@ -52,6 +56,22 @@ class CardFlowLog extends Model
     public function user()
     {
         return $this->belongsTo('app\common\model\User', 'user_id');
+    }
+
+    /**
+     * 关联订单
+     */
+    public function order()
+    {
+        return $this->belongsTo('app\common\model\fuka\CardOrder', 'order_id');
+    }
+
+    /**
+     * 关联审核人
+     */
+    public function auditor()
+    {
+        return $this->belongsTo('app\admin\model\Admin', 'auditor_id', 'id');
     }
 }
 

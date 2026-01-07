@@ -1,0 +1,297 @@
+{include file="/cus/common/script" /}
+
+<style>
+    .card-audit-index .status-badge {
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .card-audit-index .status-pending {
+        color: #E6A23C;
+        background: #FDF6EC;
+    }
+
+    .card-audit-index .status-approved {
+        color: #67C23A;
+        background: #F0F9FF;
+    }
+
+    .card-audit-index .status-rejected {
+        color: #F56C6C;
+        background: #FEF0F0;
+    }
+
+    .card-audit-index .amount-text {
+        color: #F56C6C;
+        font-weight: 600;
+    }
+
+    .card-audit-index .pay-icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 8px;
+    }
+</style>
+
+<div id="index" class="card-audit-index panel panel-default panel-intro" v-cloak>
+    <el-container class="panel-block">
+        <el-header class="sa-header">
+            <div class="sa-title sa-flex sa-row-between">
+                <div class="sa-title-left">
+                    <div class="left-name">金卡流程审核</div>
+                    <sa-filter-condition v-model="state.filter" @filter-delete="onChangeFilter">
+                    </sa-filter-condition>
+                </div>
+                <div class="sa-title-right">
+                    <el-button class="sa-button-refresh" icon="RefreshRight" @click="getData"></el-button>
+                    <el-button class="sa-button-refresh" icon="Search" @click="onOpenFilter"></el-button>
+                </div>
+            </div>
+        </el-header>
+        <el-main class="sa-main">
+            <el-table height="100%" class="sa-table" :data="state.data" stripe @sort-change="onChangeSort"
+                @selection-change="onSelectionChange">
+                <el-table-column type="selection" width="55"></el-table-column>
+
+                <el-table-column prop="id" label="ID" min-width="80" sortable="custom"></el-table-column>
+
+                <el-table-column label="用户信息" min-width="180">
+                    <template #default="scope">
+                        <sa-user-profile :user="scope.row.user" :id="scope.row.user_id"></sa-user-profile>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="流程步骤" min-width="150">
+                    <template #default="scope">
+                        <div class="sa-flex-col">
+                            <div>步骤{{ scope.row.flow_step }}: {{ scope.row.step_name }}</div>
+                            <div style="color: #909399; font-size: 12px;">金卡ID: {{ scope.row.card_id }}</div>
+                        </div>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="支付金额" min-width="120">
+                    <template #default="scope">
+                        <div class="amount-text">¥{{ scope.row.fee_amount }}</div>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="支付方式" min-width="130">
+                    <template #default="scope">
+                        <div v-if="scope.row.order && scope.row.order.pay_type" class="sa-flex">
+                            <img class="pay-icon" 
+                                :src="`/assets/addons/cus/img/${scope.row.order.pay_type}.png`" 
+                                :alt="scope.row.order.pay_type" />
+                            <div>{{ scope.row.order.pay_type_text || scope.row.order.pay_type }}</div>
+                        </div>
+                        <div v-else>-</div>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="订单号" min-width="200">
+                    <template #default="scope">
+                        <div v-if="scope.row.order">{{ scope.row.order.order_no }}</div>
+                        <div v-else>-</div>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="支付时间" min-width="170" sortable="custom">
+                    <template #default="scope">
+                        <div v-if="scope.row.order && scope.row.order.pay_time">
+                            {{ scope.row.order.pay_time }}
+                        </div>
+                        <div v-else>-</div>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="状态" fixed="right" min-width="100">
+                    <template #default="scope">
+                        <div class="status-badge" :class="{
+                            'status-pending': scope.row.flow_status == 2,
+                            'status-approved': scope.row.flow_status == 3,
+                            'status-rejected': scope.row.flow_status == 4
+                        }">
+                            {{ scope.row.flow_status_text }}
+                        </div>
+                    </template>
+                </el-table-column>
+
+                <el-table-column fixed="right" label="操作" min-width="220">
+                    <template #default="scope">
+                        {if $auth->check('cus.fuka.card_audit/detail')}
+                        <el-button type="primary" link @click="onDetail(scope.row.id)">
+                            查看详情
+                        </el-button>
+                        {/if}
+
+                        {if $auth->check('cus.fuka.card_audit/approve')}
+                        <el-popconfirm v-if="scope.row.flow_status == 2" width="280" 
+                            confirm-button-text="通过" cancel-button-text="取消" 
+                            title="确认审核通过该流程？"
+                            @confirm="onApprove(scope.row.id, scope.$index)">
+                            <template #reference>
+                                <el-button type="success" link>审核通过</el-button>
+                            </template>
+                        </el-popconfirm>
+                        {/if}
+
+                        {if $auth->check('cus.fuka.card_audit/reject')}
+                        <el-button v-if="scope.row.flow_status == 2" type="danger" link 
+                            @click="onReject(scope.row.id, scope.$index)">
+                            审核拒绝
+                        </el-button>
+                        {/if}
+
+                        {if $auth->check('cus.fuka.card_audit/user_flows')}
+                        <el-button type="primary" link @click="onUserFlows(scope.row.user_id)">
+                            用户流程
+                        </el-button>
+                        {/if}
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-main>
+        <el-footer class="sa-footer sa-flex sa-row-between">
+            <div class="sa-flex">
+                {if $auth->check('cus.fuka.card_audit/batch_approve')}
+                <el-button type="success" @click="onBatchApprove" :disabled="state.selectedIds.length === 0">
+                    批量审核通过
+                </el-button>
+                {/if}
+            </div>
+            <sa-pagination v-model="pagination" @pagination-change="getData"></sa-pagination>
+        </el-footer>
+    </el-container>
+    <sa-filter v-model="state.filter" @filter-change="onChangeFilter"></sa-filter>
+</div>
+
+<script>
+    const index = Vue.createApp({
+        data() {
+            return {
+                state: {
+                    data: [],
+                    filter: {},
+                    selectedIds: [],
+                    statusStyle: {
+                        0: 'sa-color--info',
+                        1: 'sa-color--warning',
+                        2: 'sa-color--warning',
+                        3: 'sa-color--success',
+                        4: 'sa-color--danger'
+                    }
+                },
+                pagination: {
+                    page: 1,
+                    limit: 10,
+                    total: 0
+                }
+            }
+        },
+        mounted() {
+            this.getData();
+        },
+        methods: {
+            getData() {
+                sa.table.getData.call(this, {
+                    url: 'cus.fuka.card_audit/index',
+                    pagination: true,
+                    filter: true,
+                    order: true
+                });
+            },
+            onChangeFilter() {
+                this.getData();
+            },
+            onOpenFilter() {
+                sa.table.onOpenFilter.call(this);
+            },
+            onChangeSort(e) {
+                sa.table.onChangeSort.call(this, e);
+            },
+            onSelectionChange(selection) {
+                this.state.selectedIds = selection.map(item => item.id);
+            },
+            onDetail(id) {
+                sa.open({
+                    title: '审核详情',
+                    url: `{:url('cus.fuka.card_audit/detail')}?ids=${id}`,
+                    area: ['90%', '90%']
+                });
+            },
+            onApprove(id, index) {
+                sa.ajax({
+                    url: '{:url("cus.fuka.card_audit/approve")}',
+                    type: 'POST',
+                    data: {
+                        ids: id,
+                        remark: '审核通过'
+                    },
+                    success: (res) => {
+                        sa.msg.success(res.msg || '审核通过');
+                        this.getData();
+                    }
+                });
+            },
+            onReject(id, index) {
+                sa.layer.prompt({
+                    title: '请输入拒绝原因',
+                    formType: 2,
+                    area: ['400px', '200px']
+                }, (reason, layerIndex) => {
+                    if (!reason || !reason.trim()) {
+                        sa.msg.error('请输入拒绝原因');
+                        return false;
+                    }
+                    sa.ajax({
+                        url: '{:url("cus.fuka.card_audit/reject")}',
+                        type: 'POST',
+                        data: {
+                            ids: id,
+                            reason: reason
+                        },
+                        success: (res) => {
+                            sa.msg.success(res.msg || '已拒绝');
+                            sa.layer.close(layerIndex);
+                            this.getData();
+                        }
+                    });
+                });
+            },
+            onBatchApprove() {
+                if (this.state.selectedIds.length === 0) {
+                    sa.msg.error('请先选择要审核的记录');
+                    return;
+                }
+                sa.layer.confirm('确认批量审核通过选中的记录？', () => {
+                    sa.ajax({
+                        url: '{:url("cus.fuka.card_audit/batch_approve")}',
+                        type: 'POST',
+                        data: {
+                            ids: this.state.selectedIds.join(','),
+                            remark: '批量审核通过'
+                        },
+                        success: (res) => {
+                            sa.msg.success(res.msg || '批量审核成功');
+                            this.getData();
+                        }
+                    });
+                });
+            },
+            onUserFlows(userId) {
+                sa.open({
+                    title: '用户流程记录',
+                    url: `{:url('cus.fuka.card_audit/user_flows')}?user_id=${userId}`,
+                    area: ['90%', '90%']
+                });
+            }
+        }
+    });
+
+    sa.ready(() => {
+        const app = index.mount('#index');
+        sa.index = app;
+    });
+</script>
+

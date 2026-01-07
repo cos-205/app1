@@ -33,43 +33,90 @@
       <!-- 未领取：显示领取条件 -->
       <template v-if="!state.cardData.isReceived">
         <view class="condition-card ss-m-b-20">
-          <view class="condition-title">
-            <uni-icons type="gift" size="20" color="#FFC107" />
-            <text>领取条件</text>
+          <view class="condition-header">
+            <view class="condition-title">
+              <view class="title-icon-wrap">
+                <uni-icons type="gift-filled" size="24" color="#FFC107" />
+              </view>
+              <text>领取条件</text>
+            </view>
+            <view class="condition-progress">
+              <text class="progress-text">{{ completedConditionsCount }}/3</text>
+              <view class="progress-bar">
+                <view class="progress-fill" :style="{ width: conditionProgress + '%' }"></view>
+              </view>
+            </view>
           </view>
-          <view class="condition-list">
+          
+          <view class="condition-steps">
             <view 
-              class="condition-item" 
+              class="step-item" 
               :class="{ completed: state.conditions.memberLevel }"
             >
-              <uni-icons 
-                :type="state.conditions.memberLevel ? 'checkmark-circle' : 'circle'" 
-                size="18" 
-                :color="state.conditions.memberLevel ? '#00C853' : '#9CA3AF'" 
-              />
-              <text>成为白金会员（邀请2位好友实名认证）</text>
+              <view class="step-icon" :class="{ completed: state.conditions.memberLevel }">
+                <text class="step-num">1</text>
+              </view>
+              <view class="step-content">
+                <view class="step-label">成为白金会员</view>
+                <view class="step-detail">邀请2位好友</view>
+                <view class="step-action" v-if="!state.conditions.memberLevel">
+                  <button class="step-btn" @tap="goToInvite">
+                    <text>去邀请</text>
+                  </button>
+                </view>
+                <view class="step-completed" v-else>
+                  <uni-icons type="checkmark-circle-filled" size="20" color="#00C853" />
+                  <text>已完成</text>
+                </view>
+              </view>
             </view>
+            
+            <view class="step-line" :class="{ completed: state.conditions.memberLevel }"></view>
+            
             <view 
-              class="condition-item" 
+              class="step-item" 
               :class="{ completed: state.conditions.realName }"
             >
-              <uni-icons 
-                :type="state.conditions.realName ? 'checkmark-circle' : 'circle'" 
-                size="18" 
-                :color="state.conditions.realName ? '#00C853' : '#9CA3AF'" 
-              />
-              <text>完成实名认证</text>
+              <view class="step-icon" :class="{ completed: state.conditions.realName }">
+                <text class="step-num">2</text>
+              </view>
+              <view class="step-content">
+                <view class="step-label">完成实名认证</view>
+                <view class="step-detail">验证身份信息</view>
+                <view class="step-action" v-if="!state.conditions.realName">
+                  <button class="step-btn" @tap="goToAuth">
+                    <text>去认证</text>
+                  </button>
+                </view>
+                <view class="step-completed" v-else>
+                  <uni-icons type="checkmark-circle-filled" size="20" color="#00C853" />
+                  <text>已完成</text>
+                </view>
+              </view>
             </view>
+            
+            <view class="step-line" :class="{ completed: state.conditions.realName }"></view>
+            
             <view 
-              class="condition-item" 
+              class="step-item" 
               :class="{ completed: state.conditions.address }"
             >
-              <uni-icons 
-                :type="state.conditions.address ? 'checkmark-circle' : 'circle'" 
-                size="18" 
-                :color="state.conditions.address ? '#00C853' : '#9CA3AF'" 
-              />
-              <text>填写收货地址</text>
+              <view class="step-icon" :class="{ completed: state.conditions.address }">
+                <text class="step-num">3</text>
+              </view>
+              <view class="step-content">
+                <view class="step-label">填写收货地址</view>
+                <view class="step-detail">提供邮寄地址</view>
+                <view class="step-action" v-if="!state.conditions.address">
+                  <button class="step-btn" @tap="goToAddress">
+                    <text>去填写</text>
+                  </button>
+                </view>
+                <view class="step-completed" v-else>
+                  <uni-icons type="checkmark-circle-filled" size="20" color="#00C853" />
+                  <text>已完成</text>
+                </view>
+              </view>
             </view>
           </view>
         </view>
@@ -125,35 +172,43 @@
       </template>
     </view>
 
-    <!-- 功能清单 -->
-    <view class="section-box">
-      <view class="section-header">
-        <view class="section-title">
-          <text class="title-icon">✨</text>
-          <text>激活流程</text>
+    <!-- 当前状态 -->
+    <view class="section-box" v-if="currentActiveStep">
+      <view class="status-card">
+        <view class="status-icon-wrap">
+          <uni-icons 
+            v-if="currentActiveStep.completed" 
+            type="checkmark-circle-filled" 
+            size="48" 
+            color="#00C853" 
+          />
+          <uni-icons 
+            v-else-if="currentActiveStep.enabled" 
+            type="loop" 
+            size="48" 
+            color="#4285F4" 
+          />
+          <uni-icons 
+            v-else 
+            type="locked-filled" 
+            size="48" 
+            color="#9CA3AF" 
+          />
         </view>
-        <view class="section-subtitle">完成以下步骤激活金卡全部功能</view>
-      </view>
-      
-      <view class="function-list">
-        <view 
-          class="function-item" 
-          v-for="(item, index) in state.functions" 
-          :key="index"
-          :class="{ completed: item.completed, disabled: !item.enabled }"
-          @tap="handleFunctionClick(item)"
+        <view class="status-content">
+          <view class="status-title">
+            {{ currentActiveStep.completed ? '已完成' : currentActiveStep.enabled ? '进行中' : '未开始' }}
+          </view>
+          <view class="status-name">{{ currentActiveStep.name }}</view>
+          <view class="status-desc" v-if="currentActiveStep.desc">{{ currentActiveStep.desc }}</view>
+        </view>
+        <button 
+          class="status-action" 
+          v-if="currentActiveStep.enabled && !currentActiveStep.completed"
+          @tap="handleFunctionClick(currentActiveStep)"
         >
-          <view class="function-number">{{ index + 1 }}</view>
-          <view class="function-info">
-            <text class="function-name">{{ item.name }}</text>
-            <text class="function-desc" v-if="item.desc">{{ item.desc }}</text>
-          </view>
-          <view class="function-status">
-            <uni-icons v-if="item.completed" type="checkmark-circle" size="24" color="#00C853" />
-            <uni-icons v-else-if="item.enabled" type="forward" size="20" color="#9CA3AF" />
-            <uni-icons v-else type="locked" size="20" color="#E5E7EB" />
-          </view>
-        </view>
+          立即完成
+        </button>
       </view>
     </view>
 
@@ -197,6 +252,47 @@
       </view>
     </view>
 
+    <!-- 功能介绍 -->
+    <view class="section-box">
+      <view class="section-header">
+        <view class="section-title">
+          <text class="title-icon">💎</text>
+          <text>功能介绍</text>
+        </view>
+        <view class="section-subtitle">财富金卡为您提供专属金融服务</view>
+      </view>
+      
+      <view class="feature-grid">
+        <view class="feature-item">
+          <view class="feature-icon">
+            <uni-icons type="wallet-filled" size="32" color="#4285F4" />
+          </view>
+          <text class="feature-title">大额收付款</text>
+          <text class="feature-desc">支持大额转账和收款</text>
+        </view>
+        <view class="feature-item">
+          <view class="feature-icon">
+            <uni-icons type="locked-filled" size="32" color="#00C853" />
+          </view>
+          <text class="feature-title">安全保障</text>
+          <text class="feature-desc">多重安全认证保护</text>
+        </view>
+        <view class="feature-item">
+          <view class="feature-icon">
+            <uni-icons type="settings-filled" size="32" color="#FF9800" />
+          </view>
+          <text class="feature-title">专属服务</text>
+          <text class="feature-desc">一对一专员服务</text>
+        </view>
+        <view class="feature-item">
+          <view class="feature-icon">
+            <uni-icons type="gift-filled" size="32" color="#E91E63" />
+          </view>
+          <text class="feature-title">会员特权</text>
+          <text class="feature-desc">享受会员专属权益</text>
+        </view>
+      </view>
+    </view>
 
     <!-- 申领成功弹窗 -->
     <view class="success-modal" v-if="state.showSuccessModal" @tap="closeSuccessModal">
@@ -261,13 +357,13 @@
 
 <script setup>
 import { reactive, computed } from 'vue';
-import { onLoad, onPullDownRefresh } from '@dcloudio/uni-app';
+import { onShow, onPullDownRefresh } from '@dcloudio/uni-app';
 import xxep from '@/xxep';
 
 // 页面状态
 const state = reactive({
   isSubmitting: false,
-  showSuccessModal: true,
+  showSuccessModal: false,
   cardData: {
     isReceived: false,
     status: 'not-received',
@@ -345,6 +441,37 @@ const state = reactive({
 // 是否可以申领
 const canApply = computed(() => {
   return state.conditions.memberLevel && state.conditions.realName && state.conditions.address;
+});
+
+// 已完成的条件数量
+const completedConditionsCount = computed(() => {
+  let count = 0;
+  if (state.conditions.memberLevel) count++;
+  if (state.conditions.realName) count++;
+  if (state.conditions.address) count++;
+  return count;
+});
+
+// 条件完成进度百分比
+const conditionProgress = computed(() => {
+  return (completedConditionsCount.value / 3) * 100;
+});
+
+// 当前激活步骤的索引
+const currentStepIndex = computed(() => {
+  // 找到第一个未完成且已启用的步骤
+  const index = state.functions.findIndex(item => !item.completed && item.enabled);
+  // 如果找到返回索引，否则返回第一个未完成的步骤
+  if (index !== -1) return index;
+  
+  // 如果所有已启用的都完成了，返回第一个未启用的
+  const nextIndex = state.functions.findIndex(item => !item.completed);
+  return nextIndex !== -1 ? nextIndex : 0;
+});
+
+// 当前激活的步骤
+const currentActiveStep = computed(() => {
+  return state.functions[currentStepIndex.value] || null;
 });
 
 // 获取状态图标
@@ -433,6 +560,27 @@ function checkApplyConditions() {
   state.conditions.memberLevel = (userInfo.member_level || 0) >= 1;
   state.conditions.realName = userInfo.is_realname === 1;
   state.conditions.address = !!userInfo.address;
+}
+
+// 跳转到邀请页面
+function goToInvite() {
+  uni.navigateTo({
+    url: '/pages/index/invite'
+  });
+}
+
+// 跳转到实名认证页面
+function goToAuth() {
+  uni.navigateTo({
+    url: '/pages/user/real'
+  });
+}
+
+// 跳转到收货地址页面
+function goToAddress() {
+  uni.navigateTo({
+    url: '/pages/user/address/list'
+  });
 }
 
 // 申领金卡
@@ -568,7 +716,7 @@ onPullDownRefresh(() => {
 });
 
 // 页面加载
-onLoad(() => {
+onShow(() => {
   loadData();
 });
 </script>
@@ -586,6 +734,8 @@ onLoad(() => {
   width: 100%;
   height: 320rpx;
   background: linear-gradient(135deg, #FFC107 0%, #FFD54F 50%, #FFA000 100%);
+  background-image: url('@/static/images/fuka_bg.jpeg');
+  
 }
 
 .card-wrap {
@@ -773,17 +923,26 @@ onLoad(() => {
 
 /* 领取条件 */
 .condition-card {
-  background: #FFFFFF;
+  background: linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%);
   border-radius: 24rpx;
-  padding: 32rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  padding: 40rpx 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
+  border: 2rpx solid #F3F4F6;
+}
+
+.condition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32rpx;
+  padding-bottom: 24rpx;
+  border-bottom: 2rpx solid #F3F4F6;
 }
 
 .condition-title {
   display: flex;
   align-items: center;
   gap: 12rpx;
-  margin-bottom: 24rpx;
   
   text {
     font-size: 32rpx;
@@ -792,26 +951,186 @@ onLoad(() => {
   }
 }
 
-.condition-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-}
-
-.condition-item {
+.title-icon-wrap {
+  width: 48rpx;
+  height: 48rpx;
+  background: linear-gradient(135deg, #FFD54F 0%, #FFC107 100%);
+  border-radius: 12rpx;
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba(255, 193, 7, 0.3);
+}
+
+.condition-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8rpx;
+}
+
+.progress-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #4285F4;
+}
+
+.progress-bar {
+  width: 120rpx;
+  height: 8rpx;
+  background: #E5E7EB;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4285F4 0%, #5A9CFF 100%);
+  border-radius: 4rpx;
+  transition: width 0.5s ease;
+}
+
+.condition-steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 32rpx 0;
+}
+
+.step-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12rpx;
+  position: relative;
+  transition: all 0.3s ease;
+  min-height: 200rpx;
   
-  text {
-    font-size: 28rpx;
-    color: #6B7280;
-  }
-  
-  &.completed text {
-    color: #1F2937;
+  &.completed {
+    .step-label {
+      color: #4285F4;
+      font-weight: 600;
+    }
+    
+    .step-icon {
+      background: #4285F4;
+      border-color: #4285F4;
+      
+      .step-num {
+        color: #FFFFFF;
+      }
+    }
   }
 }
+
+.step-icon {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #E5E7EB;
+  border: 2rpx solid #E5E7EB;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.step-num {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #9CA3AF;
+  transition: all 0.3s ease;
+}
+
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  align-items: center;
+  width: 100%;
+}
+
+.step-label {
+  font-size: 26rpx;
+  color: #1F2937;
+  font-weight: 500;
+  line-height: 1.4;
+  transition: all 0.3s ease;
+}
+
+.step-detail {
+  font-size: 22rpx;
+  color: #9CA3AF;
+  line-height: 1.3;
+  margin-bottom: 8rpx;
+}
+
+.step-action {
+  margin-top: 8rpx;
+}
+
+.step-btn {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 8rpx 20rpx;
+  background: linear-gradient(135deg, #4285F4 0%, #5A9CFF 100%);
+  border: none;
+  border-radius: 24rpx;
+  font-size: 22rpx;
+  color: #FFFFFF;
+  font-weight: 500;
+  box-shadow: 0 4rpx 12rpx rgba(66, 133, 244, 0.3);
+  transition: all 0.3s ease;
+  
+  &::after {
+    border: none;
+  }
+  
+  &:active {
+    opacity: 0.8;
+    transform: scale(0.95);
+  }
+  
+  text {
+    line-height: 1;
+  }
+}
+
+.step-completed {
+  margin-top: 8rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 6rpx 16rpx;
+  background: #E8F5E9;
+  border-radius: 20rpx;
+  
+  text {
+    font-size: 22rpx;
+    color: #00C853;
+    font-weight: 500;
+    line-height: 1;
+  }
+}
+
+.step-line {
+  flex: 0 0 40rpx;
+  height: 0;
+  border-top: 2rpx dashed #E5E7EB;
+  margin: 28rpx 0 0 0;
+  position: relative;
+  
+  &.completed {
+    border-top-color: #4285F4;
+    border-top-style: dashed;
+  }
+}
+
 
 /* 卡片信息 */
 .card-info-card {
@@ -928,12 +1247,123 @@ onLoad(() => {
   }
 }
 
+/* 功能介绍 */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24rpx;
+}
+
+.feature-item {
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  padding: 32rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  
+  &:active {
+    transform: translateY(-4rpx);
+    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+  }
+}
+
+.feature-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: #F9FAFB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8rpx;
+}
+
+.feature-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.feature-desc {
+  font-size: 24rpx;
+  color: #6B7280;
+  line-height: 1.4;
+}
+
+/* 当前状态卡片 */
+.status-card {
+  background: linear-gradient(135deg, #F8F9FF 0%, #FFFFFF 100%);
+  border: 2rpx solid #4285F4;
+  border-radius: 24rpx;
+  padding: 40rpx 32rpx;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(66, 133, 244, 0.12);
+}
+
+.status-icon-wrap {
+  flex-shrink: 0;
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.status-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.status-title {
+  font-size: 24rpx;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.status-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.status-desc {
+  font-size: 26rpx;
+  color: #6B7280;
+}
+
+.status-action {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #4285F4 0%, #5A9CFF 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 40rpx;
+  padding: 16rpx 32rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  box-shadow: 0 4rpx 12rpx rgba(66, 133, 244, 0.3);
+  
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
 /* 功能清单 */
 .function-list {
-  background: #FFFFFF;
+  background: transparent;
   border-radius: 24rpx;
-  overflow: hidden;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
 }
 
 .function-item {
@@ -950,28 +1380,46 @@ onLoad(() => {
   &.disabled {
     opacity: 0.5;
   }
+  
+  &.current-step {
+    border-bottom: none;
+    background: linear-gradient(135deg, #F8F9FF 0%, #FFFFFF 100%);
+    border: 2rpx solid #4285F4;
+    border-radius: 24rpx;
+    padding: 40rpx;
+    box-shadow: 0 8rpx 24rpx rgba(66, 133, 244, 0.12);
+  }
 }
 
 .function-number {
-  width: 48rpx;
-  height: 48rpx;
+  width: 56rpx;
+  height: 56rpx;
   border-radius: 50%;
   background: linear-gradient(135deg, #4285F4 0%, #5A9CFF 100%);
   color: #FFFFFF;
-  font-size: 24rpx;
+  font-size: 28rpx;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 4rpx 12rpx rgba(66, 133, 244, 0.3);
   
   .function-item.completed & {
-    background: #00C853;
+    background: linear-gradient(135deg, #00C853 0%, #00E676 100%);
+    box-shadow: 0 4rpx 12rpx rgba(0, 200, 83, 0.3);
   }
   
   .function-item.disabled & {
     background: #E5E7EB;
     color: #9CA3AF;
+    box-shadow: none;
+  }
+  
+  .function-item.current-step & {
+    width: 64rpx;
+    height: 64rpx;
+    font-size: 32rpx;
   }
 }
 
@@ -986,11 +1434,22 @@ onLoad(() => {
   font-size: 28rpx;
   color: #1F2937;
   font-weight: 500;
+  
+  .function-item.current-step & {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #4285F4;
+  }
 }
 
 .function-desc {
   font-size: 24rpx;
   color: #6B7280;
+  
+  .function-item.current-step & {
+    font-size: 26rpx;
+    color: #5A6C7D;
+  }
 }
 
 .function-status {
