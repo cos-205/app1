@@ -360,5 +360,208 @@ export default {
       showLoading: false,
       auth: true,
     },
+  }),
+
+  /**
+   * 获取取件码（付费获取）
+   * @param {Object} data { exchange_id: 兑换记录ID }
+   * @returns {Promise}
+   */
+  getPickupCode: (data) => $request({
+    url: '/api/fuka/getPickupCode',
+    method: 'POST',
+    data,
+    custom: {
+      showLoading: true,
+      loadingMsg: '获取中...',
+      auth: true,
+    },
+  }),
+
+  /**
+   * 创建取件码支付订单
+   * @param {Object} data { exchange_id: 兑换记录ID }
+   * @returns {Promise}
+   */
+  createPickupCodeOrder: (data) => $request({
+    url: '/api/fuka/createPickupCodeOrder',
+    method: 'POST',
+    data,
+    custom: {
+      showLoading: true,
+      loadingMsg: '创建订单中...',
+      auth: true,
+    },
+  }),
+
+  /**
+   * 获取支付参数
+   * @param {Object} data { order_id: 订单ID, pay_type: 支付类型 }
+   * @returns {Promise}
+   */
+  getPaymentParams: (data) => $request({
+    url: '/api/card/getPaymentParams',
+    method: 'POST',
+    data,
+    custom: {
+      showLoading: true,
+      loadingMsg: '获取支付参数中...',
+      auth: true,
+    },
+  }),
+
+  /**
+   * 查询支付结果
+   * @param {Object} data { order_id: 订单ID }
+   * @returns {Promise}
+   */
+  queryPaymentResult: (data) => $request({
+    url: '/api/card/paymentResult',
+    method: 'GET',
+    data,
+    custom: {
+      auth: true,
+    },
+  }),
+
+  /**
+   * 支付取件码费用（已废弃，请使用createPickupCodeOrder）
+   * @deprecated
+   * @param {Object} data { exchange_id: 兑换记录ID }
+   * @returns {Promise}
+   */
+  payPickupCode: (data) => $request({
+    url: '/api/fuka/payPickupCode',
+    method: 'POST',
+    data,
+    custom: {
+      showLoading: true,
+      loadingMsg: '支付中...',
+      auth: true,
+    },
+  }),
+
+  /**
+   * 获取车辆证书（付费获取）
+   * @param {Object} data { exchange_id: 兑换记录ID }
+   * @returns {Promise}
+   */
+  getCertificate: (data) => $request({
+    url: '/api/fuka/getCertificate',
+    method: 'POST',
+    data,
+    custom: {
+      showLoading: true,
+      loadingMsg: '获取中...',
+      auth: true,
+    },
+  }),
+
+  /**
+   * 创建车辆证书支付订单
+   * @param {Object} data { exchange_id: 兑换记录ID }
+   * @returns {Promise}
+   */
+  createVehicleDocOrder: (data) => $request({
+    url: '/api/fuka/createVehicleDocOrder',
+    method: 'POST',
+    data,
+    custom: {
+      showLoading: true,
+      loadingMsg: '创建订单中...',
+      auth: true,
+    },
+  }),
+
+  /**
+   * 支付车辆证书费用（已废弃）
+   * @deprecated 请使用createVehicleDocOrder + getPaymentParams
+   * @param {Object} data { exchange_id: 兑换记录ID }
+   * @returns {Promise}
+   */
+  payCertificate: (data) => $request({
+    url: '/api/fuka/payCertificate',
+    method: 'POST',
+    data,
+    custom: {
+      showLoading: true,
+      loadingMsg: '支付中...',
+      auth: true,
+    },
+  }),
+
+  // ========== 签到相关API ==========
+
+  /**
+   * 获取签到信息
+   * @returns {Promise}
+   */
+  getSigninInfo: () => $request({
+    url: '/api/signin/getInfo',
+    method: 'GET',
+    custom: {
+      showLoading: false,
+      auth: true,
+    },
+  }),
+
+  /**
+   * 执行签到
+   * @returns {Promise}
+   */
+  doSignin: () => $request({
+    url: '/api/signin/doSignin',
+    method: 'POST',
+    custom: {
+      showLoading: true,
+      loadingMsg: '签到中...',
+      showSuccess: false,
+      auth: true,
+    },
+  }),
+
+  /**
+   * 获取签到奖励列表
+   * @returns {Promise}
+   */
+  getSigninRewardList: () => $request({
+    url: '/api/signin/rewardList',
+    method: 'GET',
+    custom: {
+      showLoading: false,
+      auth: true,
+    },
+  }),
+
+  /**
+   * 领取签到奖励
+   * @param {Object} data { rule_id: 奖励规则ID }
+   * @returns {Promise}
+   */
+  receiveSigninReward: (data) => $request({
+    url: '/api/signin/receiveReward',
+    method: 'POST',
+    data,
+    custom: {
+      showLoading: true,
+      loadingMsg: '领取中...',
+      showSuccess: false,
+      auth: true,
+    },
+  }),
+
+  /**
+   * 获取签到记录
+   * @param {Object} params 查询参数
+   * @returns {Promise}
+   */
+  getSigninRecords: (params) => $request({
+    url: '/api/signin/records',
+    method: 'GET',
+    params,
+    custom: {
+      showLoading: false,
+      auth: true,
+    },
   })
 }

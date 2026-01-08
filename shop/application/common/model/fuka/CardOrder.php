@@ -37,6 +37,7 @@ class CardOrder extends Model
     // 允许写入的字段
     protected $field = [
         'order_no', 'merchant_trade_no', 'user_id', 'card_id', 'step_id', 'step_name',
+        'order_type', 'related_id',
         'amount', 'pay_type', 'pay_status', 'pay_time', 'transaction_id', 'pay_url',
         'refund_status', 'refund_time', 'refund_transaction_id', 'refund_amount'
     ];

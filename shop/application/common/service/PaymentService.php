@@ -6,6 +6,8 @@ use app\common\model\fuka\CardOrder;
 use app\common\model\fuka\CardFlowLog;
 use app\common\model\fuka\WealthCard;
 use app\common\model\fuka\UserAgreementFlow;
+use app\common\model\fuka\ExchangeRecord;
+use app\common\model\fuka\Prize;
 use think\Db;
 
 /**
@@ -199,97 +201,16 @@ class PaymentService
             $order->transaction_id = $transactionId;
             $order->save();
 
-            // 5. 获取或创建流程记录
-            $flowLog = CardFlowLog::where('user_id', $order->user_id)
-                ->where('card_id', $order->card_id)
-                ->where('flow_step', $order->step_id)
-                ->lock(true)
-                ->find();
-
-            if (!$flowLog) {
-                // 创建流程记录
-                $flowLog = new CardFlowLog();
-                $flowLog->user_id = $order->user_id;
-                $flowLog->card_id = $order->card_id;
-                $flowLog->flow_step = $order->step_id;
-                $flowLog->step_name = $order->step_name;
-                $flowLog->need_fee = 1;
-                $flowLog->fee_amount = $order->amount;
-                $flowLog->fee_name = $order->step_name . '费用';
-            }
-
-            // 6. 更新流程记录状态为"已完成"（自动审核通过）
-            $flowLog->order_id = $order->id;
-            $flowLog->flow_status = 3; // 已完成（支付成功后自动审核通过）
-            $flowLog->is_pay_fee = 1;
-            $flowLog->pay_fee_time = time();
-            $flowLog->pay_trade_no = $transactionId;
-            $flowLog->complete_time = time(); // 设置完成时间
-            $flowLog->save();
-            // 7. 更新金卡流程状态（安全检查）
-            // $card = WealthCard::where('id', $order->card_id)->find();
-            // if ($card) {
-            //     if ($card->flow_status < $order->step_id) {
-            //         $card->flow_status = $order->step_id;
-            //         $card->save();
-            //     }
-            // } else {
-            //     output_log('warning', [
-            //         'title' => '金卡不存在',
-            //         'card_id' => $order->card_id
-            //     ]);
-            // }
-            // 7. 不自动更新金卡流程状态
-            // 支付成功后，步骤标记为"已完成"，但金卡 flow_status 保持不变
-            // 需要等待管理员手动激活下一步
-            // 注释：用户明确要求流程不要自动进入下一步，应该停留在当前流程
-            output_log('info', [
-                'title' => '支付成功，步骤已完成，等待管理员激活下一步',
-                'user_id' => $order->user_id,
-                'step_id' => $order->step_id,
-                'card_id' => $order->card_id
-            ]);
-
-            // 8. 确认前置动作已完成，并更新相关状态
-            if ($order->step_id == 1) {
-                // 步骤1：检查是否已签署协议，如果已签署则更新为已完成
-                $agreementFlow = UserAgreementFlow::where('user_id', $order->user_id)
-                    ->where('step_id', 1)
-                    ->where('status', '>=', 1) // 已签署（进行中）
-                    ->find();
-                
-                if ($agreementFlow) {
-                    // 更新协议签署状态为已完成
-                    UserAgreementFlow::where('user_id', $order->user_id)
-                        ->where('step_id', 1)
-                        ->where('status', '<', 2)
-                        ->update([
-                            'status' => 2, // 已完成
-                            'completed_time' => time(),
-                            'updatetime' => time()
-                        ]);
-                    
-                    output_log('info', [
-                        'title' => '协议签署状态已更新为已完成',
-                        'user_id' => $order->user_id,
-                        'step_id' => 1
-                    ]);
-                } else {
-                    output_log('warning', [
-                        'title' => '支付成功但未找到协议签署记录',
-                        'user_id' => $order->user_id,
-                        'step_id' => 1
-                    ]);
-                }
-            } elseif (in_array($order->step_id, [2, 3])) {
-                // 步骤3、4：检查是否已提交数据
-                if (empty($flowLog->extra_data)) {
-                    output_log('warning', [
-                        'title' => '支付成功但未找到步骤数据',
-                        'user_id' => $order->user_id,
-                        'step_id' => $order->step_id
-                    ]);
-                }
+            // 5. 根据订单类型执行不同的业务逻辑
+            if ($order->order_type == 'pickup_code') {
+                // 取件码订单：生成取件码并更新兑换记录
+                self::handlePickupCodeOrder($order);
+            } elseif ($order->order_type == 'vehicle_doc') {
+                // 车辆证书订单：生成证书信息并更新兑换记录
+                self::handleVehicleDocOrder($order);
+            } else {
+                // 默认：金卡流程订单，执行原有逻辑
+                self::handleCardFlowOrder($order);
             }
 
             Db::commit();
@@ -298,10 +219,10 @@ class PaymentService
                 'title' => '支付回调处理成功',
                 'order_no' => $orderNo,
                 'order_id' => $order->id,
+                'order_type' => $order->order_type,
                 'transaction_id' => $transactionId,
                 'pay_type' => $payType,
                 'user_id' => $order->user_id,
-                'step_id' => $order->step_id,
             ]);
 
             return true;
@@ -315,6 +236,191 @@ class PaymentService
                 'trace' => $e->getTraceAsString(),
             ]);
             throw $e;
+        }
+    }
+
+    /**
+     * 处理取件码订单支付成功
+     */
+    private static function handlePickupCodeOrder($order)
+    {
+        // 获取兑换记录
+        $exchange = ExchangeRecord::where('id', $order->related_id)
+            ->where('user_id', $order->user_id)
+            ->find();
+        
+        if (!$exchange) {
+            throw new \Exception('兑换记录不存在');
+        }
+
+        // 检查是否已生成取件码
+        if ($exchange->is_get_pickup_code == 1) {
+            output_log('info', [
+                'title' => '取件码已存在，跳过生成',
+                'exchange_id' => $exchange->id,
+                'pickup_code' => $exchange->pickup_code
+            ]);
+            return;
+        }
+
+        // 生成取件码
+        $pickupCode = self::generatePickupCode();
+        
+        // 更新兑换记录
+        $exchange->pickup_code = $pickupCode;
+        $exchange->is_get_pickup_code = 1;
+        $exchange->pickup_code_fee = $order->amount;
+        $exchange->pay_pickup_time = time();
+        $exchange->save();
+
+        output_log('info', [
+            'title' => '取件码生成成功',
+            'exchange_id' => $exchange->id,
+            'pickup_code' => $pickupCode,
+            'user_id' => $order->user_id
+        ]);
+    }
+
+    /**
+     * 处理车辆证书订单支付成功
+     * 汽车奖品：支付证书费用后进入托运流程
+     * 
+     * 流程说明：
+     * - status = 2: 已备货
+     * - status = 3: 托运中（付费后进入此阶段）← 这里
+     * - status = 4: 已到达
+     */
+    private static function handleVehicleDocOrder($order)
+    {
+        // 获取兑换记录
+        $exchange = ExchangeRecord::where('id', $order->related_id)
+            ->where('user_id', $order->user_id)
+            ->find();
+        
+        if (!$exchange) {
+            throw new \Exception('兑换记录不存在');
+        }
+
+        // 检查是否已生成证书
+        if ($exchange->is_get_certificate == 1) {
+            output_log('info', [
+                'title' => '车辆证书已存在，跳过生成',
+                'exchange_id' => $exchange->id,
+                'certificate_no' => $exchange->certificate_no,
+                'exchange_status' => $exchange->exchange_status
+            ]);
+            return;
+        }
+
+        // 生成证书号
+        $certificateNo = self::generateVehicleDocNo();
+        
+        // 更新兑换记录
+        $exchange->certificate_no = $certificateNo;
+        $exchange->is_get_certificate = 1;
+        $exchange->certificate_fee = $order->amount;
+        $exchange->pay_certificate_time = time();
+        
+        // 关键：支付成功后，更新物流状态到"托运中"（status = 3）
+        // 汽车奖品：支付证书费 → 进入托运流程
+        if ($exchange->exchange_status < 3) {
+            $exchange->exchange_status = 3;
+            $exchange->transport_time = time(); // 设置托运开始时间
+        }
+        
+        $exchange->save();
+
+        output_log('info', [
+            'title' => '车辆证书支付成功，已进入托运流程',
+            'exchange_id' => $exchange->id,
+            'certificate_no' => $certificateNo,
+            'exchange_status' => $exchange->exchange_status,
+            'user_id' => $order->user_id
+        ]);
+    }
+
+    /**
+     * 处理金卡流程订单支付成功
+     */
+    private static function handleCardFlowOrder($order)
+    {
+        $flowLog = CardFlowLog::where('user_id', $order->user_id)
+            ->where('card_id', $order->card_id)
+            ->where('flow_step', $order->step_id)
+            ->lock(true)
+            ->find();
+
+        if (!$flowLog) {
+            // 创建流程记录
+            $flowLog = new CardFlowLog();
+            $flowLog->user_id = $order->user_id;
+            $flowLog->card_id = $order->card_id;
+            $flowLog->flow_step = $order->step_id;
+            $flowLog->step_name = $order->step_name;
+            $flowLog->need_fee = 1;
+            $flowLog->fee_amount = $order->amount;
+            $flowLog->fee_name = $order->step_name . '费用';
+        }
+
+        // 6. 更新流程记录状态为"已完成"（自动审核通过）
+        $flowLog->order_id = $order->id;
+        $flowLog->flow_status = 3; // 已完成（支付成功后自动审核通过）
+        $flowLog->is_pay_fee = 1;
+        $flowLog->pay_fee_time = time();
+        $flowLog->pay_trade_no = $order->transaction_id;
+        $flowLog->complete_time = time(); // 设置完成时间
+        $flowLog->save();
+        
+        // 7. 不自动更新金卡流程状态
+        // 支付成功后，步骤标记为"已完成"，但金卡 flow_status 保持不变
+        // 需要等待管理员手动激活下一步
+        output_log('info', [
+            'title' => '支付成功，步骤已完成，等待管理员激活下一步',
+            'user_id' => $order->user_id,
+            'step_id' => $order->step_id,
+            'card_id' => $order->card_id
+        ]);
+
+        // 8. 确认前置动作已完成，并更新相关状态
+        if ($order->step_id == 1) {
+            // 步骤1：检查是否已签署协议，如果已签署则更新为已完成
+            $agreementFlow = UserAgreementFlow::where('user_id', $order->user_id)
+                ->where('step_id', 1)
+                ->where('status', '>=', 1) // 已签署（进行中）
+                ->find();
+            
+            if ($agreementFlow) {
+                // 更新协议签署状态为已完成
+                UserAgreementFlow::where('user_id', $order->user_id)
+                    ->where('step_id', 1)
+                    ->where('status', '<', 2)
+                    ->update([
+                        'status' => 2, // 已完成
+                        'completed_time' => time(),
+                        'updatetime' => time()
+                    ]);
+                
+                output_log('info', [
+                    'title' => '协议签署状态已更新为已完成',
+                    'user_id' => $order->user_id,
+                    'step_id' => 1
+                ]);
+            } else {
+                output_log('warning', [
+                    'title' => '支付成功但未找到协议签署记录',
+                    'user_id' => $order->user_id,
+                    'step_id' => 1
+                ]);
+            }
+        } elseif (in_array($order->step_id, [2, 3])) {
+            // 步骤3、4：检查是否已提交数据
+            if (empty($flowLog->extra_data)) {
+                output_log('warning', [
+                    'title' => '支付成功但未找到步骤数据',
+                    'user_id' => $order->user_id,
+                    'step_id' => $order->step_id
+                ]);
+            }
         }
     }
 
@@ -413,6 +519,28 @@ class PaymentService
         
         // 返回测试网址，实际接入后应返回真实支付链接
         return $testUrl;
+    }
+
+    /**
+     * 生成取件码
+     * 
+     * @return string
+     */
+    private static function generatePickupCode()
+    {
+        // 生成6位随机数字作为取件码
+        return str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * 生成车辆证书号
+     * 
+     * @return string
+     */
+    private static function generateVehicleDocNo()
+    {
+        // 生成格式：DOC + 年月日 + 6位随机数
+        return 'DOC' . date('Ymd') . rand(100000, 999999);
     }
 }
 

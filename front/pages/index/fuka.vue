@@ -72,8 +72,14 @@
         <view class="progress-card">
           <!-- 进度标题和数字 -->
           <view class="progress-header">
-            <text class="progress-title">集福进度</text>
-            <text class="progress-number">{{ collectedTypes }}/5</text>
+            <view class="header-left">
+              <text class="progress-title">集福进度</text>
+              <text class="progress-number">{{ collectedTypes }}/5</text>
+            </view>
+            <view class="header-right" @click="goToRank">
+              <text class="header-link-text">排行榜</text>
+              <text class="header-link-icon">›</text>
+            </view>
           </view>
           
           <!-- 进度条 -->
@@ -128,59 +134,55 @@
         </view>
         
         <view class="prize-list">
-          <!-- 五福卡数量展示（移动至奖品列表内） -->
+          <!-- 五福卡数量展示与兑换记录入口 -->
           <view class="wufu-card-count prize-wufu-card-count">
-            <text class="wufu-count-label">拥有</text>
-            <text class="wufu-count-number">{{ wufuCardCount }}</text>
-            <text class="wufu-count-unit">个五福卡</text>
+            <view class="wufu-count-info">
+              <text class="wufu-count-label">拥有</text>
+              <text class="wufu-count-number">{{ wufuCardCount }}</text>
+              <text class="wufu-count-unit">个五福卡</text>
+            </view>
+            <view class="wufu-record-action" @click="goToExchangeRecords">
+              <text class="record-link-text">兑换记录</text>
+              <text class="record-link-icon">›</text>
+            </view>
           </view>
 
-          <!-- 商品卡片1：手机 -->
-          <view class="prize-card">
+          <!-- 动态渲染奖品列表 -->
+          <view 
+            v-for="prize in prizeList" 
+            :key="prize.id"
+            class="prize-card"
+            :class="{ 'disabled': wufuCardCount < prize.need_fuka_set }"
+          >
             <view class="prize-info">
-              <text class="prize-name">iPhone 15 Pro</text>
+              <text class="prize-name">{{ prize.prize_name }}</text>
               <view class="prize-condition-tag">
-                <text class="tag-text">1套五福卡</text>
+                <text class="tag-text">{{ prize.need_fuka_set }}套五福卡</text>
               </view>
             </view>
             <view class="prize-image">
-              <image src="/static/fuka/prize-phone.png" mode="aspectFit" class="prize-img" />
+              <image 
+                :src="prize.image" 
+                mode="aspectFill" 
+                class="prize-img"
+                @error="(e) => prize.image = '/static/fuka/default-prize.png'" 
+              />
             </view>
-            <button class="prize-btn" @click="goToExchange">
-              <text class="btn-text">兑换</text>
+            <button 
+              :class="['prize-btn', { 'prize-btn-disabled': prize.stock === 0 || wufuCardCount < prize.need_fuka_set }]"
+              :disabled="prize.stock === 0 || wufuCardCount < prize.need_fuka_set"
+              @click="goToExchange(prize)"
+            >
+              <text class="btn-text">
+                {{ prize.stock === 0 ? '未开放' : (wufuCardCount < prize.need_fuka_set ? '福卡不足' : '兑换') }}
+              </text>
             </button>
           </view>
           
-          <!-- 商品卡片2：现金红包 -->
-          <view class="prize-card">
-            <view class="prize-info">
-              <text class="prize-name">现金红包</text>
-              <view class="prize-condition-tag">
-                <text class="tag-text">2套五福卡</text>
-              </view>
-            </view>
-            <view class="prize-image">
-              <image src="/static/fuka/prize-cash.png" mode="aspectFit" class="prize-img" />
-            </view>
-            <button class="prize-btn" @click="goToExchange">
-              <text class="btn-text">兑换</text>
-            </button>
-          </view>
-          
-          <!-- 商品卡片3：惊喜礼包 -->
-          <view class="prize-card">
-            <view class="prize-info">
-              <text class="prize-name">惊喜礼包</text>
-              <view class="prize-condition-tag">
-                <text class="tag-text">3套五福卡</text>
-              </view>
-            </view>
-            <view class="prize-image">
-              <image src="/static/fuka/prize-gift.png" mode="aspectFit" class="prize-img" />
-            </view>
-            <button class="prize-btn" @click="goToExchange">
-              <text class="btn-text">兑换</text>
-            </button>
+          <!-- 无奖品提示 -->
+          <view v-if="prizeList.length === 0" class="prize-empty">
+            <text class="empty-icon">🎁</text>
+            <text class="empty-text">暂无可兑换奖品</text>
           </view>
         </view>
       </view>
@@ -315,6 +317,7 @@ const isCombining = ref(false) // 合成中状态
 const showCombineSuccess = ref(false) // 显示合成成功弹窗
 const showCombineError = ref(false) // 显示合成失败弹窗
 const combineErrorMsg = ref('') // 合成失败错误信息
+const prizeList = ref([]) // 奖品列表
 
 // 按固定顺序排列的福卡列表
 const sortedCards = computed(() => {
@@ -415,13 +418,31 @@ const loadPageData = async () => {
     await Promise.all([
       loadCardTypes(),
       loadChanceCount(),
-      loadStatistics()
+      loadStatistics(),
+      loadPrizeList()
     ])
   } catch (error) {
     console.error('加载页面数据失败', error)
     xxep.$helper.toast('加载失败，请稍后重试', 'error')
   } finally {
     loading.value = false
+  }
+}
+
+// 加载奖品列表
+const loadPrizeList = async () => {
+  try {
+    const res = await xxep.$api.card.getPrizeList()
+    if (res.code === 1) {
+      prizeList.value = (res.data || []).map(prize => ({
+        ...prize,
+        // 确保图片路径正确
+        image: prize.prize_image || prize.image || '/static/fuka/default-prize.png'
+      }))
+    }
+  } catch (error) {
+    console.error('加载奖品列表失败', error)
+    // 不显示错误提示，避免影响用户体验
   }
 }
 
@@ -547,6 +568,20 @@ const goToDraw = () => {
   })
 }
 
+// 跳转到排行榜
+const goToRank = () => {
+  uni.navigateTo({
+    url: '/pages/card/rank'
+  })
+}
+
+// 跳转到兑换记录
+const goToExchangeRecords = () => {
+  uni.navigateTo({
+    url: '/pages/exchange/records'
+  })
+}
+
 // 处理合成五福卡
 const handleCombine = async () => {
   if (isCombining.value || canMakeSets.value === 0) {
@@ -596,16 +631,119 @@ const closeCombineError = () => {
   combineErrorMsg.value = ''
 }
 
-// 跳转到兑换页面
-const goToExchange = () => {
+// 处理兑换奖品
+const goToExchange = async (prize = null) => {
   if (wufuCardCount.value === 0) {
     xxep.$helper.toast('请先合成五福卡', 'info')
     return
   }
   
-  uni.navigateTo({
-    url: '/pages/card/exchange'
-  })
+  // 检查库存
+  if (prize && prize.stock === 0) {
+    xxep.$helper.toast('该奖品暂未开放兑换', 'info')
+    return
+  }
+  
+  // 检查五福卡数量是否满足
+  if (prize && wufuCardCount.value < prize.need_fuka_set) {
+    xxep.$helper.toast(`需要${prize.need_fuka_set}套五福卡才能兑换此奖品`, 'info')
+    return
+  }
+  
+  // 判断奖品类型
+  if (!prize) {
+    // 没有指定奖品，跳转到兑换页面选择
+    uni.navigateTo({
+      url: '/pages/card/exchange'
+    })
+    return
+  }
+  
+  // prize_type: 0-现金, 1-手机, 2-汽车, 3-现金红包
+  if (prize.prize_type === 0 || prize.prize_type === 3) {
+    // 现金奖品：直接兑换，发放至金卡账户
+    await handleDirectExchange(prize)
+  } else {
+    // 实物奖品（手机、汽车）：跳转到兑换页面选择收货地址
+    uni.navigateTo({
+      url: `/pages/card/exchange?prize_id=${prize.id}`
+    })
+  }
+}
+
+// 直接兑换（现金红包）
+const handleDirectExchange = async (prize) => {
+  try {
+    // 显示确认弹窗
+    const confirmed = await new Promise((resolve) => {
+      uni.showModal({
+        title: '确认兑换',
+        content: `确认使用${prize.need_fuka_set}套五福卡兑换${prize.prize_name}吗？`,
+        confirmText: '确认兑换',
+        cancelText: '取消',
+        success: (res) => {
+          resolve(res.confirm)
+        }
+      })
+    })
+    
+    if (!confirmed) {
+      return
+    }
+    
+    // 显示加载中
+    uni.showLoading({
+      title: '兑换中...',
+      mask: true
+    })
+    
+    // 获取我的五福卡列表
+    const wufuRes = await xxep.$api.card.getMyWufuCards()
+    if (wufuRes.code !== 1 || !wufuRes.data?.list || wufuRes.data.list.length < prize.need_fuka_set) {
+      uni.hideLoading()
+      xxep.$helper.toast('五福卡数量不足', 'error')
+      return
+    }
+    
+    // 选择要使用的五福卡ID（按创建时间排序，使用最早的）
+    const wufuCardIds = wufuRes.data.list
+      .slice(0, prize.need_fuka_set)
+      .map(card => card.id)
+    
+    // 调用兑换接口
+    const res = await xxep.$api.card.exchangeCards({
+      prize_id: prize.id,
+      wufu_card_ids: wufuCardIds
+    })
+    
+    uni.hideLoading()
+    
+    if (res.code === 1) {
+      // 兑换成功
+      const prizeValueText = prize.prize_value ? `¥${prize.prize_value}` : ''
+      uni.showModal({
+        title: '兑换成功',
+        content: `恭喜您成功兑换${prize.prize_name}！${prizeValueText ? prizeValueText + '已' : '现金已'}发放到您的金卡余额中。`,
+        showCancel: false,
+        confirmText: '我知道了',
+        success: (modalRes) => {
+          // 可选：跳转到金卡页面查看余额
+        }
+      })
+      
+      // 刷新数据
+      await Promise.all([
+        loadStatistics(),
+        loadPrizeList()
+      ])
+    } else {
+      xxep.$helper.toast(res.msg || '兑换失败', 'error')
+    }
+  } catch (error) {
+    uni.hideLoading()
+    console.error('兑换失败', error)
+    xxep.$helper.toast(error.msg || '兑换失败，请稍后重试', 'error')
+  }
 }
 
 // 处理抽取福卡
@@ -698,11 +836,12 @@ const closeDrawResult = () => {
 // 页面标题
 // ==========================================================================
 .page-title {
-  font-size: 80rpx;
+  font-size: 64rpx;
   font-weight: 700;
   text-align: center;
-  margin-bottom: 48rpx;
-  letter-spacing: 12rpx;
+  margin-bottom: 40rpx;
+  margin-top: 20rpx;
+  letter-spacing: 10rpx;
   color: #FFEB3B;
   
   // 金色浮雕文字效果
@@ -716,18 +855,19 @@ const closeDrawResult = () => {
 // 福卡展示区域
 // ==========================================================================
 .cards-section {
-  background: rgba(255, 232, 214, 0.75);
-  backdrop-filter: blur(8rpx);
+  background: rgba(255, 232, 214, 0.85);
+  backdrop-filter: blur(12rpx);
   border-radius: 32rpx;
-  padding: 48rpx 32rpx;
-  margin-bottom: 32rpx;
-  border: 2rpx solid rgba(255, 107, 74, 0.25);
+  padding: 40rpx 24rpx;
+  margin-bottom: 24rpx;
+  border: 2rpx solid rgba(255, 107, 74, 0.3);
+  box-shadow: 0 8rpx 32rpx rgba(255, 107, 74, 0.15);
 }
 
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24rpx;
+  gap: 20rpx;
 }
 
 .card-item {
@@ -744,18 +884,25 @@ const closeDrawResult = () => {
   width: 100%;
   aspect-ratio: 0.75;
   margin-bottom: 12rpx;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   overflow: hidden;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
   
   // 未获得
-  background: rgba(255, 255, 255, 0.85);
-  border: 2rpx solid rgba(255, 107, 74, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  border: 3rpx solid rgba(255, 107, 74, 0.3);
 }
 
 .card-item.has-card .card-wrapper {
   // 已获得：金色渐变
   background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  border: 2rpx solid rgba(255, 215, 0, 0.5);
+  border: 3rpx solid rgba(255, 215, 0, 0.8);
+  box-shadow: 0 6rpx 20rpx rgba(255, 215, 0, 0.3);
+  
+  &:active {
+    box-shadow: 0 4rpx 16rpx rgba(255, 215, 0, 0.4);
+  }
 }
 
 .card-image {
@@ -840,16 +987,17 @@ const closeDrawResult = () => {
 // 进度显示区域
 // ==========================================================================
 .progress-section {
-  margin-bottom: 32rpx;
+  margin-bottom: 24rpx;
 }
 
 // 进度卡片
 .progress-card {
-  background: rgba(255, 232, 214, 0.75);
-  backdrop-filter: blur(8rpx);
+  background: rgba(255, 232, 214, 0.85);
+  backdrop-filter: blur(12rpx);
   border-radius: 32rpx;
   padding: 40rpx 32rpx;
-  border: 2rpx solid rgba(255, 107, 74, 0.25);
+  border: 2rpx solid rgba(255, 107, 74, 0.3);
+  box-shadow: 0 8rpx 32rpx rgba(255, 107, 74, 0.15);
 }
 
 // 进度头部
@@ -858,6 +1006,12 @@ const closeDrawResult = () => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24rpx;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
 }
 
 .progress-title {
@@ -870,12 +1024,40 @@ const closeDrawResult = () => {
 }
 
 .progress-number {
-  font-size: 48rpx;
+  font-size: 36rpx;
   font-weight: 700;
   color: #FF5722;
   text-shadow: 
     2rpx 2rpx 4rpx rgba(255, 255, 255, 0.8),
     -2rpx -2rpx 4rpx rgba(255, 107, 74, 0.5);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 8rpx 16rpx;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 24rpx;
+  border: 2rpx solid rgba(255, 107, 74, 0.3);
+  transition: all 0.3s ease;
+  
+  &:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.6);
+  }
+}
+
+.header-link-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #D32F2F;
+}
+
+.header-link-icon {
+  font-size: 28rpx;
+  font-weight: 300;
+  color: #FF5722;
 }
 
 // 进度条
@@ -1003,7 +1185,7 @@ const closeDrawResult = () => {
   align-items: center;
   justify-content: center;
   gap: 12rpx;
-  padding: 20rpx 24rpx;
+  // padding: 20rpx 24rpx;
   margin-top: 24rpx;
   
   // background: rgba(255, 255, 255, 0.5);
@@ -1023,7 +1205,7 @@ const closeDrawResult = () => {
 // 奖品兑换区域
 // ==========================================================================
 .prize-exchange-section {
-  margin-bottom: 32rpx;
+  margin-bottom: 24rpx;
 }
 
 .section-header {
@@ -1031,7 +1213,7 @@ const closeDrawResult = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16rpx;
+  gap: 12rpx;
 }
 
 // 五福卡数量展示
@@ -1041,16 +1223,28 @@ const closeDrawResult = () => {
   justify-content: center;
   gap: 8rpx;
   padding: 8rpx 0;
-  // background: rgba(255, 215, 0, 0.2);
   border-radius: 32rpx;
-  // border: 2rpx solid rgba(255, 215, 0, 0.4);
 }
 
 .prize-wufu-card-count {
   width: 100%;
   box-sizing: border-box;
-  justify-content: flex-start;
-  margin-bottom: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+  padding: 20rpx 28rpx;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12rpx);
+  border-radius: 28rpx;
+  border: 2rpx solid rgba(255, 107, 74, 0.35);
+  box-shadow: 0 4rpx 16rpx rgba(255, 107, 74, 0.1);
+}
+
+.wufu-count-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
 }
 
 .wufu-count-label {
@@ -1066,6 +1260,35 @@ const closeDrawResult = () => {
   text-shadow: 
     2rpx 2rpx 4rpx rgba(255, 255, 255, 0.8),
     -2rpx -2rpx 4rpx rgba(255, 107, 74, 0.5);
+}
+
+.wufu-record-action {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 8rpx 16rpx;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 20rpx;
+  border: 2rpx solid rgba(255, 107, 74, 0.3);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  
+  &:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.5);
+  }
+}
+
+.record-link-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #D32F2F;
+}
+
+.record-link-icon {
+  font-size: 28rpx;
+  font-weight: 300;
+  color: #FF5722;
 }
 
 .wufu-count-unit {
@@ -1117,19 +1340,47 @@ const closeDrawResult = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20rpx;
-  padding: 24rpx 28rpx;
+  gap: 24rpx;
+  padding: 28rpx 32rpx;
+  min-height: 160rpx;
   
   background: rgba(255, 232, 214, 0.95);
   border-radius: 24rpx;
   border: 1rpx solid rgba(255, 107, 74, 0.2);
+  box-shadow: 0 2rpx 8rpx rgba(255, 107, 74, 0.1);
   
   transition: all 0.3s ease;
   
-  &:active {
+  &:active:not(.disabled) {
     opacity: 0.9;
     transform: scale(0.98);
   }
+  
+  &.disabled {
+    opacity: 0.6;
+    background: rgba(200, 200, 200, 0.3);
+    box-shadow: none;
+  }
+}
+
+.prize-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 0;
+  gap: 24rpx;
+}
+
+.prize-empty .empty-icon {
+  font-size: 96rpx;
+  opacity: 0.5;
+}
+
+.prize-empty .empty-text {
+  font-size: 28rpx;
+  color: #D32F2F;
+  opacity: 0.7;
 }
 
 // 左侧文字信息
@@ -1137,14 +1388,15 @@ const closeDrawResult = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  gap: 12rpx;
   min-width: 0;
 }
 
 .prize-name {
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 700;
   color: #D32F2F;
+  line-height: 1.4;
   text-shadow: 
     1rpx 1rpx 2rpx rgba(255, 255, 255, 0.8),
     -1rpx -1rpx 2rpx rgba(255, 107, 74, 0.4);
@@ -1156,11 +1408,12 @@ const closeDrawResult = () => {
 .prize-condition-tag {
   display: inline-flex;
   align-self: flex-start;
-  padding: 6rpx 16rpx;
-  border-radius: 20rpx;
+  padding: 8rpx 18rpx;
+  border-radius: 24rpx;
   
   // 金色徽章
-  background: #FFD700;
+  background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%);
+  box-shadow: 0 2rpx 8rpx rgba(255, 215, 0, 0.3);
 }
 
 .tag-text {
@@ -1172,14 +1425,15 @@ const closeDrawResult = () => {
 
 // 中间图片
 .prize-image {
-  width: 100rpx;
-  height: 100rpx;
+  width: 140rpx;
+  height: 140rpx;
   flex-shrink: 0;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   overflow: hidden;
   
-  background: rgba(255, 255, 255, 0.95);
-  border: 1rpx solid rgba(255, 107, 74, 0.2);
+  background: rgba(255, 255, 255, 0.8);
+  border: 2rpx solid rgba(255, 107, 74, 0.25);
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 74, 0.15);
   
   display: flex;
   align-items: center;
@@ -1189,27 +1443,42 @@ const closeDrawResult = () => {
 .prize-img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 // 右侧按钮
 .prize-btn {
   flex-shrink: 0;
-  padding: 20rpx 32rpx;
-  border-radius: 48rpx;
+  padding: 16rpx 24rpx;
+  border-radius: 40rpx;
   border: none;
+  min-width: 120rpx;
   
   background: linear-gradient(135deg, #FF5722 0%, #FF8A65 100%);
+  box-shadow: 0 4rpx 12rpx rgba(255, 87, 34, 0.3);
   
   transition: all 0.3s ease;
   
-  &:active {
+  &:active:not(.prize-btn-disabled) {
     opacity: 0.9;
     transform: scale(0.95);
   }
 }
 
+.prize-btn-disabled {
+  background: linear-gradient(135deg, #BDBDBD 0%, #bebbbb 100%) !important;
+  opacity: 1 !important;
+  box-shadow: none !important;
+  
+  .btn-text {
+    color: #FFFFFF !important;
+    text-shadow: none !important;
+    opacity: 0.9;
+  }
+}
+
 .prize-btn .btn-text {
-  font-size: 26rpx;
+  font-size: 24rpx;
   font-weight: 600;
   color: #FFFFFF;
   white-space: nowrap;

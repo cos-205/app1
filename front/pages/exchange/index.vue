@@ -66,12 +66,12 @@
               
               <view v-if="prize.prize_type === 1" class="requirement-tips">
                 <text class="tips-icon">📱</text>
-                <text class="tips-text">需付费获取取件码</text>
+                <text class="tips-text">需获取取件码</text>
               </view>
               
               <view v-if="prize.prize_type === 2" class="requirement-tips">
                 <text class="tips-icon">🚗</text>
-                <text class="tips-text">需付费获取车辆证书</text>
+                <text class="tips-text">需获取车辆证书</text>
               </view>
             </view>
 
@@ -102,8 +102,8 @@
           <text class="rule-item">• 2套五福卡可兑换现金奖励</text>
           <text class="rule-item">• 3套五福卡可兑换谢谢参与奖</text>
           <text class="rule-item">• 兑换后福卡将被消耗,不可恢复</text>
-          <text class="rule-item">• 手机奖品需付费获取取件码</text>
-          <text class="rule-item">• 汽车奖品需付费获取车辆证书</text>
+          <text class="rule-item">• 手机奖品需获取取件码</text>
+          <text class="rule-item">• 汽车奖品需获取车辆证书</text>
         </view>
       </view>
     </view>
@@ -137,8 +137,8 @@
         <view class="confirm-tips">
           <text class="tips-title">温馨提示</text>
           <text class="tips-item">• 兑换后福卡将被消耗,不可恢复</text>
-          <text class="tips-item" v-if="selectedPrize.prize_type === 1">• 手机奖品需付费获取取件码</text>
-          <text class="tips-item" v-if="selectedPrize.prize_type === 2">• 汽车奖品需付费获取车辆证书</text>
+          <text class="tips-item" v-if="selectedPrize.prize_type === 1">• 手机奖品需获取取件码</text>
+          <text class="tips-item" v-if="selectedPrize.prize_type === 2">• 汽车奖品需获取车辆证书</text>
           <text class="tips-item">• 奖品将在审核通过后发货</text>
         </view>
 

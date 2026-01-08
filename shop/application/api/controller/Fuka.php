@@ -11,6 +11,9 @@ use app\common\model\fuka\Rank as FukaRank;
 use app\common\model\fuka\ExchangeRecord as FukaExchangeRecord;
 use app\common\model\fuka\Prize as FukaPrize;
 use app\common\model\fuka\WufuCard as FukaWufuCard;
+use app\common\model\fuka\WealthCard as FukaWealthCard;
+use app\common\model\fuka\CardBalanceLog as FukaCardBalanceLog;
+use app\common\model\fuka\CardOrder;
 use think\Db;
 
 /**
@@ -673,9 +676,63 @@ class Fuka extends Api
             $exchangeRecord->prize_type = $prize->prize_type;
             $exchangeRecord->fuka_set_count = $prize->need_fuka_set;
             $exchangeRecord->fuka_ids = json_encode($allFukaIds);
-            $exchangeRecord->exchange_status = 0; // 待审核
             $exchangeRecord->exchange_time = time();
+            
+            // 设置兑换状态
+            if (in_array($prize->prize_type, [0, 3])) {
+                // 现金奖品直接设置为已发放
+                $exchangeRecord->exchange_status = 1;
+                $exchangeRecord->audit_time = time();
+            } else {
+                // 实物奖品需要审核
+                $exchangeRecord->exchange_status = 0;
+            }
+            
+            // 先保存兑换记录，获得ID（后续余额日志需要用到）
             $exchangeRecord->save();
+            
+            // 现金奖品(prize_type = 0 或 3)直接发放至金卡账户
+            if (in_array($prize->prize_type, [0, 3])) {
+                // 获取用户金卡
+                $wealthCard = FukaWealthCard::where('user_id', $user->id)
+                    ->lock(true)
+                    ->find();
+                
+                if (!$wealthCard) {
+                    throw new \Exception('您还没有激活的金卡，请先办理金卡');
+                }
+                
+                // 增加金卡余额
+                $beforeBalance = $wealthCard->card_balance;
+                $changeAmount = $prize->prize_value; // 奖品金额
+                $wealthCard->card_balance += $changeAmount;
+                $wealthCard->save();
+                
+                // 记录余额变动日志（此时exchangeRecord已有ID）
+                $balanceLog = new FukaCardBalanceLog();
+                $balanceLog->user_id = $user->id;
+                $balanceLog->card_id = $wealthCard->id;
+                $balanceLog->change_type = 1; // 1=增加
+                $balanceLog->change_money = $changeAmount;
+                $balanceLog->before_balance = $beforeBalance;
+                $balanceLog->after_balance = $wealthCard->card_balance;
+                $balanceLog->source_type = 'fuka_exchange'; // 福卡兑换
+                $balanceLog->source_id = $exchangeRecord->id; // 关联兑换记录ID
+                $balanceLog->remark = "福卡兑换现金奖品：{$prize->prize_name}";
+                $balanceLog->save();
+                
+                output_log('info', [
+                    'title' => '福卡兑换现金奖品，直接发放至金卡账户',
+                    'user_id' => $user->id,
+                    'prize_id' => $prize->id,
+                    'prize_name' => $prize->prize_name,
+                    'amount' => $changeAmount,
+                    'card_id' => $wealthCard->id,
+                    'before_balance' => $beforeBalance,
+                    'after_balance' => $wealthCard->card_balance,
+                    'exchange_id' => $exchangeRecord->id
+                ]);
+            }
 
             // 标记五福卡为已使用
             FukaWufuCard::where('id', 'in', $wufuCardIds)
@@ -710,101 +767,24 @@ class Fuka extends Api
             Db::commit();
         } catch (\Exception $e) {
             Db::rollback();
-            // 记录错误信息（不使用\think\Log）
-            // 错误信息已通过异常捕获，直接返回错误提示
-            $this->error('兑换失败，请稍后重试');
+            
+            // 记录详细错误日志
+            output_log('error', [
+                'title' => '福卡兑换失败',
+                'user_id' => $user->id,
+                'prize_id' => $prizeId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // 返回具体错误信息
+            $this->error($e->getMessage());
         }
         
         $this->success('兑换成功', ['exchange_record' => $exchangeRecord]);
     }
 
-    /**
-     * 检查是否可以兑换(内部方法)
-     * 
-     * @param array $cards 用户福卡列表
-     * @param int $needSets 需要的套数
-     * @return bool
-     */
-    private function checkCanExchangeWithCards($cards, $needSets)
-    {
-        // 统计各类型福卡数量
-        $typeCount = [];
-        foreach ($cards as $card) {
-            $typeCode = $card->type_code;
-            if (!isset($typeCount[$typeCode])) {
-                $typeCount[$typeCode] = 0;
-            }
-            $typeCount[$typeCode]++;
-        }
 
-        // 检查是否有万能福
-        $universalCount = isset($typeCount['wanneng']) ? $typeCount['wanneng'] : 0;
-
-        // 五福卡需要的类型（爱国、友善、敬业、和谐、富强）
-        $requiredTypes = ['aiguo', 'youshan', 'jingye', 'hexie', 'fuqiang'];
-        
-        // 计算可以组成多少套
-        $canMakeSets = 0;
-        while (true) {
-            $needUniversal = 0;
-            foreach ($requiredTypes as $type) {
-                $count = isset($typeCount[$type]) ? $typeCount[$type] : 0;
-                if ($count <= $canMakeSets) {
-                    $needUniversal += ($canMakeSets + 1 - $count);
-                }
-            }
-            
-            if ($needUniversal <= $universalCount) {
-                $canMakeSets++;
-            } else {
-                break;
-            }
-        }
-
-        return $canMakeSets >= $needSets;
-    }
-
-    /**
-     * 选择用于兑换的福卡
-     * 
-     * @param array $cards 用户福卡列表
-     * @param int $needSets 需要的套数
-     * @return array
-     */
-    private function selectCardsForExchange($cards, $needSets)
-    {
-        $selectedCards = [];
-        $requiredTypes = ['aiguo', 'youshan', 'jingye', 'hexie', 'fuqiang'];
-        
-        // 按类型分组
-        $cardsByType = [];
-        foreach ($cards as $card) {
-            $typeCode = $card->type_code;
-            if (!isset($cardsByType[$typeCode])) {
-                $cardsByType[$typeCode] = [];
-            }
-            $cardsByType[$typeCode][] = $card;
-        }
-
-        // 为每套选择福卡
-        for ($i = 0; $i < $needSets; $i++) {
-            foreach ($requiredTypes as $type) {
-                // 优先使用对应类型的福卡
-                if (isset($cardsByType[$type]) && count($cardsByType[$type]) > 0) {
-                    $selectedCards[] = array_shift($cardsByType[$type]);
-                } else {
-                    // 使用万能福
-                    if (isset($cardsByType['wanneng']) && count($cardsByType['wanneng']) > 0) {
-                        $selectedCards[] = array_shift($cardsByType['wanneng']);
-                    } else {
-                        throw new \Exception('福卡不足');
-                    }
-                }
-            }
-        }
-
-        return $selectedCards;
-    }
 
     /**
      * 获取集福机会数量
@@ -837,9 +817,16 @@ class Fuka extends Api
     public function prizeList()
     {
         $list = FukaPrize::where('status', 'normal')
-            ->where('stock', '>', 0)
             ->order('weigh desc,id asc')
             ->select();
+
+        // 处理图片URL和返回字段
+        foreach ($list as &$item) {
+            $item['prize_image'] = cdnurl($item['prize_image'],true);
+            // 添加前端需要的字段别名
+            $item['required_set_count'] = $item['need_fuka_set'];
+        }
+
 
         $this->success('获取成功', $list);
     }
@@ -908,9 +895,38 @@ class Fuka extends Api
             }
         }
         
-        $list = $query->order('createtime desc')->paginate();
+        $result = $query->order('createtime desc')->paginate();
+        
+        // 获取所有奖品ID
+        $prizeIds = array_unique(array_column($result->items(), 'prize_id'));
+        $prizes = FukaPrize::where('id', 'in', $prizeIds)->column('*', 'id');
+        
+        foreach ($result as &$record) {
+            if (isset($prizes[$record['prize_id']])) {
+                $prize = $prizes[$record['prize_id']];
+                $record['prize_name'] = $prize['prize_name'] ?? '';
+                $record['prize_description'] = $prize['prize_description'] ?? '';
+                $record['prize_image'] = cdnurl($prize['prize_image'],true);
+            }
+            
+            // 安全处理：未支付时不返回取件码
+            if ($record['is_get_pickup_code'] != 1) {
+                $record['pickup_code'] = null;
+            }
+            
+            // 安全处理：未支付时不返回车辆证书
+            if ($record['is_get_certificate'] != 1) {
+                $record['certificate_no'] = null;
+            }
+            
+            // 添加字段别名，兼容前端
+            $record['doc_no'] = $record['certificate_no'];
+            $record['is_get_doc'] = $record['is_get_certificate'];
+            $record['doc_fee'] = $record['certificate_fee'];
+            $record['pay_doc_time'] = $record['pay_certificate_time'];
+        }
 
-        $this->success('获取成功', $list);
+        $this->success('获取成功', $result);
     }
 
     /**
@@ -940,6 +956,36 @@ class Fuka extends Api
         if (!$record) {
             $this->error('兑换记录不存在');
         }
+
+        // 获取奖品信息
+        $prize = FukaPrize::get($record->prize_id);
+        
+        // 将奖品信息合并到记录中
+        if ($prize) {
+            $record['prize_name'] = $prize->prize_name ?? '';
+            $record['prize_description'] = $prize->prize_description ?? '';
+            $record['prize_image'] = cdnurl($prize->prize_image,true);
+            
+            // 添加费用信息
+            $record['pickup_code_fee'] = $prize->pickup_code_fee ?? 0;
+            $record['certificate_fee'] = $prize->certificate_fee ?? 0;
+        }
+
+        // 安全处理：未支付时不返回取件码
+        if ($record->is_get_pickup_code != 1) {
+            $record['pickup_code'] = null; // 明确设置为null
+        }
+        
+        // 安全处理：未支付时不返回车辆证书
+        if ($record->is_get_certificate != 1) {
+            $record['certificate_no'] = null; // 明确设置为null
+        }
+        
+        // 添加字段别名，兼容前端
+        $record['doc_no'] = $record['certificate_no'];
+        $record['is_get_doc'] = $record['is_get_certificate'];
+        $record['doc_fee'] = $record['certificate_fee'];
+        $record['pay_doc_time'] = $record['pay_certificate_time'];
 
         $this->success('获取成功', $record);
     }
@@ -1020,27 +1066,31 @@ class Fuka extends Api
             $this->error('该奖品不需要取件码');
         }
 
-        // 检查是否已获取
-        if ($exchange->is_get_pickup_code == 1) {
-            $this->success('获取成功', [
-                'pickup_code' => $exchange->pickup_code,
-                'fee' => $exchange->pickup_code_fee
-            ]);
-        }
-
         // 获取奖品信息
         $prize = FukaPrize::get($exchange->prize_id);
         if (!$prize) {
             $this->error('奖品信息不存在');
         }
 
+        // 检查是否已支付并获取
+        if ($exchange->is_get_pickup_code == 1) {
+            // 已支付，返回取件码
+            $this->success('获取成功', [
+                'pickup_code' => $exchange->pickup_code,
+                'fee' => $exchange->pickup_code_fee,
+                'need_pay' => false,
+                'is_paid' => true
+            ]);
+        }
+
         // 检查是否需要付费
         if ($prize->need_pickup_code && $prize->pickup_code_fee > 0) {
-            // 需要付费，返回费用信息
+            // 需要付费，不返回取件码，只返回费用信息
             $this->success('需要付费获取', [
                 'need_pay' => true,
                 'fee' => $prize->pickup_code_fee,
-                'pickup_code' => ''
+                'pickup_code' => null, // 明确返回null，前端判断
+                'is_paid' => false
             ]);
         } else {
             // 免费获取，直接生成取件码
@@ -1057,7 +1107,9 @@ class Fuka extends Api
                 
                 $this->success('获取成功', [
                     'pickup_code' => $pickupCode,
-                    'fee' => 0
+                    'fee' => 0,
+                    'need_pay' => false,
+                    'is_paid' => true
                 ]);
             } catch (\Exception $e) {
                 Db::rollback();
@@ -1067,14 +1119,14 @@ class Fuka extends Api
     }
 
     /**
-     * 支付取件码费用
+     * 创建取件码支付订单
      * 
      * @ApiMethod (POST)
-     * @ApiRoute  (/api/fuka/payPickupCode)
+     * @ApiRoute  (/api/fuka/createPickupCodeOrder)
      * @ApiParams (name="exchange_id", type="integer", required=true, description="兑换记录ID")
-     * @ApiReturn ({'code':'1','msg':'支付成功','data':{'pickup_code':''}})
+     * @ApiReturn ({'code':'1','msg':'创建成功','data':{'order_id':0,'order_no':'','amount':0}})
      */
-    public function payPickupCode()
+    public function createPickupCodeOrder()
     {
         $user = $this->auth->getUser();
         if (!$user) {
@@ -1097,9 +1149,7 @@ class Fuka extends Api
 
         // 检查是否已支付
         if ($exchange->is_get_pickup_code == 1) {
-            $this->success('已获取', [
-                'pickup_code' => $exchange->pickup_code
-            ]);
+            $this->error('已获取取件码，无需重复支付');
         }
 
         // 获取奖品信息
@@ -1108,27 +1158,67 @@ class Fuka extends Api
             $this->error('该奖品不需要付费获取取件码');
         }
 
-        // TODO: 这里应该调用支付接口，暂时直接生成取件码
+        // 检查是否已有未支付订单
+        $existOrder = \app\common\model\fuka\CardOrder::where('user_id', $user->id)
+            ->where('order_type', 'pickup_code')
+            ->where('related_id', $exchangeId)
+            ->where('pay_status', 0)
+            ->where('createtime', '>', time() - 1800) // 30分钟内
+            ->find();
+        
+        if ($existOrder) {
+            $this->success('订单已存在', [
+                'order_id' => $existOrder->id,
+                'order_no' => $existOrder->order_no,
+                'amount' => $existOrder->amount
+            ]);
+        }
+
+        // 创建支付订单
         Db::startTrans();
         try {
-            $pickupCode = $this->generatePickupCode();
-            $exchange->pickup_code = $pickupCode;
-            $exchange->is_get_pickup_code = 1;
-            $exchange->pickup_code_fee = $prize->pickup_code_fee;
-            $exchange->pay_pickup_time = time();
-            $exchange->save();
+            $orderNo = \app\common\model\fuka\CardOrder::generateOrderNo();
+            
+            $order = new \app\common\model\fuka\CardOrder();
+            $order->order_no = $orderNo;
+            $order->merchant_trade_no = 'PICKUP_' . $orderNo;
+            $order->user_id = $user->id;
+            $order->order_type = 'pickup_code'; // 订单类型：取件码
+            $order->related_id = $exchangeId; // 关联兑换记录ID
+            $order->step_name = '取件码费用';
+            $order->amount = $prize->pickup_code_fee;
+            $order->pay_status = 0;
+            $order->save();
 
             Db::commit();
             
-            $this->success('支付成功', [
-                'pickup_code' => $pickupCode,
-                'fee' => $prize->pickup_code_fee
+            output_log('info', [
+                'title' => '创建取件码支付订单',
+                'user_id' => $user->id,
+                'exchange_id' => $exchangeId,
+                'order_id' => $order->id,
+                'order_no' => $orderNo,
+                'amount' => $prize->pickup_code_fee
             ]);
+            
+            
         } catch (\Exception $e) {
             Db::rollback();
-            $this->error('支付失败，请稍后重试');
+            output_log('error', [
+                'title' => '创建取件码支付订单失败',
+                'user_id' => $user->id,
+                'exchange_id' => $exchangeId,
+                'error' => $e->getMessage()
+            ]);
+            $this->error('创建订单失败，请稍后重试');
         }
+        $this->success('创建成功', [
+            'order_id' => $order->id,
+            'order_no' => $orderNo,
+            'amount' => $prize->pickup_code_fee
+        ]);
     }
+    
 
     /**
      * 获取证件（付费获取，用于汽车奖品）
@@ -1164,27 +1254,31 @@ class Fuka extends Api
             $this->error('该奖品不需要证件');
         }
 
-        // 检查是否已获取
-        if ($exchange->is_get_certificate == 1) {
-            $this->success('获取成功', [
-                'certificate_no' => $exchange->certificate_no,
-                'fee' => $exchange->certificate_fee
-            ]);
-        }
-
         // 获取奖品信息
         $prize = FukaPrize::get($exchange->prize_id);
         if (!$prize) {
             $this->error('奖品信息不存在');
         }
 
+        // 检查是否已支付并获取
+        if ($exchange->is_get_certificate == 1) {
+            // 已支付，返回证书号
+            $this->success('获取成功', [
+                'certificate_no' => $exchange->certificate_no,
+                'fee' => $exchange->certificate_fee,
+                'need_pay' => false,
+                'is_paid' => true
+            ]);
+        }
+
         // 检查是否需要付费
         if ($prize->need_certificate && $prize->certificate_fee > 0) {
-            // 需要付费，返回费用信息
+            // 需要付费，不返回证书号，只返回费用信息
             $this->success('需要付费获取', [
                 'need_pay' => true,
                 'fee' => $prize->certificate_fee,
-                'certificate_no' => ''
+                'certificate_no' => null, // 明确返回null
+                'is_paid' => false
             ]);
         } else {
             // 免费获取，直接生成证件编号
@@ -1201,7 +1295,9 @@ class Fuka extends Api
                 
                 $this->success('获取成功', [
                     'certificate_no' => $certificateNo,
-                    'fee' => 0
+                    'fee' => 0,
+                    'need_pay' => false,
+                    'is_paid' => true
                 ]);
             } catch (\Exception $e) {
                 Db::rollback();
@@ -1211,14 +1307,14 @@ class Fuka extends Api
     }
 
     /**
-     * 支付证件费用
+     * 创建车辆证书支付订单
      * 
      * @ApiMethod (POST)
-     * @ApiRoute  (/api/fuka/payCertificate)
+     * @ApiRoute  (/api/fuka/createVehicleDocOrder)
      * @ApiParams (name="exchange_id", type="integer", required=true, description="兑换记录ID")
-     * @ApiReturn ({'code':'1','msg':'支付成功','data':{'certificate_no':''}})
+     * @ApiReturn ({'code':'1','msg':'创建成功','data':{'order_id':0,'order_no':'','amount':0}})
      */
-    public function payCertificate()
+    public function createVehicleDocOrder()
     {
         $user = $this->auth->getUser();
         if (!$user) {
@@ -1241,37 +1337,87 @@ class Fuka extends Api
 
         // 检查是否已支付
         if ($exchange->is_get_certificate == 1) {
-            $this->success('已获取', [
-                'certificate_no' => $exchange->certificate_no
-            ]);
+            $this->error('已获取车辆证书，无需重复支付');
         }
 
         // 获取奖品信息
         $prize = FukaPrize::get($exchange->prize_id);
         if (!$prize || !$prize->need_certificate || $prize->certificate_fee <= 0) {
-            $this->error('该奖品不需要付费获取证件');
+            $this->error('该奖品不需要付费获取证书');
         }
 
-        // TODO: 这里应该调用支付接口，暂时直接生成证件编号
+        // 检查是否已有未支付订单
+        $existOrder = CardOrder::where('user_id', $user->id)
+            ->where('order_type', 'vehicle_doc')
+            ->where('related_id', $exchangeId)
+            ->where('pay_status', 0)
+            ->where('createtime', '>', time() - 1800) // 30分钟内
+            ->find();
+        
+        if ($existOrder) {
+            $this->success('订单已存在', [
+                'order_id' => $existOrder->id,
+                'order_no' => $existOrder->order_no,
+                'amount' => $existOrder->amount
+            ]);
+        }
+
+        // 创建支付订单
         Db::startTrans();
         try {
-            $certificateNo = $this->generateCertificateNo();
-            $exchange->certificate_no = $certificateNo;
-            $exchange->is_get_certificate = 1;
-            $exchange->certificate_fee = $prize->certificate_fee;
-            $exchange->pay_certificate_time = time();
-            $exchange->save();
+            $orderNo = CardOrder::generateOrderNo();
+            
+            $order = new CardOrder();
+            $order->order_no = $orderNo;
+            $order->merchant_trade_no = 'VEHICLE_DOC_' . $orderNo;
+            $order->user_id = $user->id;
+            $order->order_type = 'vehicle_doc'; // 订单类型：车辆证书
+            $order->related_id = $exchangeId; // 关联兑换记录ID
+            $order->step_name = '车辆证书费用';
+            $order->amount = $prize->certificate_fee;
+            $order->pay_status = 0;
+            $order->save();
 
             Db::commit();
             
-            $this->success('支付成功', [
-                'certificate_no' => $certificateNo,
-                'fee' => $prize->certificate_fee
+            output_log('info', [
+                'title' => '创建车辆证书支付订单',
+                'user_id' => $user->id,
+                'exchange_id' => $exchangeId,
+                'order_id' => $order->id,
+                'order_no' => $orderNo,
+                'amount' => $prize->certificate_fee
+            ]);
+            
+            $this->success('创建成功', [
+                'order_id' => $order->id,
+                'order_no' => $orderNo,
+                'amount' => $prize->certificate_fee
             ]);
         } catch (\Exception $e) {
             Db::rollback();
-            $this->error('支付失败，请稍后重试');
+            output_log('error', [
+                'title' => '创建车辆证书支付订单失败',
+                'user_id' => $user->id,
+                'exchange_id' => $exchangeId,
+                'error' => $e->getMessage()
+            ]);
+            $this->error('创建订单失败，请稍后重试');
         }
+    }
+    
+    /**
+     * 支付证件费用（兼容旧接口，已废弃）
+     * 
+     * @ApiMethod (POST)
+     * @ApiRoute  (/api/fuka/payCertificate)
+     * @ApiParams (name="exchange_id", type="integer", required=true, description="兑换记录ID")
+     * @ApiReturn ({'code':'1','msg':'请使用createVehicleDocOrder创建订单','data':{}})
+     * @deprecated 请使用createVehicleDocOrder创建订单，然后调用Card/getPaymentParams获取支付参数
+     */
+    public function payCertificate()
+    {
+        $this->error('该接口已废弃，请使用createVehicleDocOrder创建订单，然后调用Card/getPaymentParams获取支付参数');
     }
 
     /**
@@ -1281,8 +1427,8 @@ class Fuka extends Api
      */
     private function generatePickupCode()
     {
-        // 生成4位数字取件码
-        return str_pad(mt_rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+        // 生成6位数字取件码
+        return str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
     }
 
     /**

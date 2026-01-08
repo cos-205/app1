@@ -31,8 +31,11 @@
           <view class="record-header">
             <view class="record-title">
               <text class="prize-name">{{ record.prize_name }}</text>
-              <view class="status-badge" :class="['status-' + record.exchange_status]">
-                <text>{{ getStatusText(record.exchange_status) }}</text>
+              <!-- 查看详情按钮 -->
+              <view class="info-item info-item-button">
+                <view class="detail-btn" @click.stop="viewDetail(record)">
+                  查看详情
+                </view>
               </view>
             </view>
             <view class="record-time">{{ formatTime(record.exchange_time) }}</view>
@@ -57,6 +60,8 @@
                 <text class="info-value">{{ record.fuka_set_count }}套</text>
               </view>
               
+              
+              
               <view v-if="record.logistics_no" class="info-item">
                 <text class="info-label">物流单号：</text>
                 <text class="info-value logistics">{{ record.logistics_no }}</text>
@@ -68,7 +73,7 @@
                   {{ record.pickup_code }}
                 </text>
                 <button v-else class="pay-btn" @click.stop="handlePayCode(record)">
-                  付费获取
+                  获取
                 </button>
               </view>
               
@@ -79,17 +84,11 @@
                   class="pay-btn" 
                   @click.stop="handlePayDoc(record)"
                 >
-                  付费获取
+                  获取
                 </button>
                 <text v-else class="info-value success">已获取</text>
               </view>
             </view>
-          </view>
-
-          <view class="record-footer">
-            <button class="detail-btn" @click.stop="viewDetail(record)">
-              查看详情
-            </button>
           </view>
         </view>
       </view>
@@ -168,17 +167,45 @@ const loadRecordList = async () => {
       status: currentFilter.value
     })
     
+    console.log('兑换记录API返回：', res)
+    
     if (res.code === 1) {
-      const data = res.data || {}
-      const list = data.list || []
+      // 兼容不同的返回格式
+      let list = []
+      
+      if (Array.isArray(res.data)) {
+        // 直接返回数组
+        list = res.data
+      } else if (res.data && Array.isArray(res.data.data)) {
+        // 分页数据格式：{ data: [], total: 0 }
+        list = res.data.data
+      } else if (res.data && Array.isArray(res.data.list)) {
+        // 列表格式：{ list: [], total: 0 }
+        list = res.data.list
+      }
+      
+      // 格式化数据，统一字段名称
+      const formattedList = list.map(record => ({
+        ...record,
+        // 统一图片字段
+        prize_image: record.prize_image || record.image || '',
+        // 统一时间字段（兑换时间）
+        exchange_time: record.exchange_time || record.createtime || record.create_time || 0,
+        // 统一套数字段
+        fuka_set_count: record.fuka_set_count || record.need_fuka_set || record.set_count || 0,
+        // 统一状态字段
+        exchange_status: record.exchange_status !== undefined ? record.exchange_status : record.status
+      }))
       
       if (currentPage.value === 1) {
-        recordList.value = list
+        recordList.value = formattedList
       } else {
-        recordList.value = [...recordList.value, ...list]
+        recordList.value = [...recordList.value, ...formattedList]
       }
       
       hasMore.value = list.length >= pageSize.value
+      
+      console.log('格式化后的记录列表：', recordList.value)
     } else {
       xxep.$helper.toast(res.msg || '加载失败', 'error')
     }
@@ -221,8 +248,9 @@ const handlePayDoc = (record) => {
 
 // 跳转到兑换页面
 const goToExchange = () => {
+  // 跳转到福卡主页面
   uni.navigateTo({
-    url: '/pages/exchange/index'
+    url: '/pages/index/fuka'
   })
 }
 
@@ -466,37 +494,43 @@ const getStatusText = (status) => {
 }
 
 .pay-btn {
-  padding: 8rpx 24rpx; // --spacing-xs
+  padding: 6rpx 20rpx; // --spacing-xs（更紧凑）
   background: linear-gradient(135deg, #FF9800 0%, #FB8C00 100%); // --status-warning
   color: #FFFFFF;
   border: none;
-  border-radius: 24rpx; // --radius
-  font-size: 22rpx; // --font-size-mini
+  border-radius: 20rpx; // --radius（更小巧）
+  font-size: 20rpx; // --font-size-mini（缩小）
   font-weight: 600; // --font-weight-bold
   transition: all 0.3s ease; // --transition-base
+  line-height: 1.4;
   
   &:active {
     transform: scale(0.95); // 点击反馈
   }
 }
 
-.record-footer {
+// 按钮专用的 info-item 样式
+.info-item-button {
   display: flex;
-  justify-content: flex-end;
-  padding-top: 24rpx; // --spacing-lg
-  border-top: 2rpx solid #E5E7EB; // --bg-gray
+  align-items: end;
+  justify-content: end;
+  padding: 0;
+  margin-top: 4rpx;
+  margin-bottom: 8rpx;
 }
 
 .detail-btn {
-  padding: 16rpx 48rpx; // --spacing-md
+  // width: 100%;
+  padding: 12rpx 32rpx; // --spacing-sm（更紧凑）
   background: #4285F4; // --primary-color
   color: #FFFFFF;
   border: none;
-  border-radius: 24rpx; // --radius
-  font-size: 28rpx; // --font-size-small
+  border-radius: 20rpx; // --radius（更小）
+  font-size: 24rpx; // --font-size-small（缩小）
   font-weight: 600; // --font-weight-bold
-  box-shadow: 0 4rpx 12rpx rgba(66, 133, 244, 0.3);
+  box-shadow: 0 2rpx 8rpx rgba(66, 133, 244, 0.25);
   transition: all 0.3s ease; // --transition-base
+  line-height: 1.4;
   
   &:active {
     transform: scale(0.98); // 点击反馈
@@ -527,15 +561,16 @@ const getStatusText = (status) => {
 }
 
 .empty-btn {
-  padding: 24rpx 64rpx; // --spacing-lg
+  padding: 20rpx 48rpx; // --spacing-md（更紧凑）
   background: #4285F4; // --primary-color
   color: #FFFFFF;
   border: none;
-  border-radius: 48rpx; // 圆形按钮
-  font-size: 32rpx; // --font-size-base
+  border-radius: 40rpx; // 圆形按钮（稍小）
+  font-size: 28rpx; // --font-size-small（缩小）
   font-weight: 600; // --font-weight-bold
-  box-shadow: 0 4rpx 16rpx rgba(66, 133, 244, 0.3);
+  box-shadow: 0 4rpx 12rpx rgba(66, 133, 244, 0.3);
   transition: all 0.3s ease; // --transition-base
+  line-height: 1.4;
   
   &:active {
     transform: scale(0.98); // 点击反馈

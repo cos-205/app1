@@ -40,5 +40,27 @@ class Prize extends Model
     {
         return $this->hasMany('app\common\model\fuka\ExchangeRecord', 'prize_id');
     }
+    
+    /**
+     * 获取奖品图片完整URL
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getImageUrlAttr($value, $data)
+    {
+        if (empty($data['prize_image'])) {
+            return '';
+        }
+        
+        // 如果已经是完整URL，直接返回
+        if (strpos($data['prize_image'], 'http') === 0) {
+            return $data['prize_image'];
+        }
+        
+        // 拼接CDN或静态资源路径
+        $cdnUrl = config('site.cdnurl') ?: '';
+        return $cdnUrl . $data['prize_image'];
+    }
 }
 

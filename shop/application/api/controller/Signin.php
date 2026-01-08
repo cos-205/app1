@@ -5,12 +5,12 @@ namespace app\api\controller;
 use app\common\controller\Api;
 use app\common\model\User;
 use app\common\model\CusActivitySignin;
-use app\common\model\CusUserWalletLog;
 use app\common\model\fuka\SigninRewardRule;
 use app\common\model\fuka\SigninRewardLog;
 use app\common\model\fuka\UserStatistics;
 use app\common\model\fuka\ChanceLog;
-use app\common\validate\fuka\Signin as SigninValidate;
+use app\common\model\fuka\WealthCard;
+use app\common\model\fuka\CardBalanceLog;
 use think\Db;
 
 /**
@@ -24,6 +24,46 @@ class Signin extends Api
 {
     protected $noNeedLogin = [];
     protected $noNeedRight = '*';
+
+    /**
+     * 获取签到信息
+     * 
+     * @ApiMethod (GET)
+     * @ApiRoute  (/api/signin/getInfo)
+     * @ApiReturn ({'code':'1','msg':'获取成功','data':{}})
+     */
+    public function getInfo()
+    {
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录');
+        }
+
+        // 获取集福机会
+        $userStats = UserStatistics::where('user_id', $user->id)->find();
+        $fukaChance = $userStats ? $userStats->fuka_chance : 0;
+
+        // 获取金卡余额
+        $wealthCard = WealthCard::where('user_id', $user->id)
+            ->where('status', 'normal')
+            ->find();
+        $cardBalance = $wealthCard ? $wealthCard->card_balance : 0;
+
+        // 获取最近7天签到记录
+        $startDate = date('Y-m-d', strtotime('-6 days'));
+        $signinDates = CusActivitySignin::where('user_id', $user->id)
+            ->where('date', '>=', $startDate)
+            ->order('date asc')
+            ->column('date');
+
+        $this->success('获取成功', [
+            'signin_days' => $user->signin_days ?: 0,
+            'fuka_chance' => $fukaChance,
+            'card_balance' => $cardBalance,
+            'last_signin_date' => $user->last_signin_date ?: '',
+            'signin_dates' => $signinDates
+        ]);
+    }
 
     /**
      * 每日签到
@@ -60,9 +100,9 @@ class Signin extends Api
             $user->save();
 
             // 增加集福机会
-            $userStats = FukaUserStatistics::where('user_id', $user->id)->find();
+            $userStats = UserStatistics::where('user_id', $user->id)->find();
             if (!$userStats) {
-                $userStats = new FukaUserStatistics();
+                $userStats = new UserStatistics();
                 $userStats->user_id = $user->id;
                 $userStats->fuka_chance = 0;
             }
@@ -71,7 +111,7 @@ class Signin extends Api
             $fukaChance = $userStats->fuka_chance;
 
             // 记录集福机会日志
-            $chanceLog = new FukaChanceLog();
+            $chanceLog = new ChanceLog();
             $chanceLog->user_id = $user->id;
             $chanceLog->change_type = 1; // 获得
             $chanceLog->change_count = 1;
@@ -82,20 +122,20 @@ class Signin extends Api
             $chanceLog->save();
 
             // 检查是否有签到奖励
-            $rewardRule = FukaSigninRewardRule::where('days', $signinDays)
+            $rewardRule = SigninRewardRule::where('days', $signinDays)
                 ->where('status', 'normal')
                 ->find();
             
             if ($rewardRule) {
                 // 检查是否已领取
-                $rewardLog = FukaSigninRewardLog::where('user_id', $user->id)
+                $rewardLog = SigninRewardLog::where('user_id', $user->id)
                     ->where('rule_id', $rewardRule->id)
                     ->where('days', $signinDays)
                     ->find();
                 
                 if (!$rewardLog) {
                     // 创建奖励记录（待领取）
-                    $rewardLog = new FukaSigninRewardLog();
+                    $rewardLog = new SigninRewardLog();
                     $rewardLog->user_id = $user->id;
                     $rewardLog->rule_id = $rewardRule->id;
                     $rewardLog->days = $signinDays;
@@ -126,7 +166,7 @@ class Signin extends Api
             Db::commit();
         } catch (\Exception $e) {
             Db::rollback();
-            $this->error('签到失败，请稍后重试');
+            $this->error('签到失败：' . $e->getMessage());
         }
         
         $this->success('签到成功', [
@@ -178,15 +218,14 @@ class Signin extends Api
         if (!$user) {
             $this->error('请先登录');
         }
-
-        // 参数验证
-        $params = $this->request->only(['rule_id']);
-        $this->validate($params, SigninValidate::class . '.receiveReward');
         
         $ruleId = $this->request->param('rule_id/d', 0);
+        if (!$ruleId) {
+            $this->error('请提供奖励规则ID');
+        }
 
         // 获取奖励记录
-        $rewardLog = FukaSigninRewardLog::where('user_id', $user->id)
+        $rewardLog = SigninRewardLog::where('user_id', $user->id)
             ->where('rule_id', $ruleId)
             ->where('is_received', 0)
             ->find();
@@ -196,7 +235,7 @@ class Signin extends Api
         }
 
         // 获取奖励规则
-        $rewardRule = FukaSigninRewardRule::get($ruleId);
+        $rewardRule = SigninRewardRule::get($ruleId);
         if (!$rewardRule) {
             $this->error('奖励规则不存在');
         }
@@ -205,36 +244,49 @@ class Signin extends Api
         try {
             // 发放奖励
             if ($rewardRule->reward_type == 1) {
-                // 现金奖励
+                // 现金奖励 - 发放到金卡账户余额
                 $money = $rewardRule->reward_money * 10000; // 转换为元
                 
-                // 更新用户余额（使用现有方法）
-                User::money($money, $user->id, '签到奖励：' . $rewardRule->description);
+                // 获取用户的财富金卡
+                $wealthCard = WealthCard::where('user_id', $user->id)
+                    ->where('status', 'normal')
+                    ->find();
                 
-                // 记录到钱包日志
-                $walletLog = new CusUserWalletLog();
-                $walletLog->user_id = $user->id;
-                $walletLog->type = 'money';
-                $walletLog->event = 'signin_reward';
-                $walletLog->change_money = $money;
-                $walletLog->before_money = $beforeMoney;
-                $walletLog->after_money = $afterMoney;
-                $walletLog->oper_type = 'fuka_signin_reward';
-                $walletLog->oper_id = $rewardLog->id;
-                $walletLog->memo = '签到奖励：' . $rewardRule->description;
-                $walletLog->save();
+                if (!$wealthCard) {
+                    Db::rollback();
+                    $this->error('请先申领财富金卡');
+                }
+                
+                // 更新金卡余额
+                $beforeBalance = $wealthCard->card_balance;
+                $wealthCard->card_balance = bcadd($wealthCard->card_balance, $money, 2);
+                $wealthCard->save();
+                
+                // 记录金卡余额变动日志
+                $balanceLog = new CardBalanceLog();
+                $balanceLog->user_id = $user->id;
+                $balanceLog->card_id = $wealthCard->id;
+                $balanceLog->change_type = 1; // 增加
+                $balanceLog->change_money = $money;
+                $balanceLog->before_balance = $beforeBalance;
+                $balanceLog->after_balance = $wealthCard->card_balance;
+                $balanceLog->source_type = 'signin_reward';
+                $balanceLog->source_id = $rewardLog->id;
+                $balanceLog->remark = '签到奖励：' . $rewardRule->description;
+                $balanceLog->save();
             } elseif ($rewardRule->reward_type == 2) {
                 // 集福机会奖励
-                $userStats = FukaUserStatistics::where('user_id', $user->id)->find();
+                $userStats = UserStatistics::where('user_id', $user->id)->find();
                 if (!$userStats) {
-                    $userStats = new FukaUserStatistics();
+                    $userStats = new UserStatistics();
                     $userStats->user_id = $user->id;
+                    $userStats->fuka_chance = 0;
                 }
                 $userStats->fuka_chance += $rewardRule->reward_chance;
                 $userStats->save();
 
                 // 记录日志
-                $chanceLog = new FukaChanceLog();
+                $chanceLog = new ChanceLog();
                 $chanceLog->user_id = $user->id;
                 $chanceLog->change_type = 1;
                 $chanceLog->change_count = $rewardRule->reward_chance;
@@ -253,7 +305,7 @@ class Signin extends Api
             Db::commit();
         } catch (\Exception $e) {
             Db::rollback();
-            $this->error('领取失败，请稍后重试');
+            $this->error('领取失败：' . $e->getMessage());
         }
         
         $this->success('领取成功');
@@ -274,12 +326,12 @@ class Signin extends Api
         }
 
         // 获取所有奖励规则
-        $rules = FukaSigninRewardRule::where('status', 'normal')
+        $rules = SigninRewardRule::where('status', 'normal')
             ->order('days asc')
             ->select();
 
         // 获取用户已领取的奖励
-        $receivedRewards = FukaSigninRewardLog::where('user_id', $user->id)
+        $receivedRewards = SigninRewardLog::where('user_id', $user->id)
             ->where('is_received', 1)
             ->column('rule_id');
 
@@ -301,6 +353,47 @@ class Signin extends Api
         $this->success('获取成功', [
             'list' => $list,
             'signin_days' => $user->signin_days
+        ]);
+    }
+
+    /**
+     * 获取签到记录
+     * 
+     * @ApiMethod (GET)
+     * @ApiRoute  (/api/signin/records)
+     * @ApiParams (name="page", type="integer", required=false, description="页码")
+     * @ApiParams (name="limit", type="integer", required=false, description="每页数量")
+     * @ApiReturn ({'code':'1','msg':'获取成功','data':{'list':[],'total':0}})
+     */
+    public function records()
+    {
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录');
+        }
+
+        $page = $this->request->param('page/d', 1);
+        $limit = $this->request->param('limit/d', 10);
+
+        // 获取签到记录
+        $list = CusActivitySignin::where('user_id', $user->id)
+            ->order('date desc')
+            ->paginate($limit, false, ['page' => $page]);
+
+        $records = [];
+        foreach ($list as $item) {
+            $records[] = [
+                'id' => $item->id,
+                'date' => $item->date,
+                'reward' => '+1 集福机会'
+            ];
+        }
+
+        $this->success('获取成功', [
+            'list' => $records,
+            'total' => $list->total(),
+            'per_page' => $list->listRows(),
+            'current_page' => $list->currentPage()
         ]);
     }
 }

@@ -1,114 +1,55 @@
 <template>
   <s-layout
     title="集福排行榜"
-    navbar="normal"
-    :bgStyle="{ color: '#F3F4F6' }"
+    navbar="custom"
+    :bgStyle="{ backgroundImage: 'url(/static/images/fuka_bg.jpeg)', backgroundSize: 'cover' }"
     onShareAppMessage
   >
     <view class="rank-page">
-      <!-- 前三名展台 -->
-    <view class="top-three-section">
-      <!-- 第二名 -->
-      <view v-if="topThree[1]" class="top-item rank-2">
-        <view class="rank-badge">
-          <text class="rank-text">2</text>
-        </view>
-        <view class="user-avatar-wrapper">
-          <image 
-            :src="topThree[1].avatar || defaultAvatar" 
-            class="user-avatar"
-            mode="aspectFill"
-          />
-        </view>
-        <text class="user-nickname">{{ topThree[1].nickname }}</text>
-        <text class="user-count">{{ topThree[1].fuka_count }}张</text>
+      <!-- 返回按钮 -->
+      <view class="back-button" @click="goBack">
+        <text class="back-icon">‹</text>
       </view>
-
-      <!-- 第一名 -->
-      <view v-if="topThree[0]" class="top-item rank-1">
-        <view class="crown-icon">👑</view>
-        <view class="rank-badge champion">
-          <text class="rank-text">1</text>
-        </view>
-        <view class="user-avatar-wrapper">
-          <image 
-            :src="topThree[0].avatar || defaultAvatar" 
-            class="user-avatar"
-            mode="aspectFill"
-          />
-        </view>
-        <text class="user-nickname">{{ topThree[0].nickname }}</text>
-        <text class="user-count">{{ topThree[0].fuka_count }}张</text>
-      </view>
-
-      <!-- 第三名 -->
-      <view v-if="topThree[2]" class="top-item rank-3">
-        <view class="rank-badge">
-          <text class="rank-text">3</text>
-        </view>
-        <view class="user-avatar-wrapper">
-          <image 
-            :src="topThree[2].avatar || defaultAvatar" 
-            class="user-avatar"
-            mode="aspectFill"
-          />
-        </view>
-        <text class="user-nickname">{{ topThree[2].nickname }}</text>
-        <text class="user-count">{{ topThree[2].fuka_count }}张</text>
-      </view>
-    </view>
-
-    <!-- 我的排名 -->
-    <view v-if="myRank" class="my-rank-section">
-      <view class="my-rank-card">
-        <view class="rank-info">
-          <text class="rank-label">我的排名</text>
-          <text class="rank-value">{{ myRank.rank > 0 ? `第${myRank.rank}名` : '未上榜' }}</text>
-        </view>
-        <view class="count-info">
-          <text class="count-label">福卡数量</text>
-          <text class="count-value">{{ myRank.fuka_count }}张</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 排行榜列表 -->
-    <view class="rank-list-section">
-      <view class="section-title">完整排行榜</view>
       
-      <view v-if="rankList.length > 0" class="rank-list">
+      <!-- 页面标题 -->
+      <view class="page-title">集福榜</view>
+
+      <!-- 排行榜列表 -->
+      <view class="rank-list-section">
+        <view v-if="topTenList.length > 0" class="rank-list">
         <view 
-          v-for="(item, index) in rankList" 
+          v-for="(item, index) in topTenList" 
           :key="item.id"
           class="rank-item"
           :class="{ 
-            'is-me': item.user_id === currentUserId,
-            'top-rank': item.rank <= 3
+            'rank-first': item.rank === 1,
+            'rank-second': item.rank === 2,
+            'rank-third': item.rank === 3
           }"
         >
           <view class="rank-number">
-            <text v-if="item.rank <= 3" class="medal">{{ getMedalEmoji(item.rank) }}</text>
-            <text v-else class="number">{{ item.rank }}</text>
-          </view>
-          
-          <view class="user-info">
             <image 
-              :src="item.avatar || defaultAvatar" 
-              class="user-avatar-small"
-              mode="aspectFill"
+              v-if="item.rank <= 3" 
+              :src="`/static/rank/${item.rank}.png`" 
+              class="rank-icon"
+              mode="aspectFit"
             />
-            <view class="user-details">
-              <text class="user-nickname-text">
-                {{ item.nickname }}
-                <text v-if="item.user_id === currentUserId" class="me-tag">（我）</text>
-              </text>
-              <text class="user-update-time">{{ formatTime(item.update_time) }}</text>
+            <view v-else class="rank-normal">
+              <image 
+                src="/static/rank/normal.png" 
+                class="rank-normal-bg"
+                mode="aspectFit"
+              />
+              <text class="rank-normal-text">{{ item.rank }}</text>
             </view>
           </view>
           
+          <view class="user-info">
+            <text class="user-nickname-text">{{ item.nickname }}</text>
+          </view>
+          
           <view class="count-info-right">
-            <text class="count-number">{{ item.fuka_count }}</text>
-            <text class="count-unit">张</text>
+            <text class="count-text">已获得福卡{{ item.fuka_count }}张</text>
           </view>
         </view>
       </view>
@@ -117,28 +58,31 @@
         <text class="empty-icon">📊</text>
         <text class="empty-text">暂无排行数据</text>
       </view>
-      
-      <view v-if="loading" class="loading-more">
-        <text>加载中...</text>
       </view>
-      
-      <view v-else-if="hasMore" class="load-more" @click="loadMore">
-        <text>加载更多</text>
-      </view>
-      
-      <view v-else-if="rankList.length > 0" class="no-more">
-        <text>已加载全部</text>
-      </view>
-    </view>
 
-    <!-- 排行榜说明 -->
-    <view class="rank-tips">
-      <text class="tips-title">📋 排行榜说明</text>
-      <text class="tips-item">• 排行榜每小时更新一次</text>
-      <text class="tips-item">• 显示所有用户已收集的福卡总数</text>
-      <text class="tips-item">• 已使用的福卡不计入排名</text>
-      <text class="tips-item">• 数量相同时，先达到者排名靠前</text>
-    </view>
+      <!-- 我的排名固定在底部 -->
+      <view v-if="myRank" class="my-rank-fixed">
+        <view class="my-rank-content">
+          <view class="my-rank-left">
+            <text class="my-rank-label">我的排名：</text>
+            <text class="my-rank-value">{{ myRank.rank > 0 ? `第${myRank.rank}名` : '未上榜' }}</text>
+          </view>
+          <view class="my-rank-right">
+            <text class="my-count-label">我的福卡：</text>
+            <text class="my-count-value">{{ myRank.fuka_count }}张</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 底部操作按钮 -->
+      <view class="action-buttons">
+        <button class="action-btn draw-btn" @click="goToFuka">
+          <text class="btn-text">抽福卡</text>
+        </button>
+        <button class="action-btn exchange-btn" @click="goToExchange">
+          <text class="btn-text">兑换记录</text>
+        </button>
+      </view>
     </view>
   </s-layout>
 </template>
@@ -152,20 +96,10 @@ import xxep from '@/xxep'
 const rankList = ref([])
 const myRank = ref(null)
 const loading = ref(false)
-const hasMore = ref(true)
-const currentPage = ref(1)
-const pageSize = ref(20)
-const currentUserId = ref(0)
-const defaultAvatar = '/static/images/default-avatar.png'
 
-// 前三名
-const topThree = computed(() => {
-  const top = rankList.value.filter(item => item.rank <= 3)
-  return [
-    top.find(item => item.rank === 1),
-    top.find(item => item.rank === 2),
-    top.find(item => item.rank === 3)
-  ]
+// 前十名
+const topTenList = computed(() => {
+  return rankList.value.filter(item => item.rank <= 10).slice(0, 10)
 })
 
 // 页面加载
@@ -177,12 +111,6 @@ onLoad(() => {
 // 初始化页面
 const initPage = async () => {
   try {
-    // 获取当前用户ID
-    const userInfo = xxep.$store('user').userInfo
-    if (userInfo && userInfo.id) {
-      currentUserId.value = userInfo.id
-    }
-    
     await loadRankList()
   } catch (error) {
     console.error('初始化页面失败', error)
@@ -198,27 +126,20 @@ const loadRankList = async (loadingMore = false) => {
   
   try {
     const res = await xxep.$api.card.getCardRank({
-      page: currentPage.value,
-      limit: pageSize.value
+      page: 1,
+      limit: 10
     })
     
     if (res.code === 1) {
       const data = res.data || {}
       const list = data.list || []
       
-      if (loadingMore) {
-        rankList.value = [...rankList.value, ...list]
-      } else {
-        rankList.value = list
-      }
+      rankList.value = list
       
       // 我的排名
       if (data.my_rank) {
         myRank.value = data.my_rank
       }
-      
-      // 判断是否还有更多数据
-      hasMore.value = list.length >= pageSize.value
     } else {
       xxep.$helper.toast(res.msg || '加载失败', 'error')
     }
@@ -230,364 +151,225 @@ const loadRankList = async (loadingMore = false) => {
   }
 }
 
-// 加载更多
-const loadMore = () => {
-  if (!hasMore.value || loading.value) return
-  
-  currentPage.value++
-  loadRankList(true)
+// 返回上一页
+const goBack = () => {
+  xxep.$router.back()
 }
 
-// 获取奖牌emoji
-const getMedalEmoji = (rank) => {
-  const medals = {
-    1: '🥇',
-    2: '🥈',
-    3: '🥉'
-  }
-  return medals[rank] || rank
+// 跳转到福卡页面
+const goToFuka = () => {
+  uni.navigateTo({
+    url: '/pages/index/fuka'
+  })
 }
 
-// 格式化时间
-const formatTime = (timestamp) => {
-  if (!timestamp) return ''
-  const date = new Date(timestamp * 1000)
-  const now = new Date()
-  const diff = now - date
-  
-  // 一天内显示相对时间
-  if (diff < 24 * 60 * 60 * 1000) {
-    const hours = Math.floor(diff / (60 * 60 * 1000))
-    if (hours < 1) {
-      const minutes = Math.floor(diff / (60 * 1000))
-      return minutes < 1 ? '刚刚更新' : `${minutes}分钟前更新`
-    }
-    return `${hours}小时前更新`
-  }
-  
-  // 超过一天显示日期
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  
-  if (year === now.getFullYear()) {
-    return `${month}-${day} 更新`
-  }
-  return `${year}-${month}-${day} 更新`
+// 跳转到兑换页面
+const goToExchange = () => {
+  uni.navigateTo({
+    url: '/pages/exchange/records'
+  })
 }
 </script>
 
 <style lang="scss" scoped>
 // ==========================================================================
-// 排行榜页面样式 - 遵循UI设计规范
+// 排行榜页面样式 - 参考福卡界面风格
 // ==========================================================================
 
 .rank-page {
-  padding: 32rpx; // --spacing-md
-  padding-bottom: 32rpx;
-}
-
-// ==========================================================================
-// 前三名展台
-// ==========================================================================
-.top-three-section {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 16rpx; // --spacing-md
-  margin-bottom: 48rpx; // --spacing-xxl
-  padding: 0 16rpx; // --spacing-md
-}
-
-.top-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 32rpx 16rpx; // --spacing-md
-  background: #FFFFFF; // --bg-primary
-  border-radius: 32rpx 32rpx 0 0; // --radius
   position: relative;
-  box-shadow: 0 -4rpx 24rpx rgba(0, 0, 0, 0.08);
-  border-top: 4rpx solid #E5E7EB; // --bg-gray
+  min-height: 100vh;
+  padding: 32rpx;
+  padding-bottom: calc(200rpx + env(safe-area-inset-bottom));
   
-  &.rank-1 {
-    height: 400rpx;
-    background: linear-gradient(135deg, #ffffff 0%, #E8F5E9 100%);
-    z-index: 3;
-    border-top-color: #00C853; // --success-color
-  }
-  
-  &.rank-2 {
-    height: 350rpx;
-    background: linear-gradient(135deg, #ffffff 0%, #E3F2FD 100%);
-    z-index: 2;
-    border-top-color: #4285F4; // --primary-color
-  }
-  
-  &.rank-3 {
-    height: 320rpx;
-    background: linear-gradient(135deg, #ffffff 0%, #FFF3E0 100%);
-    z-index: 1;
-    border-top-color: #FF9800; // --status-warning
-  }
+  // 背景图片
+  background-image: url('/static/images/fuka_bg.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
-.crown-icon {
-  position: absolute;
-  top: -32rpx;
-  font-size: 48rpx;
-  animation: float 2s ease-in-out infinite;
-}
-
-// 皇冠浮动动画
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8rpx);
-  }
-}
-
-.rank-badge {
-  width: 56rpx;
-  height: 56rpx;
+// ==========================================================================
+// 返回按钮
+// ==========================================================================
+.back-button {
+  position: fixed;
+  top: calc(68rpx + env(safe-area-inset-top));
+  left: 32rpx;
+  z-index: 999;
+  width: 72rpx;
+  height: 72rpx;
   border-radius: 50%;
-  background: #F3F4F6; // --bg-secondary
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10rpx);
   display: flex;
-  align-items: center;
   justify-content: center;
-  margin-bottom: 16rpx; // --spacing-md
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
-  border: 3rpx solid #E5E7EB; // --bg-gray
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.15);
+  border: 2rpx solid rgba(255, 107, 74, 0.3);
+  transition: all 0.3s ease;
   
-  &.champion {
-    width: 72rpx;
-    height: 72rpx;
-    background: #00C853; // --success-color
-    border-color: #00C853; // --success-color
+  &:active {
+    transform: scale(0.92);
+    opacity: 0.8;
   }
 }
 
-.rank-badge .rank-text {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #4285F4;
-}
-
-.rank-badge.champion .rank-text {
-  font-size: 40rpx;
-  color: #ffffff;
-}
-
-.user-avatar-wrapper {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 4rpx solid #E5E7EB;
-  margin-bottom: 16rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
-}
-
-.rank-1 .user-avatar-wrapper {
-  width: 140rpx;
-  height: 140rpx;
-  border-width: 6rpx;
-  border-color: #00C853;
-}
-
-.user-avatar {
-  width: 100%;
-  height: 100%;
-}
-
-.user-nickname {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #1F2937;
-  margin-bottom: 8rpx;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rank-1 .user-nickname {
-  font-size: 32rpx;
-  color: #00C853;
-}
-
-.user-count {
-  font-size: 24rpx;
-  color: #6B7280;
-  font-weight: 500;
-}
-
-.rank-1 .user-count {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #00C853;
+.back-icon {
+  font-size: 60rpx;
+  font-weight: 700;
+  color: #FF6B4A;
+  line-height: 1;
+  margin-left: -4rpx;
 }
 
 // ==========================================================================
-// 我的排名
+// 页面标题
 // ==========================================================================
-.my-rank-section {
-  margin-bottom: 32rpx; // --spacing-md
-}
-
-.my-rank-card {
-  background: #FFFFFF; // --bg-primary
-  border-radius: 32rpx; // --radius
-  padding: 48rpx 32rpx; // --spacing-xl
-  display: flex;
-  justify-content: space-around;
-  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.08);
-  border: 2rpx solid #E5E7EB; // --bg-gray
-}
-
-.rank-info,
-.count-info {
+.page-title {
+  font-size: 64rpx;
+  font-weight: 700;
   text-align: center;
-}
-
-.rank-label,
-.count-label {
-  display: block;
-  font-size: 24rpx; // --font-size-mini
-  color: #6B7280; // --text-secondary
-  margin-bottom: 12rpx; // --spacing-sm
-  font-weight: 400; // --font-weight-normal
-}
-
-.rank-value,
-.count-value {
-  display: block;
-  font-size: 56rpx; // --font-size-h1
-  font-weight: 600; // --font-weight-bold
-  color: #4285F4; // --primary-color
-  letter-spacing: -1rpx;
+  margin-bottom: 40rpx;
+  margin-top: 20rpx;
+  letter-spacing: 10rpx;
+  color: #FFEB3B;
+  
+  // 金色浮雕文字效果
+  text-shadow: 
+    2rpx 2rpx 4rpx rgba(255, 107, 74, 0.8),
+    -2rpx -2rpx 4rpx rgba(255, 255, 255, 0.9),
+    0 0 20rpx rgba(255, 235, 59, 0.6);
 }
 
 // ==========================================================================
 // 排行榜列表
 // ==========================================================================
 .rank-list-section {
-  background: #FFFFFF; // --bg-primary
-  border-radius: 32rpx; // --radius
-  padding: 48rpx 32rpx; // --spacing-xl
-  margin-bottom: 32rpx; // --spacing-md
-  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.08);
-}
-
-.section-title {
-  font-size: 40rpx; // --font-size-h3
-  font-weight: 600; // --font-weight-bold
-  color: #1F2937; // --text-primary
-  margin-bottom: 32rpx; // --spacing-md
+  background: rgba(255, 232, 214, 0.85);
+  backdrop-filter: blur(12rpx);
+  border-radius: 32rpx;
+  padding: 40rpx 24rpx;
+  margin-bottom: 24rpx;
+  border: 2rpx solid rgba(255, 107, 74, 0.3);
+  box-shadow: 0 8rpx 24rpx rgba(255, 107, 74, 0.2);
 }
 
 .rank-list {
   display: flex;
   flex-direction: column;
-  gap: 16rpx; // --spacing-md
+  gap: 12rpx;
 }
 
 .rank-item {
   display: flex;
   align-items: center;
-  padding: 32rpx 24rpx; // --spacing-lg
-  background: #F9FAFB;
-  border-radius: 20rpx; // --radius
-  transition: all 0.3s ease; // --transition-base
-  border: 2rpx solid #E5E7EB; // --bg-gray
+  padding: 24rpx 20rpx;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8rpx);
+  border-radius: 20rpx;
+  transition: all 0.3s ease;
+  border: 2rpx solid rgba(255, 107, 74, 0.2);
   
-  &.is-me {
-    background: linear-gradient(135deg, rgba(66, 133, 244, 0.05), rgba(90, 156, 255, 0.05));
-    border-color: #4285F4; // --primary-color
-    box-shadow: 0 4rpx 16rpx rgba(66, 133, 244, 0.15);
+  // 第1名：金色
+  &.rank-first {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    border-color: rgba(255, 215, 0, 0.8);
+    box-shadow: 0 4rpx 16rpx rgba(255, 215, 0, 0.5);
   }
   
-  &.top-rank {
-    background: linear-gradient(135deg, rgba(0, 200, 83, 0.05), rgba(232, 245, 233, 0.1));
-    border-color: #00C853; // --success-color
+  // 第2名：银色
+  &.rank-second {
+    background: linear-gradient(135deg, #E8E8E8 0%, #B8B8B8 100%);
+    border-color: rgba(192, 192, 192, 0.8);
+    box-shadow: 0 4rpx 16rpx rgba(192, 192, 192, 0.5);
+  }
+  
+  // 第3名：铜色
+  &.rank-third {
+    background: linear-gradient(135deg, #CD7F32 0%, #B87333 100%);
+    border-color: rgba(205, 127, 50, 0.8);
+    box-shadow: 0 4rpx 16rpx rgba(205, 127, 50, 0.5);
   }
 }
 
 .rank-number {
-  width: 80rpx;
+  width: 60rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 24rpx;
+  margin-right: 20rpx;
 }
 
-.medal {
-  font-size: 56rpx;
+.rank-icon {
+  width: 56rpx;
+  height: 56rpx;
 }
 
-.number {
-  font-size: 36rpx;
-  font-weight: 600;
-  color: #9CA3AF;
+.rank-normal {
+  position: relative;
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rank-normal-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.rank-normal-text {
+  position: relative;
+  z-index: 1;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+  text-shadow: 1rpx 1rpx 2rpx rgba(0, 0, 0, 0.5);
 }
 
 .user-info {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 16rpx;
-}
-
-.user-avatar-small {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  border: 3rpx solid #E5E7EB;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
-}
-
-.user-details {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
 }
 
 .user-nickname-text {
-  font-size: 28rpx; // --font-size-small
-  font-weight: 600; // --font-weight-bold
-  color: #1F2937; // --text-primary
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1F2937;
 }
 
-.me-tag {
-  color: #4285F4; // --primary-color
-  font-size: 24rpx; // --font-size-mini
-  font-weight: 600; // --font-weight-bold
-}
-
-.user-update-time {
-  font-size: 22rpx; // --font-size-mini
-  color: #9CA3AF; // --text-tertiary
+// 前三名文字样式
+.rank-first .user-nickname-text,
+.rank-second .user-nickname-text,
+.rank-third .user-nickname-text {
+  color: #FFFFFF;
+  font-weight: 700;
+  text-shadow: 1rpx 1rpx 2rpx rgba(0, 0, 0, 0.3);
 }
 
 .count-info-right {
   text-align: right;
 }
 
-.count-number {
-  font-size: 40rpx; // --font-size-h3
-  font-weight: 600; // --font-weight-bold
-  color: #4285F4; // --primary-color
-  margin-right: 4rpx;
+.count-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #4B5563;
 }
 
-.count-unit {
-  font-size: 24rpx; // --font-size-mini
-  color: #6B7280; // --text-secondary
-  font-weight: 500; // --font-weight-medium
+// 前三名数量文字样式
+.rank-first .count-text,
+.rank-second .count-text,
+.rank-third .count-text {
+  color: #FFFFFF;
+  font-weight: 700;
+  text-shadow: 1rpx 1rpx 2rpx rgba(0, 0, 0, 0.3);
 }
 
 .rank-empty {
@@ -600,60 +382,114 @@ const formatTime = (timestamp) => {
 
 .empty-icon {
   font-size: 96rpx;
-  margin-bottom: 16rpx; // --spacing-md
+  margin-bottom: 16rpx;
   opacity: 0.5;
 }
 
 .empty-text {
-  font-size: 28rpx; // --font-size-small
-  color: #9CA3AF; // --text-tertiary
+  font-size: 28rpx;
+  color: #6B7280;
 }
 
-.loading-more,
-.load-more,
-.no-more {
-  text-align: center;
-  padding: 32rpx 0; // --spacing-md
-  font-size: 28rpx; // --font-size-small
-  color: #9CA3AF; // --text-tertiary
+// ==========================================================================
+// 我的排名固定区域
+// ==========================================================================
+.my-rank-fixed {
+  position: fixed;
+  bottom: calc(140rpx + env(safe-area-inset-bottom));
+  left: 32rpx;
+  right: 32rpx;
+  z-index: 100;
 }
 
-.load-more {
-  cursor: pointer;
-  color: #4285F4; // --primary-color
-  font-weight: 500; // --font-weight-medium
-  transition: opacity 0.3s ease; // --transition-base
+.my-rank-content {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  backdrop-filter: blur(12rpx);
+  border-radius: 24rpx;
+  padding: 24rpx 32rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 3rpx solid rgba(255, 215, 0, 0.8);
+  box-shadow: 0 8rpx 32rpx rgba(255, 165, 0, 0.4);
+}
+
+.my-rank-left,
+.my-rank-right {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+
+.my-rank-label,
+.my-count-label {
+  font-size: 26rpx;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.my-rank-value,
+.my-count-value {
+  font-size: 32rpx;
+  color: #FFFFFF;
+  font-weight: 700;
+  text-shadow: 2rpx 2rpx 4rpx rgba(0, 0, 0, 0.3);
+}
+
+// ==========================================================================
+// 底部操作按钮
+// ==========================================================================
+.action-buttons {
+  position: fixed;
+  bottom: env(safe-area-inset-bottom);
+  left: 32rpx;
+  right: 32rpx;
+  display: flex;
+  gap: 24rpx;
+  padding: 20rpx 0;
+  z-index: 100;
+}
+
+.action-btn {
+  flex: 1;
+  height: 96rpx;
+  border-radius: 48rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10rpx);
   
   &:active {
-    opacity: 0.7;
+    transform: scale(0.96);
+    opacity: 0.9;
   }
 }
 
-// ==========================================================================
-// 排行榜说明
-// ==========================================================================
-.rank-tips {
-  background: #FFFFFF; // --bg-primary
-  border-radius: 32rpx; // --radius
-  padding: 48rpx 32rpx; // --spacing-xl
-  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.08);
-  border: 2rpx solid #E5E7EB; // --bg-gray
+.draw-btn {
+  background: linear-gradient(135deg, #FF5722 0%, #FF8A65 100%);
+  border: 3rpx solid rgba(255, 87, 34, 0.6);
+  
+  .btn-text {
+    font-size: 32rpx;
+    font-weight: 700;
+    color: #FFFFFF;
+    text-shadow: 2rpx 2rpx 4rpx rgba(0, 0, 0, 0.3);
+  }
 }
 
-.tips-title {
-  display: block;
-  font-size: 32rpx; // --font-size-base
-  font-weight: 600; // --font-weight-bold
-  color: #1F2937; // --text-primary
-  margin-bottom: 24rpx; // --spacing-lg
-}
-
-.tips-item {
-  display: block;
-  font-size: 24rpx; // --font-size-mini
-  color: #6B7280; // --text-secondary
-  line-height: 2; // --line-height-loose
-  margin-bottom: 12rpx; // --spacing-sm
+.exchange-btn {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border: 3rpx solid rgba(255, 215, 0, 0.8);
+  
+  .btn-text {
+    font-size: 32rpx;
+    font-weight: 700;
+    color: #FFFFFF;
+    text-shadow: 2rpx 2rpx 4rpx rgba(0, 0, 0, 0.3);
+  }
 }
 </style>
 

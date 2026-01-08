@@ -1,204 +1,182 @@
 <template>
   <s-layout
-    title="福卡兑换"
+    title="确认兑换"
     navbar="normal"
     :bgStyle="{ color: '#F3F4F6' }"
     onShareAppMessage
   >
     <view class="exchange-page">
-      <!-- 我的福卡状态 -->
-    <view class="my-cards-status">
-      <view class="status-title">我的福卡</view>
-      <view class="cards-row">
-        <view 
-          v-for="cardType in myCardTypes" 
-          :key="cardType.id"
-          class="mini-card"
-          :class="{ 'has': cardType.count > 0 }"
-        >
-          <text class="mini-card-name">{{ cardType.type_name }}</text>
-          <text class="mini-card-count">x{{ cardType.count }}</text>
-        </view>
-      </view>
-      
-      <view class="status-summary">
-        <text class="summary-text">可组成</text>
-        <text class="summary-count">{{ setCount }}</text>
-        <text class="summary-text">套五福</text>
-      </view>
-    </view>
-
-    <!-- 奖品列表 -->
-    <view class="prizes-section">
-      <view class="section-title">选择奖品</view>
-      
-      <view v-if="prizes.length > 0" class="prizes-list">
-        <view 
-          v-for="prize in prizes" 
-          :key="prize.id"
-          class="prize-item"
-          :class="{ 
-            'active': selectedPrize && selectedPrize.id === prize.id,
-            'disabled': !canSelectPrize(prize)
-          }"
-          @click="selectPrize(prize)"
-        >
-          <view class="prize-image-wrapper">
-            <image 
-              v-if="prize.image" 
-              :src="prize.image" 
-              class="prize-image"
-              mode="aspectFill"
-            />
-            <view v-else class="prize-image-placeholder">
-              <text>{{ prize.prize_name }}</text>
-            </view>
-            
-            <!-- 需要套数角标 -->
-            <view class="set-count-badge">
-              {{ prize.required_set_count }}套
-            </view>
-            
-            <!-- 不可选择遮罩 -->
-            <view v-if="!canSelectPrize(prize)" class="prize-mask">
-              <text class="mask-text">福卡不足</text>
-            </view>
-          </view>
-          
-          <view class="prize-info">
-            <text class="prize-name">{{ prize.prize_name }}</text>
-            <text class="prize-desc">{{ prize.description || '' }}</text>
-            
-            <view v-if="prize.prize_type === 1 || prize.prize_type === 2" class="prize-tips">
-              <text class="tips-text">
-                {{ prize.prize_type === 1 ? '需付费获取取件码' : '需付费获取车辆证书' }}
-              </text>
-            </view>
-          </view>
-        </view>
-      </view>
-      
-      <view v-else class="prizes-empty">
-        <text class="empty-icon">🎁</text>
-        <text class="empty-text">暂无可兑换奖品</text>
-      </view>
-    </view>
-
-    <!-- 底部操作栏 -->
-    <view class="bottom-bar">
-      <view class="selected-info">
-        <text v-if="selectedPrize" class="selected-text">
-          已选择：{{ selectedPrize.prize_name }}
-        </text>
-        <text v-else class="hint-text">请选择要兑换的奖品</text>
-      </view>
-      
-      <button 
-        class="exchange-btn"
-        :class="{ 'disabled': !selectedPrize || isExchanging }"
-        :disabled="!selectedPrize || isExchanging"
-        @click="handleExchange"
-      >
-        <text v-if="isExchanging">兑换中...</text>
-        <text v-else>确认兑换</text>
-      </button>
-    </view>
-
-    <!-- 兑换确认弹窗 -->
-    <view v-if="showConfirmModal" class="confirm-modal" @click="closeConfirmModal">
-      <view class="confirm-content" @click.stop>
-        <text class="confirm-title">确认兑换</text>
+      <!-- 奖品信息 -->
+      <view v-if="prizeInfo" class="prize-section">
+        <view class="section-title">兑换奖品</view>
         
-        <view class="confirm-prize">
+        <view class="prize-detail">
           <image 
-            v-if="selectedPrize.image" 
-            :src="selectedPrize.image" 
-            class="confirm-prize-image"
-            mode="aspectFill"
+            v-if="prizeInfo.image" 
+            :src="prizeInfo.image" 
+            class="prize-image"
+            mode="aspectFit"
           />
-          <text class="confirm-prize-name">{{ selectedPrize.prize_name }}</text>
-        </view>
-        
-        <view class="confirm-info">
-          <view class="info-item">
-            <text class="info-label">使用福卡套数：</text>
-            <text class="info-value">{{ selectedPrize.required_set_count }}套</text>
-          </view>
-          <view class="info-item">
-            <text class="info-label">剩余福卡套数：</text>
-            <text class="info-value">{{ setCount - selectedPrize.required_set_count }}套</text>
+          <view class="prize-info">
+            <text class="prize-name">{{ prizeInfo.prize_name }}</text>
+            <text class="prize-desc">{{ prizeInfo.description || '' }}</text>
+            <view class="prize-requirement">
+              <text class="requirement-text">需要：{{ prizeInfo.need_fuka_set }}套五福卡</text>
+            </view>
           </view>
         </view>
-        
-        <view class="confirm-tips">
-          <text class="tips-title">温馨提示：</text>
-          <text class="tips-item">• 兑换后福卡将被消耗，不可恢复</text>
-          <text class="tips-item" v-if="selectedPrize.prize_type === 1">
-            • 手机奖品需付费获取取件码
-          </text>
-          <text class="tips-item" v-if="selectedPrize.prize_type === 2">
-            • 汽车奖品需付费获取车辆证书
-          </text>
-          <text class="tips-item">• 奖品将在审核通过后发货</text>
-        </view>
-        
-        <view class="confirm-buttons">
-          <button class="confirm-btn cancel" @click="closeConfirmModal">
-            取消
-          </button>
-          <button class="confirm-btn primary" @click="confirmExchange">
-            确认兑换
-          </button>
-        </view>
-      </view>
-    </view>
 
-    <!-- 兑换成功弹窗 -->
-    <view v-if="showSuccessModal" class="success-modal" @click="closeSuccessModal">
-      <view class="success-content" @click.stop>
-        <text class="success-icon">🎉</text>
-        <text class="success-title">兑换成功！</text>
-        <text class="success-desc">您的兑换申请已提交，请等待审核</text>
+        <!-- 费用提示 -->
+        <view v-if="prizeInfo.need_pickup_code || prizeInfo.need_certificate" class="fee-tips">
+          <text class="tips-icon">💡</text>
+          <view class="tips-content">
+            <text class="tips-title">温馨提示</text>
+            <text v-if="prizeInfo.need_pickup_code" class="tips-text">
+              此奖品兑换后需支付{{ prizeInfo.pickup_code_fee }}元获取取件码
+            </text>
+            <text v-if="prizeInfo.need_certificate" class="tips-text">
+              此奖品兑换后需支付{{ prizeInfo.certificate_fee }}元获取{{ prizeInfo.certificate_type }}
+            </text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 收货地址 -->
+      <view class="address-section">
+        <view class="section-title">收货地址</view>
         
-        <button class="success-btn" @click="viewMyRecords">
-          查看我的兑换记录
-        </button>
+        <view v-if="selectedAddress" class="address-card" @click="selectAddress">
+          <view class="address-info">
+            <view class="address-header">
+              <text class="consignee-name">{{ selectedAddress.consignee }}</text>
+              <text class="consignee-mobile">{{ selectedAddress.mobile }}</text>
+            </view>
+            <text class="address-detail">
+              {{ selectedAddress.province_name }}{{ selectedAddress.city_name }}{{ selectedAddress.district_name }}{{ selectedAddress.address }}
+            </text>
+          </view>
+          <view class="address-action">
+            <text class="action-text">修改</text>
+            <text class="action-icon">›</text>
+          </view>
+        </view>
         
-        <button class="success-btn secondary" @click="closeSuccessModal">
-          继续集福
+        <view v-else class="address-empty" @click="selectAddress">
+          <text class="empty-icon">📍</text>
+          <text class="empty-text">请选择收货地址</text>
+          <text class="empty-action">点击选择 ›</text>
+        </view>
+      </view>
+
+      <!-- 我的五福卡状态 -->
+      <view v-if="prizeInfo" class="wufu-status-section">
+        <view class="section-title">我的五福卡</view>
+        
+        <view class="wufu-status">
+          <view class="status-item">
+            <text class="status-label">当前拥有</text>
+            <text class="status-value">{{ wufuCardCount }}</text>
+            <text class="status-unit">套</text>
+          </view>
+          <text class="status-arrow">→</text>
+          <view class="status-item">
+            <text class="status-label">兑换后剩余</text>
+            <text class="status-value remaining">{{ wufuCardCount - prizeInfo.need_fuka_set }}</text>
+            <text class="status-unit">套</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 底部操作栏 -->
+      <view class="bottom-bar">
+        <button 
+          class="exchange-btn"
+          :class="{ 'disabled': !canExchange || isExchanging }"
+          :disabled="!canExchange || isExchanging"
+          @click="confirmExchange"
+        >
+          <text v-if="isExchanging">兑换中...</text>
+          <text v-else>确认兑换</text>
         </button>
       </view>
-    </view>
+
+      <!-- 兑换成功弹窗 -->
+      <view v-if="showSuccessModal" class="success-modal" @click="closeSuccessModal">
+        <view class="success-content" @click.stop>
+          <text class="success-icon">🎉</text>
+          <text class="success-title">兑换成功！</text>
+          <text class="success-desc">您的兑换申请已提交，请等待审核</text>
+          
+          <button class="success-btn" @click="viewMyRecords">
+            查看兑换记录
+          </button>
+          
+          <button class="success-btn secondary" @click="goBack">
+            返回
+          </button>
+        </view>
+      </view>
     </view>
   </s-layout>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { ref, computed, onMounted } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import xxep from '@/xxep'
 
 // 响应式数据
-const myCardTypes = ref([])
-const prizes = ref([])
-const selectedPrize = ref(null)
+const prizeInfo = ref(null)
+const prizeIdFromUrl = ref(0)
+const selectedAddress = ref(null)
+const wufuCardCount = ref(0)
+const myWufuCards = ref([])
 const isExchanging = ref(false)
-const showConfirmModal = ref(false)
 const showSuccessModal = ref(false)
-const setCount = ref(0)
+
+// 计算属性：是否可以兑换
+const canExchange = computed(() => {
+  return prizeInfo.value 
+    && selectedAddress.value 
+    && wufuCardCount.value >= prizeInfo.value.need_fuka_set
+})
 
 // 页面加载
-onLoad(() => {
-  console.log('兑换页面加载')
-  loadPageData()
+onLoad((options) => {
+  console.log('兑换确认页面加载', options)
+  if (options && options.prize_id) {
+    prizeIdFromUrl.value = parseInt(options.prize_id)
+  } else {
+    xxep.$helper.toast('缺少奖品信息', 'error')
+    setTimeout(() => {
+      uni.navigateBack()
+    }, 1500)
+  }
+})
+
+// 页面显示（用于从地址选择页面返回时刷新）
+onShow(() => {
+  if (prizeIdFromUrl.value > 0) {
+    loadPageData()
+  }
+})
+
+// 监听地址选择事件
+onMounted(() => {
+  uni.$on('SELECT_ADDRESS', (data) => {
+    if (data && data.addressInfo) {
+      selectedAddress.value = data.addressInfo
+    }
+  })
 })
 
 // 加载页面数据
 const loadPageData = async () => {
   try {
     await Promise.all([
-      loadMyCards(),
-      loadPrizes()
+      loadPrizeInfo(),
+      loadDefaultAddress(),
+      loadMyWufuCards()
     ])
   } catch (error) {
     console.error('加载页面数据失败', error)
@@ -206,338 +184,179 @@ const loadPageData = async () => {
   }
 }
 
-// 加载我的福卡
-const loadMyCards = async () => {
-  try {
-    const [typesRes, myCardsRes, statsRes] = await Promise.all([
-      xxep.$api.card.getCardTypes(),
-      xxep.$api.card.getMyCards(),
-      xxep.$api.card.getCardStatistics()
-    ])
-    
-    if (typesRes.code === 1 && myCardsRes.code === 1) {
-      const types = typesRes.data || []
-      const myCards = myCardsRes.data || []
-      
-      // 合并福卡类型和数量
-      myCardTypes.value = types.map(type => {
-        const userCards = myCards.filter(
-          card => card.type_code === type.type_code && !card.is_used
-        )
-        return {
-          ...type,
-          count: userCards.length
-        }
-      })
-      
-      // 计算可组成的套数
-      if (statsRes.code === 1) {
-        setCount.value = statsRes.data.set_count || 0
-      } else {
-        // 如果没有统计接口，手动计算
-        const normalCards = myCardTypes.value.filter(c => !c.is_universal)
-        const minCount = Math.min(...normalCards.map(c => c.count))
-        setCount.value = minCount >= 0 ? minCount : 0
-      }
-    }
-  } catch (error) {
-    console.error('加载福卡失败', error)
-  }
-}
-
-// 加载奖品列表
-const loadPrizes = async () => {
+// 加载奖品信息
+const loadPrizeInfo = async () => {
   try {
     const res = await xxep.$api.card.getPrizeList()
     if (res.code === 1) {
-      prizes.value = res.data || []
+      const prizeList = Array.isArray(res.data) ? res.data : []
+      const prize = prizeList.find(p => p.id === prizeIdFromUrl.value)
+      
+      if (prize) {
+        prizeInfo.value = {
+          ...prize,
+          image: prize.image || prize.prize_image || '/static/fuka/default-prize.png'
+        }
+      } else {
+        xxep.$helper.toast('奖品不存在', 'error')
+        setTimeout(() => {
+          uni.navigateBack()
+        }, 1500)
+      }
     }
   } catch (error) {
-    console.error('加载奖品列表失败', error)
+    console.error('加载奖品信息失败', error)
   }
 }
 
-// 判断是否可以选择奖品
-const canSelectPrize = (prize) => {
-  return setCount.value >= prize.required_set_count
-}
-
-// 选择奖品
-const selectPrize = (prize) => {
-  if (!canSelectPrize(prize)) {
-    xxep.$helper.toast('福卡套数不足', 'info')
-    return
-  }
-  
-  if (selectedPrize.value && selectedPrize.value.id === prize.id) {
-    selectedPrize.value = null
-  } else {
-    selectedPrize.value = prize
+// 加载默认地址
+const loadDefaultAddress = async () => {
+  try {
+    const res = await xxep.$api.user.address.list()
+    if (res.code === 1 && res.data && res.data.length > 0) {
+      // 查找默认地址，如果没有则使用第一个
+      const defaultAddr = res.data.find(addr => addr.is_default)
+      selectedAddress.value = defaultAddr || res.data[0]
+    }
+  } catch (error) {
+    console.error('加载地址失败', error)
   }
 }
 
-// 处理兑换
-const handleExchange = () => {
-  if (!selectedPrize.value || isExchanging.value) {
-    return
+// 加载我的五福卡
+const loadMyWufuCards = async () => {
+  try {
+    const res = await xxep.$api.card.getMyWufuCards()
+    if (res.code === 1) {
+      myWufuCards.value = res.data?.list || []
+      wufuCardCount.value = myWufuCards.value.length
+    }
+  } catch (error) {
+    console.error('加载五福卡失败', error)
+    myWufuCards.value = []
+    wufuCardCount.value = 0
   }
-  
-  showConfirmModal.value = true
+}
+
+// 选择地址
+const selectAddress = () => {
+  uni.navigateTo({
+    url: '/pages/user/address/list'
+  })
 }
 
 // 确认兑换
 const confirmExchange = async () => {
-  if (isExchanging.value) return
+  if (!canExchange.value || isExchanging.value) {
+    return
+  }
+  
+  if (!selectedAddress.value) {
+    xxep.$helper.toast('请先选择收货地址', 'info')
+    return
+  }
+  
+  // 检查五福卡数量
+  const needCount = prizeInfo.value.need_fuka_set
+  if (myWufuCards.value.length < needCount) {
+    xxep.$helper.toast('五福卡数量不足', 'error')
+    return
+  }
   
   isExchanging.value = true
   
   try {
+    // 选择要使用的五福卡ID（按创建时间排序，使用最早的）
+    const wufuCardIds = myWufuCards.value
+      .slice(0, needCount)
+      .map(card => card.id)
+    
+    // 调用兑换接口
     const res = await xxep.$api.card.exchangeCards({
-      prize_id: selectedPrize.value.id,
-      fuka_set_count: selectedPrize.value.required_set_count
+      prize_id: prizeInfo.value.id,
+      wufu_card_ids: wufuCardIds,
+      address_id: selectedAddress.value.id,
+      consignee: selectedAddress.value.consignee,
+      mobile: selectedAddress.value.mobile,
+      address: `${selectedAddress.value.province_name}${selectedAddress.value.city_name}${selectedAddress.value.district_name}${selectedAddress.value.address}`
     })
     
     if (res.code === 1) {
-      closeConfirmModal()
       showSuccessModal.value = true
-      
-      // 重新加载福卡数据
-      await loadMyCards()
     } else {
       xxep.$helper.toast(res.msg || '兑换失败', 'error')
     }
   } catch (error) {
     console.error('兑换失败', error)
-    xxep.$helper.toast('兑换失败，请稍后重试', 'error')
+    xxep.$helper.toast(error.msg || '兑换失败，请稍后重试', 'error')
   } finally {
     isExchanging.value = false
   }
 }
 
-// 关闭确认弹窗
-const closeConfirmModal = () => {
-  showConfirmModal.value = false
-}
-
 // 关闭成功弹窗
 const closeSuccessModal = () => {
   showSuccessModal.value = false
-  selectedPrize.value = null
+  // 返回上一页
+  uni.navigateBack()
 }
 
-// 查看我的兑换记录
+// 查看兑换记录
 const viewMyRecords = () => {
   closeSuccessModal()
-  uni.navigateTo({
+  uni.redirectTo({
     url: '/pages/exchange/records'
   })
+}
+
+// 返回
+const goBack = () => {
+  closeSuccessModal()
+  uni.navigateBack()
 }
 </script>
 
 <style lang="scss" scoped>
 // ==========================================================================
-// 兑换页面样式 - 遵循UI设计规范
+// 兑换确认页面样式
 // ==========================================================================
 
 .exchange-page {
-  padding: 32rpx; // --spacing-md
-  padding-bottom: 200rpx; // 底部操作栏高度
-}
-
-// ==========================================================================
-// 我的福卡状态
-// ==========================================================================
-.my-cards-status {
-  background: #FFFFFF; // --bg-primary
-  border-radius: 32rpx; // --radius
-  padding: 48rpx 32rpx; // --spacing-xl
-  margin-bottom: 32rpx; // --spacing-md
-  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.08);
-}
-
-.status-title {
-  font-size: 40rpx; // --font-size-h3
-  font-weight: 600; // --font-weight-bold
-  color: #1F2937; // --text-primary
-  margin-bottom: 32rpx; // --spacing-md
-}
-
-.cards-row {
-  display: flex;
-  gap: 16rpx; // --spacing-md
-  margin-bottom: 24rpx; // --spacing-lg
-  flex-wrap: wrap;
-}
-
-.mini-card {
-  flex: 1;
-  min-width: 100rpx;
-  padding: 20rpx;
-  background: #F9FAFB;
-  border-radius: 16rpx; // --radius
-  text-align: center;
-  opacity: 0.5;
-  border: 2rpx solid #E5E7EB; // --bg-gray
-  transition: all 0.3s ease; // --transition-base
-  
-  &.has {
-    background: linear-gradient(135deg, #4285F4 0%, #5A9CFF 100%); // --primary gradient
-    opacity: 1;
-    border-color: #4285F4; // --primary-color
-  }
-}
-
-.mini-card-name {
-  display: block;
-  font-size: 24rpx;
-  color: #1F2937;
-  margin-bottom: 8rpx;
-  font-weight: 500;
-}
-
-.mini-card.has .mini-card-name {
-  color: #ffffff;
-}
-
-.mini-card-count {
-  display: block;
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #4285F4;
-}
-
-.mini-card.has .mini-card-count {
-  color: #ffffff;
-}
-
-.status-summary {
-  text-align: center;
-  padding: 32rpx; // --spacing-md
-  background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
-  border-radius: 20rpx; // --radius
-  border: 2rpx solid #00C853; // --success-color
-}
-
-.summary-text {
-  font-size: 28rpx; // --font-size-small
-  color: #2E7D32;
-  font-weight: 500; // --font-weight-medium
-}
-
-.summary-count {
-  font-size: 64rpx; // --font-size-large
-  font-weight: 600; // --font-weight-bold
-  color: #00C853; // --success-color
-  margin: 0 16rpx; // --spacing-md
-  letter-spacing: -1rpx;
-}
-
-// ==========================================================================
-// 奖品列表
-// ==========================================================================
-.prizes-section {
-  background: #FFFFFF; // --bg-primary
-  border-radius: 32rpx; // --radius
-  padding: 48rpx 32rpx; // --spacing-xl
-  margin-bottom: 32rpx; // --spacing-md
-  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.08);
+  padding: 24rpx;
+  padding-bottom: 200rpx;
 }
 
 .section-title {
-  font-size: 40rpx; // --font-size-h3
-  font-weight: 600; // --font-weight-bold
-  color: #1F2937; // --text-primary
-  margin-bottom: 32rpx; // --spacing-md
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 24rpx;
 }
 
-.prizes-list {
+// ==========================================================================
+// 奖品信息
+// ==========================================================================
+.prize-section {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.prize-detail {
   display: flex;
-  flex-direction: column;
   gap: 24rpx;
-}
-
-.prize-item {
-  display: flex;
-  gap: 24rpx; // --spacing-lg
-  padding: 32rpx 24rpx; // --spacing-lg
+  padding: 24rpx;
   background: #F9FAFB;
-  border-radius: 20rpx; // --radius
-  border: 3rpx solid #E5E7EB; // --bg-gray
-  transition: all 0.3s ease; // --transition-base
-  cursor: pointer;
-  
-  &.active {
-    border-color: #4285F4; // --primary-color
-    background: linear-gradient(135deg, rgba(66, 133, 244, 0.05), rgba(90, 156, 255, 0.05));
-    box-shadow: 0 4rpx 16rpx rgba(66, 133, 244, 0.15);
-  }
-  
-  &.disabled {
-    opacity: 0.5;
-  }
-  
-  &:active:not(.disabled) {
-    transform: scale(0.98); // 点击反馈
-  }
-}
-
-.prize-image-wrapper {
-  position: relative;
-  width: 200rpx;
-  height: 200rpx;
-  flex-shrink: 0;
   border-radius: 16rpx;
-  overflow: hidden;
 }
 
 .prize-image {
-  width: 100%;
-  height: 100%;
-}
-
-.prize-image-placeholder {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 16rpx;
-  font-size: 28rpx;
-  font-weight: bold;
-  color: #ffffff;
-}
-
-.set-count-badge {
-  position: absolute;
-  top: 8rpx;
-  right: 8rpx;
-  background: #00C853;
-  color: #ffffff;
-  padding: 6rpx 16rpx;
-  border-radius: 24rpx;
-  font-size: 24rpx;
-  font-weight: 600;
-  box-shadow: 0 2rpx 8rpx rgba(0, 200, 83, 0.3);
-}
-
-.prize-mask {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mask-text {
-  font-size: 24rpx;
-  color: #ffffff;
-  font-weight: bold;
+  width: 180rpx;
+  height: 180rpx;
+  flex-shrink: 0;
+  border-radius: 12rpx;
 }
 
 .prize-info {
@@ -545,51 +364,228 @@ const viewMyRecords = () => {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 12rpx;
 }
 
 .prize-name {
   font-size: 32rpx;
-  font-weight: bold;
-  color: #333333;
-  margin-bottom: 12rpx;
+  font-weight: 600;
+  color: #1F2937;
 }
 
 .prize-desc {
   font-size: 24rpx;
-  color: #666666;
+  color: #6B7280;
   line-height: 1.6;
-  margin-bottom: 12rpx;
 }
 
-.prize-tips {
+.prize-requirement {
+  display: inline-flex;
+  align-self: flex-start;
   padding: 8rpx 16rpx;
-  background: rgba(255, 165, 0, 0.1);
-  border-left: 4rpx solid #ffa500;
-  border-radius: 4rpx;
+  background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+  border-radius: 24rpx;
+  border: 2rpx solid #00C853;
+}
+
+.requirement-text {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #2E7D32;
+}
+
+.fee-tips {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 24rpx;
+  padding: 24rpx;
+  background: rgba(255, 165, 0, 0.08);
+  border-radius: 16rpx;
+  border-left: 6rpx solid #FFA500;
+}
+
+.tips-icon {
+  font-size: 40rpx;
+  flex-shrink: 0;
+}
+
+.tips-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.tips-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #D97706;
 }
 
 .tips-text {
-  font-size: 22rpx;
-  color: #ffa500;
+  font-size: 24rpx;
+  color: #92400E;
+  line-height: 1.6;
 }
 
-.prizes-empty {
+// ==========================================================================
+// 收货地址
+// ==========================================================================
+.address-section {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.address-card {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 24rpx;
+  background: #F9FAFB;
+  border-radius: 16rpx;
+  border: 2rpx solid #E5E7EB;
+  transition: all 0.3s ease;
+
+  &:active {
+    transform: scale(0.98);
+    background: #F3F4F6;
+  }
+}
+
+.address-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.address-header {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.consignee-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.consignee-mobile {
+  font-size: 26rpx;
+  color: #6B7280;
+}
+
+.address-detail {
+  font-size: 24rpx;
+  color: #6B7280;
+  line-height: 1.6;
+}
+
+.address-action {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+  color: #4285F4;
+}
+
+.action-text {
+  font-size: 26rpx;
+}
+
+.action-icon {
+  font-size: 32rpx;
+  font-weight: 300;
+}
+
+.address-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80rpx 0;
+  padding: 64rpx 24rpx;
+  background: #F9FAFB;
+  border-radius: 16rpx;
+  border: 2rpx dashed #D1D5DB;
+  gap: 16rpx;
+  transition: all 0.3s ease;
+
+  &:active {
+    transform: scale(0.98);
+    background: #F3F4F6;
+  }
 }
 
 .empty-icon {
-  font-size: 96rpx;
-  margin-bottom: 16rpx;
-  opacity: 0.5;
+  font-size: 72rpx;
 }
 
 .empty-text {
-  font-size: 28rpx;
-  color: #999999;
+  font-size: 26rpx;
+  color: #9CA3AF;
+}
+
+.empty-action {
+  font-size: 24rpx;
+  color: #4285F4;
+}
+
+// ==========================================================================
+// 五福卡状态
+// ==========================================================================
+.wufu-status-section {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.wufu-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 32rpx 24rpx;
+  background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+  border-radius: 16rpx;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.status-label {
+  font-size: 22rpx;
+  color: #2E7D32;
+}
+
+.status-value {
+  font-size: 64rpx;
+  font-weight: 600;
+  color: #00C853;
+  line-height: 1;
+
+  &.remaining {
+    color: #1565C0;
+  }
+}
+
+.status-unit {
+  font-size: 24rpx;
+  color: #2E7D32;
+}
+
+.status-arrow {
+  font-size: 48rpx;
+  color: #4CAF50;
+  font-weight: 300;
 }
 
 // ==========================================================================
@@ -600,185 +596,33 @@ const viewMyRecords = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: #FFFFFF; // --bg-primary
-  padding: 32rpx; // --spacing-md
+  background: #FFFFFF;
+  padding: 24rpx;
   box-shadow: 0 -4rpx 24rpx rgba(0, 0, 0, 0.08);
-  display: flex;
-  align-items: center;
-  gap: 24rpx; // --spacing-lg
   z-index: 100;
-  border-top: 2rpx solid #E5E7EB; // --bg-gray
-}
-
-.selected-info {
-  flex: 1;
-}
-
-.selected-text {
-  font-size: 28rpx; // --font-size-small
-  color: #1F2937; // --text-primary
-  font-weight: 600; // --font-weight-bold
-}
-
-.hint-text {
-  font-size: 28rpx; // --font-size-small
-  color: #9CA3AF; // --text-tertiary
-  font-weight: 400; // --font-weight-normal
+  border-top: 2rpx solid #E5E7EB;
 }
 
 .exchange-btn {
-  width: 240rpx;
-  min-height: 88rpx; // --min-touch-size
-  background: #4285F4; // --primary-color
-  border-radius: 44rpx; // 圆形按钮
+  width: 100%;
+  min-height: 88rpx;
+  background: linear-gradient(135deg, #4285F4, #5A9CFF);
+  border-radius: 44rpx;
   border: none;
-  font-size: 32rpx; // --font-size-base
-  font-weight: 600; // --font-weight-bold
+  font-size: 32rpx;
+  font-weight: 600;
   color: #ffffff;
   box-shadow: 0 4rpx 16rpx rgba(66, 133, 244, 0.3);
-  transition: all 0.3s ease; // --transition-base
-  
+  transition: all 0.3s ease;
+
   &:active:not(.disabled) {
-    transform: scale(0.98); // 点击反馈
+    transform: scale(0.98);
   }
-  
+
   &.disabled {
     opacity: 0.5;
-    background: #9CA3AF; // --status-pending
-  }
-}
-
-// ==========================================================================
-// 确认弹窗
-// ==========================================================================
-.confirm-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 32rpx; // --spacing-md
-}
-
-.confirm-content {
-  width: 100%;
-  max-width: 600rpx;
-  background: #FFFFFF; // --bg-primary
-  border-radius: 32rpx; // --radius
-  padding: 48rpx; // --spacing-xl
-}
-
-.confirm-title {
-  display: block;
-  font-size: 40rpx; // --font-size-h3
-  font-weight: 600; // --font-weight-bold
-  color: #1F2937; // --text-primary
-  text-align: center;
-  margin-bottom: 32rpx; // --spacing-md
-}
-
-.confirm-prize {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 32rpx;
-  padding: 24rpx;
-  background: #f8f8f8;
-  border-radius: 16rpx;
-}
-
-.confirm-prize-image {
-  width: 200rpx;
-  height: 200rpx;
-  border-radius: 16rpx;
-  margin-bottom: 16rpx;
-}
-
-.confirm-prize-name {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333333;
-}
-
-.confirm-info {
-  margin-bottom: 32rpx;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 16rpx 0;
-  border-bottom: 2rpx solid #f0f0f0;
-}
-
-.info-label {
-  font-size: 28rpx;
-  color: #666666;
-}
-
-.info-value {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #4285F4;
-}
-
-.confirm-tips {
-  background: #F9FAFB;
-  padding: 32rpx 24rpx; // --spacing-lg
-  border-radius: 20rpx; // --radius
-  margin-bottom: 32rpx; // --spacing-md
-  border: 2rpx solid #E5E7EB; // --bg-gray
-}
-
-.tips-title {
-  display: block;
-  font-size: 28rpx; // --font-size-small
-  font-weight: 600; // --font-weight-bold
-  color: #1F2937; // --text-primary
-  margin-bottom: 16rpx; // --spacing-md
-}
-
-.tips-item {
-  display: block;
-  font-size: 24rpx; // --font-size-mini
-  color: #6B7280; // --text-secondary
-  line-height: 2; // --line-height-loose
-  margin-bottom: 8rpx; // --spacing-xs
-}
-
-.confirm-buttons {
-  display: flex;
-  gap: 16rpx; // --spacing-md
-}
-
-.confirm-btn {
-  flex: 1;
-  min-height: 88rpx; // --min-touch-size
-  border-radius: 44rpx; // 圆形按钮
-  border: none;
-  font-size: 32rpx; // --font-size-base
-  font-weight: 600; // --font-weight-bold
-  transition: all 0.3s ease; // --transition-base
-  
-  &.cancel {
-    background: #F3F4F6; // --bg-secondary
-    color: #6B7280; // --text-secondary
-    border: 2rpx solid #E5E7EB; // --bg-gray
-  }
-  
-  &.primary {
-    background: #4285F4; // --primary-color
-    color: #ffffff;
-    box-shadow: 0 4rpx 16rpx rgba(66, 133, 244, 0.3);
-  }
-  
-  &:active {
-    transform: scale(0.98); // 点击反馈
+    background: #9CA3AF;
+    box-shadow: none;
   }
 }
 
@@ -796,15 +640,15 @@ const viewMyRecords = () => {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 32rpx; // --spacing-md
+  padding: 32rpx;
 }
 
 .success-content {
   width: 100%;
   max-width: 600rpx;
-  background: #FFFFFF; // --bg-primary
-  border-radius: 32rpx; // --radius
-  padding: 64rpx 48rpx; // --spacing-xl
+  background: #FFFFFF;
+  border-radius: 32rpx;
+  padding: 64rpx 48rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -812,48 +656,47 @@ const viewMyRecords = () => {
 
 .success-icon {
   font-size: 120rpx;
-  margin-bottom: 24rpx; // --spacing-lg
+  margin-bottom: 24rpx;
 }
 
 .success-title {
-  font-size: 48rpx; // --font-size-h2
-  font-weight: 600; // --font-weight-bold
-  color: #1F2937; // --text-primary
-  margin-bottom: 16rpx; // --spacing-md
+  font-size: 48rpx;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 16rpx;
 }
 
 .success-desc {
-  font-size: 28rpx; // --font-size-small
-  color: #6B7280; // --text-secondary
+  font-size: 28rpx;
+  color: #6B7280;
   text-align: center;
-  margin-bottom: 48rpx; // --spacing-xxl
-  line-height: 1.6; // --line-height-base
+  margin-bottom: 48rpx;
+  line-height: 1.6;
 }
 
 .success-btn {
   width: 100%;
-  min-height: 88rpx; // --min-touch-size
-  background: #4285F4; // --primary-color
-  border-radius: 44rpx; // 圆形按钮
+  min-height: 88rpx;
+  background: linear-gradient(135deg, #4285F4, #5A9CFF);
+  border-radius: 44rpx;
   border: none;
-  font-size: 32rpx; // --font-size-base
-  font-weight: 600; // --font-weight-bold
+  font-size: 32rpx;
+  font-weight: 600;
   color: #ffffff;
-  margin-bottom: 16rpx; // --spacing-md
+  margin-bottom: 16rpx;
   box-shadow: 0 4rpx 16rpx rgba(66, 133, 244, 0.3);
-  transition: all 0.3s ease; // --transition-base
-  
+  transition: all 0.3s ease;
+
   &.secondary {
-    background: #F3F4F6; // --bg-secondary
-    color: #6B7280; // --text-secondary
+    background: #F3F4F6;
+    color: #6B7280;
     margin-bottom: 0;
     box-shadow: none;
-    border: 2rpx solid #E5E7EB; // --bg-gray
+    border: 2rpx solid #E5E7EB;
   }
-  
+
   &:active {
-    transform: scale(0.98); // 点击反馈
+    transform: scale(0.98);
   }
 }
 </style>
-

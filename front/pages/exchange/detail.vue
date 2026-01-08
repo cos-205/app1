@@ -23,20 +23,13 @@
         <view class="prize-info">
           <view class="prize-name">{{ detail.prize_name }}</view>
           <view class="prize-desc">{{ detail.prize_description }}</view>
-          
-          <view class="status-row">
-            <text class="status-label">当前状态：</text>
-            <view class="status-badge" :class="['status-' + detail.exchange_status]">
-              <text>{{ getStatusText(detail.exchange_status) }}</text>
-            </view>
-          </view>
+
         </view>
       </view>
 
       <!-- 物流进度时间轴（手机奖品） -->
       <view v-if="detail.prize_type === 1" class="timeline-card">
         <view class="timeline-header">
-          <text class="timeline-icon">🚚</text>
           <text class="timeline-title">物流进度</text>
         </view>
 
@@ -125,19 +118,19 @@
             </view>
             <view class="timeline-content">
               <view class="timeline-name">到达取件点</view>
-              <view class="timeline-desc">生成取件码（需付费获取）</view>
+              <view class="timeline-desc">已到达取件点，查看取件码</view>
               <view v-if="detail.arrive_time" class="timeline-time">
                 {{ formatTime(detail.arrive_time) }}
               </view>
               
               <view v-if="detail.exchange_status >= 5" class="pickup-code-section">
-                <view v-if="detail.pickup_code_status === 'paid'" class="code-paid">
+                <view v-if="detail.pickup_code_status === 'paid' && detail.pickup_code" class="code-paid">
                   <text class="code-label">取件码：</text>
                   <text class="code-value">{{ detail.pickup_code }}</text>
                 </view>
                 <button v-else class="pay-code-btn" @click="handlePayCode">
                   <text class="btn-icon">💳</text>
-                  <text class="btn-text">付费获取取件码</text>
+                  <text class="btn-text">查看取件码</text>
                 </button>
               </view>
             </view>
@@ -215,19 +208,19 @@
             </view>
             <view class="timeline-content">
               <view class="timeline-name">车辆登记证书</view>
-              <view class="timeline-desc">需付费获取车辆登记证书（绿本）</view>
+              <view class="timeline-desc">获取车辆登记证书（绿本）办理过户</view>
               <view v-if="detail.doc_time" class="timeline-time">
                 {{ formatTime(detail.doc_time) }}
               </view>
               
               <view v-if="detail.exchange_status >= 4" class="vehicle-doc-section">
-                <view v-if="detail.vehicle_doc_status === 'paid'" class="doc-paid">
+                <view v-if="detail.vehicle_doc_status === 'paid' && detail.doc_no" class="doc-paid">
                   <text class="doc-label">车辆证书：</text>
                   <text class="doc-value">已获取</text>
                 </view>
                 <button v-else class="pay-doc-btn" @click="handlePayDoc">
                   <text class="btn-icon">📄</text>
-                  <text class="btn-text">付费获取车辆证书</text>
+                  <text class="btn-text">获取车辆证书</text>
                   <text v-if="detail.doc_fee" class="btn-fee">¥{{ detail.doc_fee }}</text>
                 </button>
               </view>
@@ -268,8 +261,8 @@
         <view class="tips-title">温馨提示</view>
         <view class="tips-list">
           <text class="tips-item">• 请保持手机畅通,以便物流联系您</text>
-          <text class="tips-item" v-if="detail.prize_type === 1">• 手机奖品到达取件点后需付费获取取件码</text>
-          <text class="tips-item" v-if="detail.prize_type === 2">• 汽车奖品需支付托运费和证书费</text>
+          <text class="tips-item" v-if="detail.prize_type === 1">• 手机奖品到达取件点后可获取取件码</text>
+          <text class="tips-item" v-if="detail.prize_type === 2">• 汽车奖品需获取托运和证书</text>
           <text class="tips-item">• 如有问题请联系客服</text>
         </view>
       </view>
@@ -302,8 +295,37 @@ const loadDetail = async () => {
   try {
     const res = await xxep.$api.card.getExchangeDetail(recordId.value)
     
+    console.log('兑换详情API返回：', res)
+    
     if (res.code === 1) {
-      detail.value = res.data || {}
+      const record = res.data || {}
+      
+      // 格式化数据，统一字段名称
+      detail.value = {
+        ...record,
+        // 统一图片字段
+        prize_image: record.prize_image || record.image || '',
+        // 统一描述字段
+        prize_description: record.prize_description || record.description || '',
+        // 统一时间字段
+        exchange_time: record.exchange_time || record.createtime || record.create_time || 0,
+        // 统一套数字段
+        fuka_set_count: record.fuka_set_count || record.need_fuka_set || record.set_count || 0,
+        // 统一状态字段
+        exchange_status: record.exchange_status !== undefined ? record.exchange_status : record.status,
+        // 统一收货人字段
+        contact_name: record.contact_name || record.consignee || '',
+        // 统一手机字段
+        contact_phone: record.contact_phone || record.mobile || '',
+        // 统一地址字段
+        shipping_address: record.shipping_address || record.address || '',
+        // 取件码状态（只有已支付且有取件码时才是paid）
+        pickup_code_status: record.pickup_code_status || ((record.is_get_pickup_code && record.pickup_code) ? 'paid' : 'unpaid'),
+        // 车辆证书状态（只有已支付且有证书号时才是paid）
+        vehicle_doc_status: record.vehicle_doc_status || ((record.is_get_doc && record.doc_no) ? 'paid' : 'unpaid')
+      }
+      
+      console.log('格式化后的详情数据：', detail.value)
     } else {
       xxep.$helper.toast(res.msg || '加载失败', 'error')
     }
@@ -317,8 +339,24 @@ const loadDetail = async () => {
 
 // 处理取件码付费
 const handlePayCode = () => {
+  console.log('点击查看取件码，recordId:', recordId.value)
+  
+  if (!recordId.value) {
+    xxep.$helper.toast('兑换记录ID不存在', 'error')
+    return
+  }
+  
+  console.log('准备跳转到:', `/pages/exchange/pay-pickup-code?id=${recordId.value}`)
+  
   uni.navigateTo({
-    url: `/pages/exchange/pay-pickup-code?id=${recordId.value}`
+    url: `/pages/exchange/pay-pickup-code?id=${recordId.value}`,
+    fail: (err) => {
+      console.error('跳转失败：', err)
+      xxep.$helper.toast('页面跳转失败', 'error')
+    },
+    success: () => {
+      console.log('跳转成功')
+    }
   })
 }
 
@@ -394,7 +432,7 @@ const getStatusText = (status) => {
 .prize-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #4285F4 0%, #5A9CFF 100%); // --primary gradient
+  // background: linear-gradient(135deg, #4285F4 0%, #5A9CFF 100%); // --primary gradient
   display: flex;
   align-items: center;
   justify-content: center;
@@ -469,7 +507,7 @@ const getStatusText = (status) => {
 .timeline-card {
   background: #FFFFFF; // --bg-primary
   border-radius: 32rpx; // --radius
-  padding: 48rpx 32rpx; // --spacing-xl
+  padding: 40rpx 32rpx; // --spacing-lg
   margin-bottom: 32rpx; // --spacing-md
   box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.08);
 }
@@ -478,7 +516,7 @@ const getStatusText = (status) => {
   display: flex;
   align-items: center;
   gap: 16rpx; // --spacing-md
-  margin-bottom: 48rpx; // --spacing-xxl
+  margin-bottom: 40rpx; // --spacing-xl
 }
 
 .timeline-icon {
@@ -493,12 +531,12 @@ const getStatusText = (status) => {
 
 .timeline-list {
   position: relative;
-  padding-left: 80rpx;
+  padding-left: 48rpx;
 }
 
 .timeline-item {
   position: relative;
-  padding-bottom: 64rpx; // --spacing-xl
+  padding-bottom: 52rpx; // --spacing-lg
   
   &:last-child {
     padding-bottom: 0;
@@ -508,10 +546,10 @@ const getStatusText = (status) => {
   &:not(:last-child)::before {
     content: '';
     position: absolute;
-    left: -56rpx;
-    top: 96rpx;
-    width: 4rpx;
-    height: calc(100% - 64rpx);
+    left: -24rpx;
+    top: 36rpx;
+    width: 2rpx;
+    height: calc(100% - 36rpx);
     background: #E5E7EB; // --bg-gray
   }
   
@@ -523,15 +561,15 @@ const getStatusText = (status) => {
 
 .timeline-node {
   position: absolute;
-  left: -80rpx;
+  left: -42rpx;
   top: 0;
-  width: 96rpx;
-  height: 96rpx;
+  width: 30rpx;
+  height: 30rpx;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 6rpx solid #E5E7EB; // --bg-gray
+  border: 3rpx solid #E5E7EB; // --bg-gray
   background: #F3F4F6; // --bg-secondary
   transition: all 0.3s ease; // --transition-base
   
@@ -541,7 +579,7 @@ const getStatusText = (status) => {
     
     .node-icon {
       color: #FFFFFF;
-      font-size: 48rpx;
+      font-size: 16rpx;
       font-weight: 600; // --font-weight-bold
     }
   }
@@ -552,8 +590,8 @@ const getStatusText = (status) => {
     animation: pulse 2s infinite;
     
     .node-dot {
-      width: 24rpx;
-      height: 24rpx;
+      width: 10rpx;
+      height: 10rpx;
       background: #FFFFFF;
       border-radius: 50%;
     }
@@ -561,8 +599,8 @@ const getStatusText = (status) => {
   
   &.pending {
     .node-dot {
-      width: 24rpx;
-      height: 24rpx;
+      width: 10rpx;
+      height: 10rpx;
       background: #9CA3AF; // --text-tertiary
       border-radius: 50%;
     }
@@ -575,7 +613,7 @@ const getStatusText = (status) => {
     box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.4);
   }
   50% {
-    box-shadow: 0 0 0 20rpx rgba(66, 133, 244, 0);
+    box-shadow: 0 0 0 8rpx rgba(66, 133, 244, 0);
   }
 }
 
@@ -613,12 +651,12 @@ const getStatusText = (status) => {
 
 .logistics-info,
 .fee-info {
-  margin-top: 16rpx; // --spacing-md
-  padding: 16rpx; // --spacing-md
+  margin-top: 12rpx; // --spacing-sm
+  padding: 12rpx 16rpx; // --spacing-sm --spacing-md
   background: #F9FAFB;
-  border-radius: 12rpx;
+  border-radius: 8rpx;
   display: flex;
-  gap: 12rpx; // --spacing-sm
+  gap: 8rpx; // --spacing-xs
 }
 
 .logistics-label,
@@ -642,36 +680,37 @@ const getStatusText = (status) => {
 
 .pickup-code-section,
 .vehicle-doc-section {
-  margin-top: 24rpx; // --spacing-lg
+  margin-top: 20rpx; // --spacing-md
 }
 
 .code-paid,
 .doc-paid {
   display: flex;
   align-items: center;
-  gap: 16rpx; // --spacing-md
-  padding: 24rpx; // --spacing-lg
+  gap: 12rpx; // --spacing-sm
+  padding: 20rpx; // --spacing-md
   background: linear-gradient(135deg, rgba(0, 200, 83, 0.05), rgba(0, 200, 83, 0.1));
-  border-radius: 16rpx; // --radius
+  border-radius: 12rpx; // --radius-sm
   border: 2rpx solid #00C853; // --success-color
 }
 
 .code-label,
 .doc-label {
-  font-size: 28rpx; // --font-size-small
+  font-size: 26rpx; // --font-size-small
   color: #1F2937; // --text-primary
   font-weight: 500; // --font-weight-medium
 }
 
 .code-value {
-  font-size: 48rpx; // --font-size-h2
+  font-size: 40rpx; // --font-size-h3
   font-weight: 600; // --font-weight-bold
   color: #00C853; // --success-color
   font-family: monospace;
+  letter-spacing: 4rpx;
 }
 
 .doc-value {
-  font-size: 32rpx; // --font-size-base
+  font-size: 28rpx; // --font-size-small
   font-weight: 600; // --font-weight-bold
   color: #00C853; // --success-color
 }
@@ -679,18 +718,18 @@ const getStatusText = (status) => {
 .pay-code-btn,
 .pay-doc-btn {
   width: 100%;
-  min-height: 88rpx; // --min-touch-size
+  min-height: 76rpx; // --min-touch-size-reduced
   background: linear-gradient(135deg, #FF9800 0%, #FB8C00 100%); // --status-warning
   color: #FFFFFF;
   border: none;
-  border-radius: 44rpx; // 圆形按钮
+  border-radius: 38rpx; // 圆形按钮
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16rpx; // --spacing-md
-  font-size: 32rpx; // --font-size-base
+  gap: 12rpx; // --spacing-sm
+  font-size: 28rpx; // --font-size-small
   font-weight: 600; // --font-weight-bold
-  box-shadow: 0 4rpx 16rpx rgba(255, 152, 0, 0.3);
+  box-shadow: 0 4rpx 12rpx rgba(255, 152, 0, 0.25);
   transition: all 0.3s ease; // --transition-base
   
   &:active {
@@ -699,7 +738,7 @@ const getStatusText = (status) => {
 }
 
 .btn-icon {
-  font-size: 40rpx;
+  font-size: 32rpx;
 }
 
 .btn-text {
@@ -707,7 +746,7 @@ const getStatusText = (status) => {
 }
 
 .btn-fee {
-  font-size: 36rpx; // --font-size-h4
+  font-size: 28rpx; // --font-size-small
   font-weight: 600; // --font-weight-bold
 }
 

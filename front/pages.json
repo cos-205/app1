@@ -87,8 +87,7 @@
     {
       "path": "pages/index/card",
       "style": {
-        "navigationBarTitleText": "财富金卡",
-        "enablePullDownRefresh": true
+        "navigationBarTitleText": "财富金卡"
       },
       "meta": {
         "auth": true,
@@ -100,8 +99,7 @@
     {
       "path": "pages/index/invite",
       "style": {
-        "navigationBarTitleText": "邀请好友",
-        "enablePullDownRefresh": true
+        "navigationBarTitleText": "邀请好友"
       },
       "meta": {
         "auth": true,
@@ -113,8 +111,7 @@
     {
       "path": "pages/user/team",
       "style": {
-        "navigationBarTitleText": "我的团队",
-        "enablePullDownRefresh": true
+        "navigationBarTitleText": "我的团队"
       },
       "meta": {
         "auth": true,
@@ -139,8 +136,7 @@
     {
       "path": "pages/index/fuka",
       "style": {
-        "navigationBarTitleText": "我的福卡",
-        "enablePullDownRefresh": true
+        "navigationBarTitleText": "我的福卡"
       },
       "meta": {
         "auth": true,
@@ -152,8 +148,7 @@
     {
       "path": "pages/card/draw",
       "style": {
-        "navigationBarTitleText": "集福卡",
-        "enablePullDownRefresh": false
+        "navigationBarTitleText": "集福卡"
       },
       "meta": {
         "auth": true,
@@ -165,8 +160,7 @@
     {
       "path": "pages/card/exchange",
       "style": {
-        "navigationBarTitleText": "福卡兑换",
-        "enablePullDownRefresh": false
+        "navigationBarTitleText": "福卡兑换"
       },
       "meta": {
         "auth": true,
@@ -178,8 +172,7 @@
     {
       "path": "pages/card/rank",
       "style": {
-        "navigationBarTitleText": "集福排行榜",
-        "enablePullDownRefresh": true
+        "navigationBarTitleText": "集福排行榜"
       },
       "meta": {
         "auth": false,
@@ -223,6 +216,30 @@
         "auth": true,
         "sync": true,
         "title": "兑换详情",
+        "group": "奖品兑换"
+      }
+    },
+    {
+      "path": "pages/exchange/pay-pickup-code",
+      "style": {
+        "navigationBarTitleText": "获取取件码"
+      },
+      "meta": {
+        "auth": true,
+        "sync": true,
+        "title": "获取取件码",
+        "group": "奖品兑换"
+      }
+    },
+    {
+      "path": "pages/exchange/pay-vehicle-doc",
+      "style": {
+        "navigationBarTitleText": "获取车辆证书"
+      },
+      "meta": {
+        "auth": true,
+        "sync": true,
+        "title": "获取车辆证书",
         "group": "奖品兑换"
       }
     }
@@ -913,6 +930,19 @@
     {
       "root": "pages/card",
       "pages": [
+        {
+          "path": "signin",
+          "style": {
+            "navigationBarTitleText": "每日签到",
+            "enablePullDownRefresh": true
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "每日签到",
+            "group": "福卡系统"
+          }
+        },
         {
           "path": "payment",
           "style": {
