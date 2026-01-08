@@ -143,10 +143,17 @@ const loading = ref(false);
 // 绑定成功状态
 const isSuccess = ref(false);
 
+// 已绑定的账号
+const boundAccount = ref('');
+
 // 脱敏后的账号
 const maskedAccount = computed(() => {
-  if (!formData.value.account) return '';
-  const account = formData.value.account;
+  // 如果是已绑定状态，使用已绑定的账号
+  const account = isSuccess.value && boundAccount.value 
+    ? boundAccount.value 
+    : formData.value.account;
+  
+  if (!account) return '';
   
   // 如果是手机号
   if (/^1\d{10}$/.test(account)) {
@@ -236,6 +243,7 @@ async function handleSubmit() {
     
     if (res.code === 1) {
       isSuccess.value = true;
+      boundAccount.value = formData.value.account.trim();
       uni.showToast({
         title: '绑定成功',
         icon: 'success'
@@ -266,7 +274,13 @@ function handleBack() {
 }
 
 onLoad(() => {
-  // 页面加载时的逻辑
+  // 检查用户是否已经绑定支付宝
+  const userInfo = xxep.$store('user').userInfo;
+  if (userInfo && userInfo.alipay_account) {
+    // 已经绑定过了，显示绑定成功状态
+    isSuccess.value = true;
+    boundAccount.value = userInfo.alipay_account;
+  }
 });
 </script>
 

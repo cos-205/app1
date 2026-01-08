@@ -26,7 +26,7 @@ class Auth
     //默认配置
     protected $config = [];
     protected $options = [];
-    protected $allowFields = ['id', 'username', 'nickname', 'mobile', 'avatar', 'score'];
+    protected $allowFields = ['id', 'username', 'nickname', 'mobile', 'avatar', 'score', 'alipay_account', 'wechat_account', 'alipay_bind_time', 'wechat_bind_time'];
 
     public function __construct($options = [])
     {

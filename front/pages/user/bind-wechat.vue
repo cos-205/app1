@@ -24,7 +24,7 @@
           <view class="user-info-section">
             <view class="info-item">
               <view class="info-label">微信号</view>
-              <view class="info-value">{{ formData.account }}</view>
+              <view class="info-value">{{ maskedAccount }}</view>
             </view>
           </view>
 
@@ -143,6 +143,28 @@ const loading = ref(false);
 // 绑定成功状态
 const isSuccess = ref(false);
 
+// 已绑定的账号
+const boundAccount = ref('');
+
+// 脱敏后的账号
+const maskedAccount = computed(() => {
+  // 如果是已绑定状态，使用已绑定的账号
+  const account = isSuccess.value && boundAccount.value 
+    ? boundAccount.value 
+    : formData.value.account;
+  
+  if (!account) return '';
+  
+  // 微信号脱敏：显示前3位和后3位，中间用****代替
+  if (account.length > 6) {
+    return account.substring(0, 3) + '****' + account.substring(account.length - 3);
+  } else if (account.length > 3) {
+    return account.substring(0, 3) + '****';
+  }
+  
+  return account;
+});
+
 // 表单验证
 const isFormValid = computed(() => {
   return formData.value.account && 
@@ -212,6 +234,7 @@ async function handleSubmit() {
     
     if (res.code === 1) {
       isSuccess.value = true;
+      boundAccount.value = formData.value.account.trim();
       uni.showToast({
         title: '绑定成功',
         icon: 'success'
@@ -242,7 +265,13 @@ function handleBack() {
 }
 
 onLoad(() => {
-  // 页面加载时的逻辑
+  // 检查用户是否已经绑定微信
+  const userInfo = xxep.$store('user').userInfo;
+  if (userInfo && userInfo.wechat_account) {
+    // 已经绑定过了，显示绑定成功状态
+    isSuccess.value = true;
+    boundAccount.value = userInfo.wechat_account;
+  }
 });
 </script>
 
