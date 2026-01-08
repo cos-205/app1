@@ -332,5 +332,33 @@ export default {
       showLoading: false,
       auth: true,
     },
+  }),
+
+  /**
+   * 合成五福卡
+   * @returns {Promise}
+   */
+  combineWufuCard: () => $request({
+    url: '/api/fuka/combine',
+    method: 'POST',
+    custom: {
+      showLoading: true,
+      loadingMsg: '合成中...',
+      showSuccess: true,
+      auth: true,
+    },
+  }),
+
+  /**
+   * 获取我的五福卡列表
+   * @returns {Promise}
+   */
+  getMyWufuCards: () => $request({
+    url: '/api/fuka/myWufuCards',
+    method: 'GET',
+    custom: {
+      showLoading: false,
+      auth: true,
+    },
   })
 }

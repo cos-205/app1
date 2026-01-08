@@ -1,10 +1,11 @@
 <?php
 
-namespace addons\cus\service\fuka;
+namespace app\common\service\fuka;
 
 use app\admin\model\cus\user\User as UserModel;
 use app\admin\model\cus\Share as ShareModel;
 use app\common\model\fuka\UserStatistics as UserStatisticsModel;
+use app\common\model\fuka\ChanceLog as ChanceLogModel;
 use think\Db;
 
 /**
@@ -163,6 +164,7 @@ class UserInit
                 ->where('status', 'normal')
                 ->count();
 
+            $oldValidInviteCount = $inviterStats->valid_invite_count;
             $inviterStats->valid_invite_count = $validInviteCount;
             $inviterStats->last_update_time = time();
             $inviterStats->updatetime = time();
@@ -170,6 +172,73 @@ class UserInit
 
             // 根据有效邀请人数更新会员等级
             $this->updateMemberLevel($inviter, $validInviteCount);
+
+            // 发放集福机会奖励
+            $this->grantInviteReward($inviter, $inviterStats, $oldValidInviteCount, $validInviteCount);
+        }
+    }
+
+    /**
+     * 发放邀请奖励（集福机会）
+     * 
+     * @param UserModel $inviter 邀请人
+     * @param UserStatisticsModel $inviterStats 邀请人统计
+     * @param int $oldValidInviteCount 旧的有效邀请人数
+     * @param int $newValidInviteCount 新的有效邀请人数
+     */
+    protected function grantInviteReward($inviter, $inviterStats, $oldValidInviteCount, $newValidInviteCount)
+    {
+        Db::startTrans();
+        try {
+            // 1. 每邀请1位好友注册并实名认证，获得1次集福机会
+            $chanceToAdd = 0;
+            $remark = '';
+
+            // 检查是否是新增加的实名认证用户
+            if ($newValidInviteCount > $oldValidInviteCount) {
+                $chanceToAdd = 1; // 每邀请1位好友实名认证，获得1次集福机会
+                $remark = '邀请好友完成实名认证获得';
+            }
+
+            // 2. 每邀请3位好友，额外获得1次集福机会（团队推广）
+            // 计算新增的3的倍数
+            $oldGroups = intval($oldValidInviteCount / 3); // 旧的3人组数
+            $newGroups = intval($newValidInviteCount / 3); // 新的3人组数
+            
+            if ($newGroups > $oldGroups) {
+                $teamRewardCount = $newGroups - $oldGroups; // 新增的3人组数
+                $chanceToAdd += $teamRewardCount; // 每3人额外获得1次集福机会
+                if ($teamRewardCount > 0) {
+                    $remark .= ($remark ? '，' : '') . "团队推广奖励（每邀请3位好友额外获得1次）";
+                }
+            }
+
+            // 发放集福机会
+            if ($chanceToAdd > 0) {
+                $beforeCount = $inviterStats->fuka_chance;
+                $inviterStats->fuka_chance += $chanceToAdd;
+                $inviterStats->save();
+
+                // 记录集福机会日志
+                $chanceLog = new ChanceLogModel();
+                $chanceLog->user_id = $inviter->id;
+                $chanceLog->change_type = 1; // 获得
+                $chanceLog->change_count = $chanceToAdd;
+                $chanceLog->before_count = $beforeCount;
+                $chanceLog->after_count = $inviterStats->fuka_chance;
+                $chanceLog->source_type = 2; // 邀请
+                $chanceLog->source_id = $this->user->id; // 被邀请人ID
+                $chanceLog->remark = $remark;
+                $chanceLog->createtime = time();
+                $chanceLog->updatetime = time();
+                $chanceLog->status = 'normal';
+                $chanceLog->save();
+            }
+
+            Db::commit();
+        } catch (\Exception $e) {
+            Db::rollback();
+            // 记录错误信息（不使用\think\Log）
         }
     }
 
@@ -206,15 +275,6 @@ class UserInit
             $oldLevel = $user->member_level;
             $user->member_level = $newLevel;
             $user->save();
-
-            // 记录等级提升日志
-            \think\Log::info('[福卡系统] 会员等级提升', [
-                'user_id' => $user->id,
-                'mobile' => $user->mobile,
-                'old_level' => $oldLevel,
-                'new_level' => $newLevel,
-                'valid_invite_count' => $validInviteCount
-            ]);
         }
     }
 
@@ -256,3 +316,4 @@ class UserInit
         $share->save();
     }
 }
+

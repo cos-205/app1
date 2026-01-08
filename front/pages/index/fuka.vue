@@ -23,9 +23,10 @@
             <view class="card-wrapper">
               <!-- 福卡图片 -->
               <image 
-                :src="card.image" 
+                :src="card.image || getDefaultImage(card.type_code)" 
                 class="card-image"
                 mode="aspectFit"
+                @error="handleImageError"
               />
               
               <!-- 未拥有的遮罩 -->
@@ -44,11 +45,28 @@
               </view>
             </view>
             
-            <view class="card-name">{{ card.type_name }}</view>
+            <view class="card-name">
+              <text>{{ card.type_name }}</text>
+              <text v-if="card.count > 0" class="card-name-count">x{{ card.count }}</text>
+            </view>
           </view>
         </view>
       </view>
-
+      <!-- 抽取福卡圆形按钮 -->
+      <view class="draw-button-container">
+        <view 
+          class="draw-button"
+          :class="{ 'disabled': chanceCount <= 0 || isDrawing, 'drawing': isDrawing }"
+          @click="handleDraw"
+        >
+          <view class="draw-button-inner">
+            <text v-if="isDrawing" class="draw-button-text">抽取中...</text>
+            <text v-else-if="chanceCount <= 0" class="draw-button-text">机会已用完</text>
+            <text v-else class="draw-button-text">抽取福卡</text>
+            <text v-if="chanceCount > 0 && !isDrawing" class="draw-button-chance">剩余{{ chanceCount }}次</text>
+          </view>
+        </view>
+      </view>
       <!-- 进度显示区域 -->
       <view class="progress-section">
         <view class="progress-card">
@@ -63,7 +81,7 @@
             <view class="progress-bar-track">
               <view 
                 class="progress-bar-fill" 
-                :style="{ width: (collectedTypes / 5 * 100) + '%' }"
+                :style="{ width: Math.min((collectedTypes / 5 * 100), 100) + '%' }"
               ></view>
             </view>
           </view>
@@ -86,10 +104,11 @@
           <!-- 合成五福卡按钮 -->
           <view 
             class="compose-button"
-            :class="{ 'disabled': canMakeSets === 0 }"
-            @click="goToExchange"
+            :class="{ 'disabled': canMakeSets === 0 || isCombining }"
+            @click="handleCombine"
           >
-            <text class="compose-btn-text">立即合成五福卡</text>
+            <text v-if="isCombining" class="compose-btn-text">合成中...</text>
+            <text v-else class="compose-btn-text">立即合成五福卡</text>
           </view>
           
           <!-- 进度提示 -->
@@ -109,6 +128,13 @@
         </view>
         
         <view class="prize-list">
+          <!-- 五福卡数量展示（移动至奖品列表内） -->
+          <view class="wufu-card-count prize-wufu-card-count">
+            <text class="wufu-count-label">拥有</text>
+            <text class="wufu-count-number">{{ wufuCardCount }}</text>
+            <text class="wufu-count-unit">个五福卡</text>
+          </view>
+
           <!-- 商品卡片1：手机 -->
           <view class="prize-card">
             <view class="prize-info">
@@ -156,6 +182,31 @@
               <text class="btn-text">兑换</text>
             </button>
           </view>
+        </view>
+      </view>
+
+      
+
+      <!-- 抽中福卡动画弹窗 -->
+      <view v-if="showDrawResult" class="draw-result-modal" @click="closeDrawResult">
+        <view class="draw-result-content" @click.stop>
+          <view class="drawn-card-animation" :class="{ 'show': showCardAnimation }">
+            <image 
+              v-if="drawnCard"
+              :src="drawnCard.image || getDefaultImage(drawnCard.type_code)" 
+              class="drawn-card-image"
+              mode="aspectFit"
+              @error="handleImageError"
+            />
+            <view class="drawn-card-info">
+              <text class="drawn-card-title">恭喜获得</text>
+              <text class="drawn-card-name">{{ drawnCard?.type_name }}</text>
+              <view v-if="drawnCard?.is_universal" class="drawn-card-universal">
+                <text>✨ 万能福卡 ✨</text>
+              </view>
+            </view>
+          </view>
+          <button class="draw-result-btn" @click="closeDrawResult">知道了</button>
         </view>
       </view>
 
@@ -208,6 +259,31 @@
         </view>
       </view>
     </view>
+
+      <!-- 合成成功弹窗 -->
+      <view v-if="showCombineSuccess" class="combine-result-modal" @click="closeCombineSuccess">
+        <view class="combine-result-content success" @click.stop>
+          <view class="combine-success-icon">
+            <text class="success-icon">✓</text>
+          </view>
+          <view class="combine-result-title">合成成功！</view>
+          <view class="combine-result-message">恭喜您成功合成五福卡</view>
+          <view class="combine-result-tip">现在可以使用五福卡兑换奖品了</view>
+          <button class="combine-result-btn" @click="closeCombineSuccess">知道了</button>
+        </view>
+      </view>
+
+      <!-- 合成失败弹窗 -->
+      <view v-if="showCombineError" class="combine-result-modal" @click="closeCombineError">
+        <view class="combine-result-content error" @click.stop>
+          <view class="combine-error-icon">
+            <text class="error-icon">✗</text>
+          </view>
+          <view class="combine-result-title">合成失败</view>
+          <view class="combine-result-message">{{ combineErrorMsg }}</view>
+          <button class="combine-result-btn" @click="closeCombineError">知道了</button>
+        </view>
+      </view>
   </s-layout>
 </template>
 
@@ -229,6 +305,16 @@ const CARD_ORDER = [
 // 响应式数据
 const cardTypes = ref([])
 const loading = ref(false)
+const chanceCount = ref(0)
+const isDrawing = ref(false)
+const showDrawResult = ref(false)
+const showCardAnimation = ref(false)
+const drawnCard = ref(null)
+const wufuCardCount = ref(0) // 实际拥有的五福卡数量
+const isCombining = ref(false) // 合成中状态
+const showCombineSuccess = ref(false) // 显示合成成功弹窗
+const showCombineError = ref(false) // 显示合成失败弹窗
+const combineErrorMsg = ref('') // 合成失败错误信息
 
 // 按固定顺序排列的福卡列表
 const sortedCards = computed(() => {
@@ -236,6 +322,8 @@ const sortedCards = computed(() => {
     const userCard = cardTypes.value.find(c => c.type_code === config.type_code)
     return {
       ...config,
+      // 优先使用后端返回的图片，如果没有则使用默认配置
+      image: userCard?.image || userCard?.image_url || config.image,
       count: userCard?.count || 0,
       id: userCard?.id || config.type_code
     }
@@ -324,12 +412,44 @@ onLoad(() => {
 const loadPageData = async () => {
   loading.value = true
   try {
-    await loadCardTypes()
+    await Promise.all([
+      loadCardTypes(),
+      loadChanceCount(),
+      loadStatistics()
+    ])
   } catch (error) {
     console.error('加载页面数据失败', error)
     xxep.$helper.toast('加载失败，请稍后重试', 'error')
   } finally {
     loading.value = false
+  }
+}
+
+// 加载统计信息（包含五福卡数量）
+const loadStatistics = async () => {
+  try {
+    const res = await xxep.$api.card.getCardStatistics()
+    if (res.code === 1) {
+      wufuCardCount.value = res.data.wufu_card_count || 0
+      // 如果API返回了可合成数量，可以在这里使用
+      // 但前端计算逻辑已经足够，这里仅作为备用
+    }
+  } catch (error) {
+    console.error('加载统计信息失败', error)
+    xxep.$helper.toast('加载统计信息失败', 'error')
+  }
+}
+
+// 加载集福机会数量
+const loadChanceCount = async () => {
+  try {
+    const res = await xxep.$api.card.getChanceCount()
+    if (res.code === 1) {
+      chanceCount.value = res.data.chance_count || 0
+    }
+  } catch (error) {
+    console.error('加载集福机会失败', error)
+    // 不显示错误提示，避免影响用户体验
   }
 }
 
@@ -342,21 +462,63 @@ const loadCardTypes = async () => {
     ])
     
     if (typesRes.code === 1 && myCardsRes.code === 1) {
-      const types = typesRes.data || []
-      const myCards = myCardsRes.data || []
+      // 处理API返回的数据结构：typeList返回 {list: [...]}
+      const types = typesRes.data?.list || (Array.isArray(typesRes.data) ? typesRes.data : [])
+      
+      // 处理API返回的数据结构：myCards返回 {list: [], statistics: []}
+      const myCardsList = myCardsRes.data?.list || (Array.isArray(myCardsRes.data) ? myCardsRes.data : [])
+      const myCardsStatistics = myCardsRes.data?.statistics || []
       
       // 合并福卡类型和数量
       cardTypes.value = types.map(type => {
-        const userCards = myCards.filter(card => card.type_code === type.type_code && !card.is_used)
+        // 优先使用statistics中的数据（已统计好的数量）
+        const statItem = myCardsStatistics.find(s => s.type_code === type.type_code)
+        let count = 0
+        
+        if (statItem) {
+          // 使用统计数据
+          count = statItem.count || 0
+        } else {
+          // 如果没有统计数据，从列表中计算
+          const userCards = myCardsList.filter(card => 
+            card.type_code === type.type_code && !card.is_used
+          )
+          count = userCards.length
+        }
+        
+        // 优先使用后端返回的图片，如果没有则使用默认路径
+        const image = type.image || type.image_url || statItem?.image || CARD_ORDER.find(c => c.type_code === type.type_code)?.image || ''
+        
         return {
           ...type,
-          count: userCards.length
+          image: image,
+          count: count
         }
       })
     }
   } catch (error) {
     console.error('加载福卡类型失败', error)
+    xxep.$helper.toast('加载福卡信息失败，请稍后重试', 'error')
   }
+}
+
+// 获取默认图片
+const getDefaultImage = (typeCode) => {
+  const defaultImages = {
+    'aiguo': '/static/fuka/爱国.png',
+    'youshan': '/static/fuka/友善.png',
+    'jingye': '/static/fuka/敬业.png',
+    'hexie': '/static/fuka/和谐.png',
+    'fuqiang': '/static/fuka/富强.png',
+    'wanneng': '/static/fuka/万能.png'
+  }
+  return defaultImages[typeCode] || '/static/fuka/default.png'
+}
+
+// 处理图片加载错误
+const handleImageError = (e) => {
+  console.warn('福卡图片加载失败', e)
+  // 可以在这里设置默认图片
 }
 
 // 查看福卡详情
@@ -385,16 +547,131 @@ const goToDraw = () => {
   })
 }
 
+// 处理合成五福卡
+const handleCombine = async () => {
+  if (isCombining.value || canMakeSets.value === 0) {
+    if (canMakeSets.value === 0) {
+      xxep.$helper.toast('集齐5张不同福卡才能合成哦', 'info')
+    }
+    return
+  }
+  
+  isCombining.value = true
+  
+  try {
+    const res = await xxep.$api.card.combineWufuCard()
+    
+    if (res.code === 1) {
+      // 显示成功弹窗
+      showCombineSuccess.value = true
+      // 刷新数据（确保更新五福卡数量）
+      await Promise.all([
+        loadCardTypes(),
+        loadStatistics(),
+        loadChanceCount() // 确保机会数量同步
+      ])
+    } else {
+      // 显示失败弹窗
+      combineErrorMsg.value = res.msg || '合成失败，请稍后重试'
+      showCombineError.value = true
+    }
+  } catch (error) {
+    console.error('合成五福卡失败', error)
+    // 显示失败弹窗
+    combineErrorMsg.value = error.message || '合成失败，请稍后重试'
+    showCombineError.value = true
+  } finally {
+    isCombining.value = false
+  }
+}
+
+// 关闭合成成功弹窗
+const closeCombineSuccess = () => {
+  showCombineSuccess.value = false
+}
+
+// 关闭合成失败弹窗
+const closeCombineError = () => {
+  showCombineError.value = false
+  combineErrorMsg.value = ''
+}
+
 // 跳转到兑换页面
 const goToExchange = () => {
-  if (canMakeSets.value === 0) {
-    xxep.$helper.toast('集齐5张不同福卡才能兑换哦', 'info')
+  if (wufuCardCount.value === 0) {
+    xxep.$helper.toast('请先合成五福卡', 'info')
     return
   }
   
   uni.navigateTo({
     url: '/pages/card/exchange'
   })
+}
+
+// 处理抽取福卡
+const handleDraw = async () => {
+  if (isDrawing.value || chanceCount.value <= 0) {
+    return
+  }
+  
+  isDrawing.value = true
+  
+  try {
+    const res = await xxep.$api.card.drawCard()
+    
+    if (res.code === 1) {
+      // 更新机会数量（如果API返回了则使用，否则重新获取）
+      if (res.data.chance_count !== undefined) {
+        chanceCount.value = res.data.chance_count
+      } else {
+        await loadChanceCount()
+      }
+      
+      // 获取抽中的福卡信息
+      const cardType = cardTypes.value.find(c => c.type_code === res.data.card?.type_code)
+      if (cardType) {
+        drawnCard.value = {
+          ...cardType,
+          ...res.data.card,
+          // 确保图片URL存在
+          image: res.data.card?.image || cardType.image || CARD_ORDER.find(c => c.type_code === res.data.card?.type_code)?.image || ''
+        }
+      } else {
+        // 如果没有找到类型，使用默认配置
+        const defaultCard = CARD_ORDER.find(c => c.type_code === res.data.card?.type_code)
+        drawnCard.value = {
+          ...res.data.card,
+          image: res.data.card?.image || defaultCard?.image || '',
+          type_name: res.data.card?.type_name || defaultCard?.type_name || ''
+        }
+      }
+      
+      // 显示动画弹窗
+      showDrawResult.value = true
+      
+      // 延迟显示动画效果
+      setTimeout(() => {
+        showCardAnimation.value = true
+      }, 100)
+      
+      // 刷新福卡列表
+      await loadCardTypes()
+    } else {
+      xxep.$helper.toast(res.msg || '抽取失败', 'error')
+    }
+  } catch (error) {
+    console.error('抽取福卡失败', error)
+    xxep.$helper.toast('抽取失败，请稍后重试', 'error')
+  } finally {
+    isDrawing.value = false
+  }
+}
+
+// 关闭抽中结果弹窗
+const closeDrawResult = () => {
+  showDrawResult.value = false
+  showCardAnimation.value = false
+  drawnCard.value = null
 }
 </script>
 
@@ -547,6 +824,16 @@ const goToExchange = () => {
   text-shadow: 
     1rpx 1rpx 2rpx rgba(255, 255, 255, 0.8),
     -1rpx -1rpx 2rpx rgba(255, 107, 74, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+
+.card-name-count {
+  font-size: 24rpx;
+  color: #FF5722;
+  font-weight: 700;
 }
 
 // ==========================================================================
@@ -741,6 +1028,50 @@ const goToExchange = () => {
 
 .section-header {
   margin-bottom: 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+
+// 五福卡数量展示
+.wufu-card-count {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 8rpx 0;
+  // background: rgba(255, 215, 0, 0.2);
+  border-radius: 32rpx;
+  // border: 2rpx solid rgba(255, 215, 0, 0.4);
+}
+
+.prize-wufu-card-count {
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  margin-bottom: 8rpx;
+}
+
+.wufu-count-label {
+  font-size: 28rpx;
+  color: #D32F2F;
+  font-weight: 600;
+}
+
+.wufu-count-number {
+  font-size: 48rpx;
+  color: #FF5722;
+  font-weight: 700;
+  text-shadow: 
+    2rpx 2rpx 4rpx rgba(255, 255, 255, 0.8),
+    -2rpx -2rpx 4rpx rgba(255, 107, 74, 0.5);
+}
+
+.wufu-count-unit {
+  font-size: 28rpx;
+  color: #D32F2F;
+  font-weight: 600;
 }
 
 .section-title-wrapper {
@@ -941,6 +1272,372 @@ const goToExchange = () => {
   line-height: 1.8;
   text-shadow: 
     1rpx 1rpx 2rpx rgba(255, 255, 255, 0.5);
+}
+
+// ==========================================================================
+// 抽取福卡按钮
+// ==========================================================================
+.draw-button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 28rpx 0;
+  position: relative;
+  z-index: 10;
+}
+
+.draw-button {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+  
+  // 可用状态：金色渐变圆形按钮
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  box-shadow: 
+    0 8rpx 24rpx rgba(255, 215, 0, 0.4),
+    0 0 0 8rpx rgba(255, 215, 0, 0.1),
+    0 0 0 16rpx rgba(255, 215, 0, 0.05);
+  
+  &:active:not(.disabled) {
+    transform: scale(0.95);
+  }
+  
+  // 抽取中动画
+  &.drawing {
+    animation: drawPulse 1s ease-in-out infinite;
+  }
+  
+  // 禁用状态
+  &.disabled {
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+    opacity: 0.7;
+  }
+}
+
+@keyframes drawPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 
+      0 8rpx 24rpx rgba(255, 215, 0, 0.4),
+      0 0 0 8rpx rgba(255, 215, 0, 0.1),
+      0 0 0 16rpx rgba(255, 215, 0, 0.05);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 
+      0 12rpx 32rpx rgba(255, 215, 0, 0.6),
+      0 0 0 12rpx rgba(255, 215, 0, 0.2),
+      0 0 0 24rpx rgba(255, 215, 0, 0.1);
+  }
+}
+
+.draw-button-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+}
+
+.draw-button-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #D32F2F;
+  text-shadow: 
+    1rpx 1rpx 2rpx rgba(255, 255, 255, 0.8),
+    -1rpx -1rpx 2rpx rgba(255, 107, 74, 0.4);
+  white-space: nowrap;
+}
+
+.draw-button-chance {
+  font-size: 22rpx;
+  color: #FF5722;
+  font-weight: 600;
+  text-shadow: 
+    1rpx 1rpx 2rpx rgba(255, 255, 255, 0.6);
+}
+
+.draw-button.disabled .draw-button-text {
+  color: #9CA3AF;
+  text-shadow: none;
+}
+
+// ==========================================================================
+// 抽中福卡动画弹窗
+// ==========================================================================
+.draw-result-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.draw-result-content {
+  width: 600rpx;
+  padding: 60rpx 40rpx;
+  background: rgba(255, 232, 214, 0.95);
+  backdrop-filter: blur(12rpx);
+  border-radius: 32rpx;
+  border: 3rpx solid rgba(255, 215, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40rpx;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.3);
+}
+
+.drawn-card-animation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32rpx;
+  opacity: 0;
+  transform: scale(0.5) translateY(100rpx);
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  &.show {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    animation: cardBounce 0.8s ease 0.3s;
+  }
+}
+
+@keyframes cardBounce {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+  }
+  25% {
+    transform: scale(1.1) translateY(-20rpx);
+  }
+  50% {
+    transform: scale(1) translateY(0);
+  }
+  75% {
+    transform: scale(1.05) translateY(-10rpx);
+  }
+}
+
+.drawn-card-image {
+  width: 300rpx;
+  height: 400rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.2);
+}
+
+.drawn-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.drawn-card-title {
+  font-size: 32rpx;
+  color: #FF5722;
+  font-weight: 600;
+}
+
+.drawn-card-name {
+  font-size: 48rpx;
+  color: #D32F2F;
+  font-weight: 700;
+  text-shadow: 
+    2rpx 2rpx 4rpx rgba(255, 255, 255, 0.8),
+    -2rpx -2rpx 4rpx rgba(255, 107, 74, 0.5);
+}
+
+.drawn-card-universal {
+  padding: 12rpx 24rpx;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border-radius: 24rpx;
+  border: 2rpx solid rgba(255, 215, 0, 0.6);
+  
+  text {
+    font-size: 28rpx;
+    color: #D32F2F;
+    font-weight: 700;
+  }
+}
+
+.draw-result-btn {
+  width: 100%;
+  padding: 24rpx;
+  border-radius: 24rpx;
+  border: none;
+  background: linear-gradient(135deg, #FF5722 0%, #FF8A65 100%);
+  color: #FFFFFF;
+  font-size: 32rpx;
+  font-weight: 700;
+  box-shadow: 0 8rpx 24rpx rgba(211, 47, 47, 0.4);
+}
+
+// ==========================================================================
+// 合成结果弹窗
+// ==========================================================================
+.combine-result-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+.combine-result-content {
+  width: 600rpx;
+  padding: 60rpx 40rpx;
+  background: rgba(255, 232, 214, 0.95);
+  backdrop-filter: blur(12rpx);
+  border-radius: 32rpx;
+  border: 3rpx solid rgba(255, 215, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32rpx;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  &.success {
+    border-color: rgba(76, 175, 80, 0.6);
+    background: rgba(232, 245, 233, 0.95);
+  }
+  
+  &.error {
+    border-color: rgba(244, 67, 54, 0.6);
+    background: rgba(255, 235, 238, 0.95);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100rpx) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.combine-success-icon {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(76, 175, 80, 0.4);
+  animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.combine-error-icon {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F44336 0%, #C62828 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(244, 67, 54, 0.4);
+  animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.success-icon {
+  font-size: 72rpx;
+  color: #FFFFFF;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.error-icon {
+  font-size: 72rpx;
+  color: #FFFFFF;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.combine-result-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #D32F2F;
+  text-align: center;
+}
+
+.combine-result-content.success .combine-result-title {
+  color: #2E7D32;
+}
+
+.combine-result-content.error .combine-result-title {
+  color: #C62828;
+}
+
+.combine-result-message {
+  font-size: 28rpx;
+  color: #666666;
+  text-align: center;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.combine-result-tip {
+  font-size: 24rpx;
+  color: #999999;
+  text-align: center;
+  margin-top: -16rpx;
+}
+
+.combine-result-btn {
+  width: 100%;
+  padding: 24rpx;
+  background: linear-gradient(135deg, #FF5722 0%, #D32F2F 100%);
+  color: #FFFFFF;
+  font-size: 32rpx;
+  font-weight: 700;
+  text-shadow: 
+    1rpx 1rpx 2rpx rgba(211, 47, 47, 0.5);
+  transition: all 0.3s ease;
+  
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
 }
 
 </style>

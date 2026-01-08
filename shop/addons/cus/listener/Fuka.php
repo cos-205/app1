@@ -4,7 +4,7 @@ namespace addons\cus\listener;
 
 use app\admin\model\cus\user\User as UserModel;
 use app\admin\model\cus\Share as ShareModel;
-use addons\cus\service\fuka\UserInit as UserInitService;
+use app\common\service\fuka\UserInit as UserInitService;
 
 /**
  * 福卡系统监听器

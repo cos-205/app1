@@ -327,6 +327,22 @@ CREATE TABLE `fa_fuka_card_flow_config` (
   UNIQUE KEY `step` (`step`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='金卡流程状态配置表';
 
+-- 2.13.1 五福卡记录表
+CREATE TABLE `fa_fuka_wufu_card` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `user_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '用户ID',
+  `fuka_ids` text COMMENT '合成使用的福卡ID列表:JSON格式',
+  `is_used` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否已使用:1=是,0=否',
+  `exchange_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '兑换记录ID',
+  `used_time` bigint DEFAULT NULL COMMENT '使用时间',
+  `createtime` bigint DEFAULT NULL COMMENT '创建时间',
+  `updatetime` bigint DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `is_used` (`is_used`),
+  KEY `user_is_used` (`user_id`, `is_used`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='五福卡记录表';
+
 -- 2.14 财富金卡表
 CREATE TABLE `fa_fuka_wealth_card` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',

@@ -26,6 +26,7 @@ class UserStatistics extends Model
         'valid_invite_count' => 'integer',
         'total_fuka_count' => 'integer',
         'current_fuka_count' => 'integer',
+        'current_wufu_card_count' => 'integer',
         'fuka_chance' => 'integer',
         'dividend_money' => 'float',
         'total_dividend' => 'float',
