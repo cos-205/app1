@@ -4,7 +4,6 @@ namespace app\api\controller;
 
 use app\common\controller\Api;
 use app\common\service\PaymentService;
-use think\Log;
 
 /**
  * 支付回调接口
@@ -37,7 +36,8 @@ class Payment extends Api
         $data = $this->request->param();
         
         // 记录回调日志
-        Log::info('支付回调通知', [
+        output_log('info', [
+            'title' => '支付回调通知',
             'pay_type' => $payType,
             'params' => $data,
             'raw_input' => file_get_contents('php://input')
@@ -49,7 +49,8 @@ class Payment extends Api
             $result = PaymentService::processNotify($data, $payType);
             
         } catch (\Exception $e) {
-            Log::error('支付回调处理异常', [
+            output_log('error', [
+                'title' => '支付回调处理异常',
                 'pay_type' => $payType,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()

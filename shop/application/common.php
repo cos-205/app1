@@ -507,3 +507,55 @@ EOT;
         return $icon;
     }
 }
+
+if (!function_exists('output_log')) {
+    /**
+     * ******************
+     * 1、写入内容到文件,追加内容到文件
+     * 2、打开并读取文件内容
+     * *******************
+     */
+    function output_log($folder = 'debug', $msg)
+    {
+        $path = LOG_PATH . $folder;
+        if (!is_dir($path)) {
+            mkdir($path);
+        }
+        $filename = $path . '/' . date('Ymd') . '.txt';
+        $content = date("Y-m-d H:i:s") . "\r\n" . print_r($msg, 1) . "\r\n \r\n \r\n ";
+        file_put_contents($filename, $content, FILE_APPEND);
+    } # code...
+}
+
+if (!function_exists('getRequest')) {
+    function getRequest($params, $host, $method = "GET")
+    {
+        $headers = array();
+        //根据API的要求，定义相对应的Content-Type
+
+        array_push($headers, "Content-Type" . ":" . "application/json", "Access-Control-Allow-Origin" . ":" . "*");
+        $url = $host;
+
+        $oCurl = curl_init();
+        curl_setopt($oCurl, CURLOPT_CUSTOMREQUEST, $method);
+        curl_setopt($oCurl, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($oCurl, CURLOPT_FAILONERROR, false);
+
+        if (stripos("$" . $host, "https://") !== FALSE) {
+            curl_setopt($oCurl, CURLOPT_SSL_VERIFYPEER, FALSE);
+            curl_setopt($oCurl, CURLOPT_SSL_VERIFYHOST, FALSE);
+            curl_setopt($oCurl, CURLOPT_SSLVERSION, TRUE); //CURL_SSLVERSION_TLSv1
+        }
+        curl_setopt($oCurl, CURLOPT_URL, $url);
+        curl_setopt($oCurl, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($oCurl, CURLOPT_VERBOSE, TRUE);
+        curl_setopt($oCurl, CURLOPT_HEADER, FALSE);
+        curl_setopt($oCurl, CURLOPT_POSTFIELDS, json_encode($params, true));
+        $sContent = curl_exec($oCurl);
+        // $aStatus = curl_getinfo($oCurl);
+
+        curl_close($oCurl);
+        output_log("debug", $sContent);
+        return json_decode($sContent, true);
+    }
+}

@@ -99,6 +99,38 @@ export default {
   }),
 
   /**
+   * 签署协议（步骤1专用）
+   * @param {Object} data { step: 步骤ID（固定为1） }
+   * @returns {Promise}
+   */
+  signAgreement: (data) => $request({
+    url: '/api/card/signAgreement',
+    method: 'POST',
+    data,
+    custom: {
+      showLoading: true,
+      loadingMsg: '签署中...',
+      auth: true,
+    },
+  }),
+
+  /**
+   * 提交步骤数据（用于步骤3、4等需要提交数据的步骤）
+   * @param {Object} data { step: 步骤ID, data: 步骤数据（如密码、限额等） }
+   * @returns {Promise}
+   */
+  submitStepData: (data) => $request({
+    url: '/api/card/submitStepData',
+    method: 'POST',
+    data,
+    custom: {
+      showLoading: true,
+      loadingMsg: '提交中...',
+      auth: true,
+    },
+  }),
+
+  /**
    * 完成某个流程步骤（支持额外数据）
    * @param {Object} data { step: 步骤ID, extra_data: 额外数据 }
    * @returns {Promise}

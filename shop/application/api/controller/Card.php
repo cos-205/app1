@@ -11,10 +11,10 @@ use app\common\model\fuka\CardFlowLog;
 use app\common\model\fuka\CardOrder;
 use app\common\model\fuka\CardAgreementFlow;
 use app\common\model\fuka\UserAgreementFlow;
+use app\common\model\fuka\MemberLevel;
 use app\common\validate\fuka\WealthCard as WealthCardValidate;
 use app\common\service\PaymentService;
 use think\Db;
-use think\Log;
 
 /**
  * 财富金卡接口
@@ -117,17 +117,28 @@ class Card extends Api
         }
 
         // 实时检查申领条件
-        $userStats = \app\common\model\fuka\UserStatistics::where('user_id', $user->id)->find();
-        $validInviteCount = $userStats ? intval($userStats->valid_invite_count) : 0;
+        // 实时查询已实名认证的好友数量（确保准确性）
+        $validInviteCount = User::where('parent_user_id', $user->id)
+            ->where('is_realname', 1)
+            ->where('status', 'normal')
+            ->count();
         
-        // 条件1：铂金会员（会员等级 >= 1）
-        $isMember = intval($user->member_level) >= 1;
+        // 根据实时统计的邀请人数自动升级会员等级
+        $this->updateMemberLevelByInviteCount($user, $validInviteCount);
+        
+        // 重新获取用户信息（会员等级可能已更新）
+        $user = User::get($user->id);
+        
+        // 条件1：铂金会员（会员等级 >= 1 且 邀请2位好友）
+        $hasInvite = $validInviteCount >= 2;
+        $isMemberLevel = intval($user->member_level) >= 1;
+        $isMember = $isMemberLevel && $hasInvite; // 需要同时满足会员等级和邀请条件
         
         // 条件2：实名认证
         $isRealname = intval($user->is_realname) === 1;
         
-        // 条件3：邀请2位好友完成实名认证
-        $hasInvite = $validInviteCount >= 2;
+        // 条件3：邀请2位好友完成实名认证（已合并到铂金会员条件中）
+        // $hasInvite = $validInviteCount >= 2;
         
         // 条件4：收货地址（从 fa_cus_user_address 表查询）
         $userAddress = Db::name('cus_user_address')
@@ -142,7 +153,9 @@ class Card extends Api
                 'desc' => '需要成为铂金会员',
                 'completed' => $isMember,
                 'required' => true,
-                'value' => $user->member_level
+                'value' => $user->member_level,
+                'member_level_ok' => $isMemberLevel,
+                'invite_ok' => $hasInvite
             ],
             [
                 'name' => '实名认证',
@@ -180,6 +193,50 @@ class Card extends Api
             ->order('step asc')
             ->select();
 
+        // 如果已领取金卡（apply_status >= 2），自动启用步骤1
+        if ($card->apply_status >= 2) {
+            // 如果 flow_status 还是0，自动设置为1以启用步骤1
+            if ($card->flow_status == 0) {
+                $card->flow_status = 1;
+                $card->save();
+            }
+            
+            // 检查步骤1的流程记录是否存在
+            $step1Log = CardFlowLog::where('user_id', $user->id)
+                ->where('card_id', $card->id)
+                ->where('flow_step', 1)
+                ->find();
+            
+            // 如果步骤1的流程记录不存在，自动创建
+            if (!$step1Log) {
+                $step1Config = CardFlowConfig::where('step', 1)
+                    ->where('status', 'normal')
+                    ->find();
+                
+                if ($step1Config) {
+                    $step1Log = new CardFlowLog();
+                    $step1Log->user_id = $user->id;
+                    $step1Log->card_id = $card->id;
+                    $step1Log->flow_step = 1;
+                    $step1Log->step_name = $step1Config->step_name;
+                    $step1Log->need_fee = $step1Config->need_fee ? 1 : 0;
+                    $step1Log->fee_amount = $step1Config->fee_amount;
+                    $step1Log->fee_name = $step1Config->step_name . '费用';
+                    $step1Log->flow_status = 1; // 未支付
+                    $step1Log->save();
+                    
+                    // 创建协议流程记录
+                    $this->createAgreementFlowRecords($user->id, 1);
+                    
+                    output_log('info', [
+                        'title' => '[金卡系统] 自动创建协议签署流程记录',
+                        'user_id' => $user->id,
+                        'card_id' => $card->id
+                    ]);
+                }
+            }
+        }
+
         // 获取用户流程记录
         $flowLogs = CardFlowLog::where('user_id', $user->id)
             ->where('card_id', $card->id)
@@ -190,10 +247,32 @@ class Card extends Api
             $flowLogMap[$log->flow_step] = $log;
         }
 
+        // 获取用户协议流程记录（步骤1）
+        $agreementFlows = UserAgreementFlow::where('user_id', $user->id)
+            ->where('step_id', 1)
+            ->select();
+        $agreementSigned = false;
+        foreach ($agreementFlows as $flow) {
+            if ($flow->status >= 1) { // 已签署（进行中或已完成）
+                $agreementSigned = true;
+                break;
+            }
+        }
+
         // 组装流程信息
         $steps = [];
         foreach ($flowConfigs as $config) {
             $log = isset($flowLogMap[$config->step]) ? $flowLogMap[$config->step] : null;
+            
+            // 判断是否已签署/已提交数据
+            $dataSubmitted = false;
+            if ($config->step == 1) {
+                // 步骤1：检查是否已签署协议
+                $dataSubmitted = $agreementSigned;
+            } elseif (in_array($config->step, [2, 3])) {
+                // 步骤3、4：检查是否已提交数据
+                $dataSubmitted = $log && !empty($log->extra_data);
+            }
             
             $steps[] = [
                 'step' => $config->step,
@@ -210,9 +289,14 @@ class Card extends Api
                 'scene_desc' => $config->scene_desc,
                 'refund_rule' => $config->refund_rule,
                 // 用户流程状态
-                'flow_status' => $log ? $log->flow_status : 1,  // 1=未支付
+                'flow_status' => $log ? $log->flow_status : 1,  // 1=未支付, 3=已完成
                 'order_id' => $log ? $log->order_id : null,
-                'extra_data' => $log && $log->extra_data ? json_decode($log->extra_data, true) : null,
+                // 是否启用：只有当前 flow_status 等于或大于此步骤时才启用
+                // 这样可以防止步骤自动进入下一步，需要管理员手动更新 flow_status
+                'enabled' => $card->flow_status >= $config->step,
+                // 前置动作状态
+                'agreement_signed' => $config->step == 1 ? $agreementSigned : null, // 步骤1：是否已签署协议
+                'data_submitted' => in_array($config->step, [2, 3]) ? $dataSubmitted : null, // 步骤3、4：是否已提交数据
             ];
         }
 
@@ -221,6 +305,11 @@ class Card extends Api
             'card_status' => [
                 'flow_status' => $card->flow_status,
                 'apply_status' => $card->apply_status,
+                'holder_name' => $card->holder_name ?: '',
+                'holder_idcard' => $card->holder_idcard ?: '',
+                'balance' => $card->card_balance ? number_format($card->card_balance, 2, '.', '') : '0.00',
+                'card_no' => $card->card_no ?: '',
+                'agreement_signed' => $agreementSigned, // 是否已签署协议
             ],
             'steps' => $steps,
             'total_amount' => array_sum(array_column($steps, 'fee_amount')),
@@ -260,11 +349,6 @@ class Card extends Api
             $this->error('请先申请财富金卡');
         }
 
-        // 检查金卡审核状态
-        if ($card->apply_status != 2) {
-            $this->error('金卡尚未审核通过，无法支付');
-        }
-
         // 获取流程配置
         $flowConfig = CardFlowConfig::where('step', $step)
             ->where('status', 'normal')
@@ -288,6 +372,29 @@ class Card extends Api
             
             if (!$prevLog || $prevLog->flow_status != 3) {
                 $this->error('请先完成上一步骤');
+            }
+        }
+
+        // 检查当前步骤的前置动作是否已完成
+        if ($step == 1) {
+            // 步骤1：检查是否已签署协议
+            $agreementFlow = UserAgreementFlow::where('user_id', $user->id)
+                ->where('step_id', 1)
+                ->where('status', '>=', 1) // 已签署（进行中或已完成）
+                ->find();
+            
+            if (!$agreementFlow) {
+                $this->error('请先签署协议');
+            }
+        } elseif (in_array($step, [2, 3])) {
+            // 步骤3、4：检查是否已提交数据
+            $currentLog = CardFlowLog::where('user_id', $user->id)
+                ->where('card_id', $card->id)
+                ->where('flow_step', $step)
+                ->find();
+            
+            if (!$currentLog || empty($currentLog->extra_data)) {
+                $this->error('请先提交必要的数据');
             }
         }
 
@@ -315,7 +422,8 @@ class Card extends Api
                 $this->success('订单已存在', ['order' => $existOrder]);
             } else {
                 // 订单已过期，标记为超时（可选）
-                Log::info('订单已超时', [
+                output_log('info', [
+                    'title' => '订单已超时',
                     'order_id' => $existOrder->id,
                     'order_no' => $existOrder->order_no
                 ]);
@@ -347,7 +455,8 @@ class Card extends Api
 
             Db::commit();
             
-            Log::info('创建金卡支付订单', [
+            output_log('info', [
+                'title' => '创建金卡支付订单',
                 'user_id' => $user->id,
                 'order_id' => $order->id,
                 'order_no' => $orderNo,
@@ -357,7 +466,8 @@ class Card extends Api
             
         } catch (\Exception $e) {
             Db::rollback();
-            Log::error('创建订单失败', [
+            output_log('error', [
+                'title' => '创建订单失败',
                 'user_id' => $user->id,
                 'step' => $step,
                 'error' => $e->getMessage(),
@@ -449,23 +559,26 @@ class Card extends Api
             // 使用统一支付服务生成支付参数
             $paymentParams = PaymentService::generatePaymentParams($order, $payType);
 
-            Log::info('获取支付参数', [
+            output_log('info', [
+                'title' => '获取支付参数',
                 'user_id' => $user->id,
                 'order_id' => $orderId,
                 'order_no' => $order->order_no,
                 'pay_type' => $payType
             ]);
 
-            $this->success('获取成功', $paymentParams);
-            
+
         } catch (\Exception $e) {
-            Log::error('获取支付参数失败', [
+            output_log('error', [
+                'title' => '获取支付参数失败',
                 'user_id' => $user->id,
                 'order_id' => $orderId,
                 'error' => $e->getMessage()
             ]);
             $this->error($e->getMessage());
         }
+        $this->success('获取成功', $paymentParams);
+            
     }
 
     /**
@@ -473,7 +586,8 @@ class Card extends Api
      * 
      * @ApiMethod (GET)
      * @ApiRoute  (/api/card/paymentResult)
-     * @ApiParams (name="order_id", type="integer", required=true, description="订单ID")
+     * @ApiParams (name="order_id", type="integer", required=false, description="订单ID")
+     * @ApiParams (name="order_no", type="string", required=false, description="订单号")
      * @ApiReturn ({'code':'1','msg':'查询成功','data':{'pay_status':0,'order':{}}})
      */
     public function paymentResult()
@@ -484,13 +598,21 @@ class Card extends Api
         }
 
         $orderId = $this->request->param('order_id/d', 0);
-        if (!$orderId) {
-            $this->error('订单ID不能为空');
+        $orderNo = $this->request->param('order_no', '');
+        
+        if (!$orderId && !$orderNo) {
+            $this->error('订单ID或订单号不能为空');
         }
 
-        $order = CardOrder::where('id', $orderId)
-            ->where('user_id', $user->id)
-            ->find();
+        $orderQuery = CardOrder::where('user_id', $user->id);
+        
+        if ($orderId) {
+            $orderQuery->where('id', $orderId);
+        } elseif ($orderNo) {
+            $orderQuery->where('order_no', $orderNo);
+        }
+        
+        $order = $orderQuery->find();
         
         if (!$order) {
             $this->error('订单不存在');
@@ -503,12 +625,250 @@ class Card extends Api
     }
 
     /**
-     * 完成流程步骤（新版，支持A类步骤数据提交）
+     * 签署协议（步骤1专用）
+     * 
+     * @ApiMethod (POST)
+     * @ApiRoute  (/api/card/signAgreement)
+     * @ApiParams (name="step", type="integer", required=true, description="流程步骤（固定为1）")
+     * @ApiReturn ({'code':'1','msg':'签署成功','data':{}})
+     */
+    public function signAgreement()
+    {
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录');
+        }
+
+        $step = $this->request->param('step/d', 0);
+        if ($step != 1) {
+            $this->error('此接口仅用于步骤1（协议签署）');
+        }
+
+        // 获取金卡信息
+        $card = WealthCard::where('user_id', $user->id)->find();
+        if (!$card) {
+            $this->error('请先申请财富金卡');
+        }
+
+
+        // 获取流程配置
+        $flowConfig = CardFlowConfig::where('step', $step)
+            ->where('status', 'normal')
+            ->find();
+        
+        if (!$flowConfig) {
+            $this->error('流程配置不存在');
+        }
+
+        Db::startTrans();
+        try {
+            // 创建或更新协议流程记录
+            $this->createAgreementFlowRecords($user->id, $step);
+            
+            // 更新所有协议流程记录状态为"进行中"（已签署，等待支付）
+            UserAgreementFlow::where('user_id', $user->id)
+                ->where('step_id', $step)
+                ->where('status', '<', 2)
+                ->update([
+                    'status' => 1, // 进行中（已签署，等待支付）
+                    'start_time' => time(),
+                    'updatetime' => time()
+                ]);
+
+            // 创建或更新流程记录
+            $flowLog = CardFlowLog::where('user_id', $user->id)
+                ->where('card_id', $card->id)
+                ->where('flow_step', $step)
+                ->find();
+
+            if (!$flowLog) {
+                $flowLog = new CardFlowLog();
+                $flowLog->user_id = $user->id;
+                $flowLog->card_id = $card->id;
+                $flowLog->flow_step = $step;
+                $flowLog->step_name = $flowConfig->step_name;
+                $flowLog->need_fee = $flowConfig->need_fee ? 1 : 0;
+                $flowLog->fee_amount = $flowConfig->fee_amount;
+                $flowLog->fee_name = $flowConfig->step_name . '费用';
+            }
+
+            // 更新流程状态为"未支付"（已签署，等待支付）
+            $flowLog->flow_status = 1; // 未支付（已签署，等待支付）
+            $flowLog->save();
+
+            Db::commit();
+            
+            output_log('info', [
+                'title' => '协议签署成功',
+                'user_id' => $user->id,
+                'step' => $step,
+                'flow_log_id' => $flowLog->id
+            ]);
+            
+        } catch (\Exception $e) {
+            Db::rollback();
+            output_log('error', [
+                'title' => '协议签署失败',
+                'user_id' => $user->id,
+                'step' => $step,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            $this->error('签署失败，请稍后重试');
+        }
+        
+        $this->success('协议签署成功，请继续支付');
+    }
+
+    /**
+     * 提交步骤数据（用于步骤3、4等需要提交数据的步骤）
+     * 
+     * @ApiMethod (POST)
+     * @ApiRoute  (/api/card/submitStepData)
+     * @ApiParams (name="step", type="integer", required=true, description="流程步骤（3、4等）")
+     * @ApiParams (name="data", type="object", required=true, description="步骤数据（如密码、限额等）")
+     * @ApiReturn ({'code':'1','msg':'提交成功','data':{}})
+     */
+    public function submitStepData()
+    {
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录');
+        }
+
+        $step = $this->request->param('step/d', 0);
+        if ($step < 1 || $step > 9) {
+            $this->error('无效的步骤编号');
+        }
+
+        // 处理步骤数据 - 尝试多种方式获取 POST JSON 数据
+        $stepData = null;
+        
+        // 方式1: 直接获取 data 参数
+        $params = $this->request->param();
+        $stepData = $params["data"];
+        // 验证数据是否为有效的数组
+        if ( empty($stepData)) {
+            output_log('submitStepData_param_error', [
+                'user_id' => $user->id,
+                'step' => $step,
+                'all_params' => $this->request->param(),
+                'post_params' => $this->request->post(),
+                'raw_content' => $this->request->getContent(),
+                'error' => '数据格式错误或为空'
+            ]);
+            $this->error('请提交必要的数据');
+        }
+
+        // 获取金卡信息
+        $card = WealthCard::where('user_id', $user->id)->find();
+        if (!$card) {
+            $this->error('请先申请财富金卡');
+        }
+
+        // 获取流程配置
+        $flowConfig = CardFlowConfig::where('step', $step)
+            ->where('status', 'normal')
+            ->find();
+        
+        if (!$flowConfig) {
+            $this->error('流程配置不存在');
+        }
+
+        // 验证步骤数据
+        try {
+            $this->validateStepData($step, $stepData);
+        } catch (\Exception $e) {
+            $this->error($e->getMessage());
+        }
+
+        Db::startTrans();
+        try {
+            // 获取或创建流程记录
+            $flowLog = CardFlowLog::where('user_id', $user->id)
+                ->where('card_id', $card->id)
+                ->where('flow_step', $step)
+                ->find();
+
+            if (!$flowLog) {
+                $flowLog = new CardFlowLog();
+                $flowLog->user_id = $user->id;
+                $flowLog->card_id = $card->id;
+                $flowLog->flow_step = $step;
+                $flowLog->step_name = $flowConfig->step_name;
+                $flowLog->need_fee = $flowConfig->need_fee ? 1 : 0;
+                $flowLog->fee_amount = $flowConfig->fee_amount;
+                $flowLog->fee_name = $flowConfig->step_name . '费用';
+            }
+
+            // 保存步骤数据（JSON格式）
+            $flowLog->extra_data = json_encode($stepData, JSON_UNESCAPED_UNICODE);
+            // 更新流程状态为"未支付"（已提交数据，等待支付）
+            $flowLog->flow_status = 1; // 未支付（已提交数据，等待支付）
+            $flowLog->save();
+
+            Db::commit();
+            
+            output_log('info', [
+                'title' => '步骤数据提交成功',
+                'user_id' => $user->id,
+                'step' => $step,
+                'flow_log_id' => $flowLog->id
+            ]);
+            
+        } catch (\Exception $e) {
+            Db::rollback();
+            output_log('error', [
+                'title' => '步骤数据提交失败',
+                'user_id' => $user->id,
+                'step' => $step,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            $this->error('提交失败，请稍后重试');
+        }
+        
+        $this->success('数据提交成功，请继续支付');
+    }
+
+    /**
+     * 验证步骤数据
+     * @throws \Exception
+     */
+    private function validateStepData($step, $data)
+    {
+        switch ($step) {
+            case 3: // 设置卡片密码
+                if (!isset($data['card_password'])) {
+                    throw new \Exception('请设置卡片密码');
+                }
+                $password = trim($data['card_password']);
+                if (strlen($password) != 6 || !ctype_digit($password)) {
+                    throw new \Exception('密码必须为6位数字');
+                }
+                break;
+            
+            case 4: // 大额收付款功能
+                if (!isset($data['payment_limit'])) {
+                    throw new \Exception('请设置支付限额');
+                }
+                $limit = floatval($data['payment_limit']);
+                if ($limit <= 0 || $limit > 1000000) {
+                    throw new \Exception('支付限额必须在0-100万之间');
+                }
+                break;
+            
+            default:
+                throw new \Exception('该步骤不需要提交数据');
+        }
+    }
+
+    /**
+     * 完成流程步骤（新版）
      * 
      * @ApiMethod (POST)
      * @ApiRoute  (/api/card/completeStepV2)
      * @ApiParams (name="step", type="integer", required=true, description="流程步骤（1-9）")
-     * @ApiParams (name="extra_data", type="object", required=false, description="额外数据（A类步骤需要）")
      * @ApiReturn ({'code':'1','msg':'提交成功','data':{}})
      */
     public function completeStepV2()
@@ -519,7 +879,6 @@ class Card extends Api
         }
 
         $step = $this->request->param('step/d', 0);
-        $extraData = $this->request->param('extra_data', null);
 
         if ($step < 1 || $step > 9) {
             $this->error('无效的步骤编号');
@@ -529,11 +888,6 @@ class Card extends Api
         $card = WealthCard::where('user_id', $user->id)->find();
         if (!$card) {
             $this->error('请先申请财富金卡');
-        }
-
-        // 检查金卡审核状态
-        if ($card->apply_status != 2) {
-            $this->error('金卡尚未审核通过');
         }
 
         // 获取流程配置
@@ -562,20 +916,6 @@ class Card extends Api
             }
         }
 
-        // A类步骤需要提交额外数据
-        if ($flowConfig->step_type == 'A') {
-            if (!$extraData || !is_array($extraData)) {
-                $this->error('请提交必要的数据');
-            }
-
-            // 验证额外数据
-            try {
-                $this->validateExtraData($step, $extraData);
-            } catch (\Exception $e) {
-                $this->error($e->getMessage());
-            }
-        }
-
         Db::startTrans();
         try {
             if (!$flowLog) {
@@ -589,32 +929,34 @@ class Card extends Api
                 $flowLog->fee_name = $flowConfig->step_name . '费用';
             }
 
-            // 保存额外数据（JSON格式）
-            if ($extraData) {
-                $flowLog->extra_data = json_encode($extraData, JSON_UNESCAPED_UNICODE);
+            // 如果已支付，直接更新状态为已完成（支付成功后自动审核通过）
+            if ($flowLog->flow_status >= 2) {
+                $flowLog->flow_status = 3; // 已完成
+                $flowLog->complete_time = time();
+            } else {
+                // 未支付的情况（理论上不应该到这里，因为上面已经检查了）
+                $flowLog->flow_status = 1; // 未支付
             }
-
-            // 更新状态为待审核
-            $flowLog->flow_status = 2; // 已支付待审核
             $flowLog->save();
 
             // 如果是步骤1（协议签署），创建协议流程记录
-            if ($step == 1 && $flowLog->flow_status == 2) {
+            if ($step == 1 && $flowLog->flow_status == 3) {
                 $this->createAgreementFlowRecords($user->id, $step);
             }
 
             Db::commit();
             
-            Log::info('提交流程步骤', [
+            output_log('info', [
+                'title' => '提交流程步骤',
                 'user_id' => $user->id,
                 'step' => $step,
-                'flow_log_id' => $flowLog->id,
-                'extra_data' => $extraData
+                'flow_log_id' => $flowLog->id
             ]);
             
         } catch (\Exception $e) {
             Db::rollback();
-            Log::error('提交步骤失败', [
+            output_log('error', [
+                'title' => '提交步骤失败',
                 'user_id' => $user->id,
                 'step' => $step,
                 'error' => $e->getMessage(),
@@ -624,42 +966,7 @@ class Card extends Api
         }
         
         // success 必须在 try-catch 外面，否则抛出的异常会被catch捕获
-        $this->success('提交成功，等待审核');
-    }
-
-    /**
-     * 验证额外数据
-     * @throws \Exception
-     */
-    private function validateExtraData($step, $extraData)
-    {
-        switch ($step) {
-            case 1: // 协议签署
-                if (!isset($extraData['agreement_signed']) || !$extraData['agreement_signed']) {
-                    throw new \Exception('请确认已签署协议');
-                }
-                break;
-            
-            case 3: // 设置卡片密码
-                if (!isset($extraData['card_password'])) {
-                    throw new \Exception('请设置卡片密码');
-                }
-                $password = trim($extraData['card_password']);
-                if (strlen($password) != 6 || !ctype_digit($password)) {
-                    throw new \Exception('密码必须为6位数字');
-                }
-                break;
-            
-            case 4: // 大额收付款功能
-                if (!isset($extraData['payment_limit'])) {
-                    throw new \Exception('请设置支付限额');
-                }
-                $limit = floatval($extraData['payment_limit']);
-                if ($limit <= 0 || $limit > 1000000) {
-                    throw new \Exception('支付限额必须在0-100万之间');
-                }
-                break;
-        }
+        $this->success('提交成功');
     }
 
     /**
@@ -787,6 +1094,83 @@ class Card extends Api
         ];
 
         $this->success('获取成功', ['detail' => $detail]);
+    }
+
+    /**
+     * 根据邀请人数自动升级会员等级
+     * @param User $user 用户对象
+     * @param int $validInviteCount 有效邀请人数（已实名认证）
+     */
+    private function updateMemberLevelByInviteCount($user, $validInviteCount)
+    {
+        // 从会员等级表中读取升级条件（不写死）
+        $memberLevels = MemberLevel::where('status', 'normal')
+            ->order('invite_count', 'desc')  // 按邀请人数降序排序（邀请人数多的在前）
+            ->order('level', 'desc')         // 同邀请人数时，按等级降序
+            ->select();
+
+        // select() 返回数组，使用 empty() 检查
+        if (empty($memberLevels)) {
+            output_log('warning', [
+                'title' => '[金卡系统] 会员等级配置表为空，无法升级',
+                'user_id' => $user->id,
+                'valid_invite_count' => $validInviteCount
+            ]);
+            return;
+        }
+
+        // 找到满足邀请人数条件的最高等级
+        // 逻辑：邀请人数 >= 该等级要求的邀请人数，且等级最高
+        $newLevel = 0; // 默认为普通会员
+        $newLevelName = '普通会员';
+        
+        foreach ($memberLevels as $levelConfig) {
+            $requiredInviteCount = intval($levelConfig->invite_count);
+            $levelValue = intval($levelConfig->level);
+            
+            // 如果邀请人数达到该等级的要求，且该等级比当前找到的等级更高
+            if ($validInviteCount >= $requiredInviteCount && $levelValue > $newLevel) {
+                $newLevel = $levelValue;
+                $newLevelName = $levelConfig->name;
+            }
+        }
+
+        // 只在等级提升时更新
+        $currentLevel = intval($user->member_level);
+        if ($newLevel > $currentLevel) {
+            $oldLevel = $currentLevel;
+            $user->member_level = $newLevel;
+            $user->save();
+
+            // 同时更新统计表中的有效邀请人数
+            $userStats = \app\common\model\fuka\UserStatistics::where('user_id', $user->id)->find();
+            if ($userStats) {
+                $userStats->valid_invite_count = $validInviteCount;
+                $userStats->last_update_time = time();
+                $userStats->updatetime = time();
+                $userStats->save();
+            }
+
+            // 记录等级提升日志
+            output_log('info', [
+                'title' => '[金卡系统] 会员等级自动提升',
+                'user_id' => $user->id,
+                'mobile' => $user->mobile,
+                'old_level' => $oldLevel,
+                'new_level' => $newLevel,
+                'new_level_name' => $newLevelName,
+                'valid_invite_count' => $validInviteCount
+            ]);
+        } else {
+            // 即使等级不变，也更新统计表中的有效邀请人数（保持数据同步）
+            $userStats = \app\common\model\fuka\UserStatistics::where('user_id', $user->id)->find();
+            if ($userStats && $userStats->valid_invite_count != $validInviteCount) {
+                $userStats->valid_invite_count = $validInviteCount;
+                $userStats->last_update_time = time();
+                $userStats->updatetime = time();
+                $userStats->save();
+            }
+        }
     }
 }
 

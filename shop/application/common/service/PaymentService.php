@@ -5,8 +5,8 @@ namespace app\common\service;
 use app\common\model\fuka\CardOrder;
 use app\common\model\fuka\CardFlowLog;
 use app\common\model\fuka\WealthCard;
+use app\common\model\fuka\UserAgreementFlow;
 use think\Db;
-use think\Log;
 
 /**
  * 统一支付服务类
@@ -57,21 +57,43 @@ class PaymentService
             throw new \Exception('订单不存在或已支付');
         }
 
+        // 生成商户支付单号（如果还没有）
+        if (empty($order->merchant_trade_no)) {
+            $merchantTradeNo = self::generateMerchantTradeNo($payType);
+            $order->merchant_trade_no = $merchantTradeNo;
+            $order->pay_type = $payType;
+            $order->save();
+        } else {
+            $merchantTradeNo = $order->merchant_trade_no;
+        }
+
         // 获取回调地址
         $notifyUrl = self::getNotifyUrl($payType);
 
         // TODO: 对接真实支付SDK
         // 这里应该调用对应的支付SDK生成支付参数
+        // 接入第三方支付后，请移除 getMockPaymentUrl 调用，改为调用真实支付SDK
+        
+        // 开发环境：返回测试支付网址
+        $mockUrl = self::getMockPaymentUrl($order, $payType, $merchantTradeNo);
         
         $result = [
             'pay_type' => $payType,
             'order_no' => $order->order_no,
+            'merchant_trade_no' => $merchantTradeNo,
             'amount' => $order->amount,
             'notify_url' => $notifyUrl,
-            'payment_url' => self::getMockPaymentUrl($order, $payType),
+            'payment_url' => $mockUrl,  // H5环境使用
+            'pay_url' => $mockUrl,      // 兼容字段
         ];
 
-        Log::info('生成支付参数', $result);
+        output_log('info', [
+            'title' => '生成支付参数',
+            'order_no' => $order->order_no,
+            'merchant_trade_no' => $merchantTradeNo,
+            'pay_type' => $payType,
+            'payment_url' => $mockUrl
+        ]);
 
         return $result;
     }
@@ -109,10 +131,16 @@ class PaymentService
     }
 
     /**
-     * 提取订单号
+     * 提取订单号（优先使用merchant_trade_no，兼容out_trade_no）
      */
     private static function extractOrderNo($data, $payType)
     {
+        // 优先使用 merchant_trade_no（商户支付单号）
+        if (!empty($data['merchant_trade_no'])) {
+            return $data['merchant_trade_no'];
+        }
+        
+        // 兼容第三方支付回调的字段名
         $field = self::$orderNoFields[$payType] ?? 'out_trade_no';
         return $data[$field] ?? '';
     }
@@ -139,15 +167,22 @@ class PaymentService
     {
         Db::startTrans();
         try {
-            // 1. 查询订单
-            $order = CardOrder::where('order_no', $orderNo)->lock(true)->find();
+            // 1. 查询订单（优先使用商户支付单号，兼容订单号）
+            $order = CardOrder::where(function($query) use ($orderNo) {
+                $query->where('merchant_trade_no', $orderNo)
+                      ->whereOr('order_no', $orderNo);
+            })->lock(true)->find();
+            
             if (!$order) {
                 throw new \Exception('订单不存在');
             }
 
             // 2. 幂等性检查
             if ($order->pay_status == 1) {
-                Log::info('订单已支付，跳过处理', ['order_no' => $orderNo]);
+                output_log('info', [
+                    'title' => '订单已支付，跳过处理',
+                    'order_no' => $orderNo
+                ]);
                 Db::commit();
                 return true;
             }
@@ -183,28 +218,84 @@ class PaymentService
                 $flowLog->fee_name = $order->step_name . '费用';
             }
 
-            // 6. 更新流程记录状态为"已支付待审核"
+            // 6. 更新流程记录状态为"已完成"（自动审核通过）
             $flowLog->order_id = $order->id;
-            $flowLog->flow_status = 2; // 已支付待审核
+            $flowLog->flow_status = 3; // 已完成（支付成功后自动审核通过）
             $flowLog->is_pay_fee = 1;
             $flowLog->pay_fee_time = time();
             $flowLog->pay_trade_no = $transactionId;
+            $flowLog->complete_time = time(); // 设置完成时间
             $flowLog->save();
-
             // 7. 更新金卡流程状态（安全检查）
-            $card = WealthCard::where('id', $order->card_id)->find();
-            if ($card) {
-                if ($card->flow_status < $order->step_id) {
-                    $card->flow_status = $order->step_id;
-                    $card->save();
+            // $card = WealthCard::where('id', $order->card_id)->find();
+            // if ($card) {
+            //     if ($card->flow_status < $order->step_id) {
+            //         $card->flow_status = $order->step_id;
+            //         $card->save();
+            //     }
+            // } else {
+            //     output_log('warning', [
+            //         'title' => '金卡不存在',
+            //         'card_id' => $order->card_id
+            //     ]);
+            // }
+            // 7. 不自动更新金卡流程状态
+            // 支付成功后，步骤标记为"已完成"，但金卡 flow_status 保持不变
+            // 需要等待管理员手动激活下一步
+            // 注释：用户明确要求流程不要自动进入下一步，应该停留在当前流程
+            output_log('info', [
+                'title' => '支付成功，步骤已完成，等待管理员激活下一步',
+                'user_id' => $order->user_id,
+                'step_id' => $order->step_id,
+                'card_id' => $order->card_id
+            ]);
+
+            // 8. 确认前置动作已完成，并更新相关状态
+            if ($order->step_id == 1) {
+                // 步骤1：检查是否已签署协议，如果已签署则更新为已完成
+                $agreementFlow = UserAgreementFlow::where('user_id', $order->user_id)
+                    ->where('step_id', 1)
+                    ->where('status', '>=', 1) // 已签署（进行中）
+                    ->find();
+                
+                if ($agreementFlow) {
+                    // 更新协议签署状态为已完成
+                    UserAgreementFlow::where('user_id', $order->user_id)
+                        ->where('step_id', 1)
+                        ->where('status', '<', 2)
+                        ->update([
+                            'status' => 2, // 已完成
+                            'completed_time' => time(),
+                            'updatetime' => time()
+                        ]);
+                    
+                    output_log('info', [
+                        'title' => '协议签署状态已更新为已完成',
+                        'user_id' => $order->user_id,
+                        'step_id' => 1
+                    ]);
+                } else {
+                    output_log('warning', [
+                        'title' => '支付成功但未找到协议签署记录',
+                        'user_id' => $order->user_id,
+                        'step_id' => 1
+                    ]);
                 }
-            } else {
-                Log::warning('金卡不存在', ['card_id' => $order->card_id]);
+            } elseif (in_array($order->step_id, [2, 3])) {
+                // 步骤3、4：检查是否已提交数据
+                if (empty($flowLog->extra_data)) {
+                    output_log('warning', [
+                        'title' => '支付成功但未找到步骤数据',
+                        'user_id' => $order->user_id,
+                        'step_id' => $order->step_id
+                    ]);
+                }
             }
 
             Db::commit();
 
-            Log::info('支付回调处理成功', [
+            output_log('info', [
+                'title' => '支付回调处理成功',
                 'order_no' => $orderNo,
                 'order_id' => $order->id,
                 'transaction_id' => $transactionId,
@@ -217,7 +308,8 @@ class PaymentService
 
         } catch (\Exception $e) {
             Db::rollback();
-            Log::error('支付回调处理失败', [
+            output_log('error', [
+                'title' => '支付回调处理失败',
                 'order_no' => $orderNo,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -226,120 +318,33 @@ class PaymentService
         }
     }
 
+
+
+
     /**
-     * 验证签名
+     * 生成商户支付单号
      * 
-     * @param array $data 回调数据
      * @param string $payType 支付类型
-     * @return bool
+     * @return string
      */
-    private static function verifySign($data, $payType)
+    private static function generateMerchantTradeNo($payType)
     {
+        $prefix = '';
         switch ($payType) {
             case self::PAY_TYPE_WECHAT:
-                return self::verifyWechatSign($data);
+                $prefix = 'WX';
+                break;
             case self::PAY_TYPE_ALIPAY:
-                return self::verifyAlipaySign($data);
+                $prefix = 'AL';
+                break;
             case self::PAY_TYPE_UNIONPAY:
-                return self::verifyUnionpaySign($data);
+                $prefix = 'UP';
+                break;
             default:
-                return false;
+                $prefix = 'MT';
         }
-    }
-
-    /**
-     * 验证微信支付签名
-     */
-    private static function verifyWechatSign($data)
-    {
-        // TODO: 实现微信支付签名验证
-        $apiKey = config('payment.wechat.api_key');
-        if (empty($apiKey)) {
-            Log::warning('微信支付API密钥未配置');
-            return true; // 开发环境跳过验证
-        }
-
-        $sign = $data['sign'] ?? '';
-        unset($data['sign'], $data['sign_type']);
-
-        ksort($data);
-        $string = '';
-        foreach ($data as $k => $v) {
-            if ($v !== '' && !is_array($v)) {
-                $string .= $k . '=' . $v . '&';
-            }
-        }
-        $string .= 'key=' . $apiKey;
-
-        $calcSign = strtoupper(md5($string));
-
-        return $sign === $calcSign;
-    }
-
-    /**
-     * 验证支付宝签名
-     */
-    private static function verifyAlipaySign($data)
-    {
-        // TODO: 实现支付宝签名验证
-        $alipayPublicKey = config('payment.alipay.public_key');
-        if (empty($alipayPublicKey)) {
-            Log::warning('支付宝公钥未配置');
-            return true; // 开发环境跳过验证
-        }
-
-        $sign = $data['sign'] ?? '';
-        unset($data['sign'], $data['sign_type']);
-
-        ksort($data);
-        $string = '';
-        foreach ($data as $k => $v) {
-            if ($v !== '' && !is_array($v)) {
-                $string .= $k . '=' . $v . '&';
-            }
-        }
-        $string = rtrim($string, '&');
-
-        $publicKey = "-----BEGIN PUBLIC KEY-----\n" .
-            wordwrap($alipayPublicKey, 64, "\n", true) .
-            "\n-----END PUBLIC KEY-----";
-
-        return openssl_verify(
-            $string,
-            base64_decode($sign),
-            $publicKey,
-            OPENSSL_ALGO_SHA256
-        ) === 1;
-    }
-
-    /**
-     * 验证云闪付签名
-     */
-    private static function verifyUnionpaySign($data)
-    {
-        // TODO: 实现云闪付签名验证
-        $unionpayPublicKey = config('payment.unionpay.public_key');
-        if (empty($unionpayPublicKey)) {
-            Log::warning('云闪付公钥未配置');
-            return true; // 开发环境跳过验证
-        }
-
-        $sign = $data['signature'] ?? '';
-        unset($data['signature']);
-
-        ksort($data);
-        $string = http_build_query($data);
-
-        $publicKey = "-----BEGIN PUBLIC KEY-----\n" .
-            wordwrap($unionpayPublicKey, 64, "\n", true) .
-            "\n-----END PUBLIC KEY-----";
-
-        return openssl_verify(
-            $string,
-            base64_decode($sign),
-            $publicKey,
-            OPENSSL_ALGO_SHA256
-        ) === 1;
+        
+        return $prefix . date('YmdHis') . rand(100000, 999999);
     }
 
     /**
@@ -352,12 +357,62 @@ class PaymentService
     }
 
     /**
-     * 获取模拟支付链接（开发环境使用）
+     * 生成测试交易号
+     * 
+     * @param string $payType 支付类型
+     * @return string
      */
-    private static function getMockPaymentUrl($order, $payType)
+    private static function generateTestTransactionId($payType)
     {
-        $baseUrl = config('app.app_url') ?: 'http://your-domain.com';
-        return $baseUrl . '/mock/payment?order_no=' . $order->order_no . '&pay_type=' . $payType;
+        $prefix = '';
+        switch ($payType) {
+            case self::PAY_TYPE_WECHAT:
+                $prefix = '420000';
+                break;
+            case self::PAY_TYPE_ALIPAY:
+                $prefix = '2024';
+                break;
+            case self::PAY_TYPE_UNIONPAY:
+                $prefix = '622848';
+                break;
+            default:
+                $prefix = 'TEST';
+        }
+        
+        return $prefix . date('YmdHis') . rand(100000, 999999);
+    }
+
+    /**
+     * 获取模拟支付链接（开发环境使用）
+     * TODO: 接入第三方支付后，请移除此方法，改为调用真实支付SDK
+     */
+    private static function getMockPaymentUrl($order, $payType, $merchantTradeNo)
+    {
+        // 生成测试交易号
+        $testTransactionId = self::generateTestTransactionId($payType);
+        
+        // 根据支付类型生成对应的回调参数
+        $callbackParams = [
+            'pay_type' => $payType,
+            'merchant_trade_no' => $merchantTradeNo,
+            'order_no' => $order->order_no, // 兼容字段
+            'amount' => $order->amount,
+        ];
+        
+        // 添加支付类型对应的交易号字段
+        $transactionField = self::$transactionIdFields[$payType] ?? 'transaction_id';
+        $callbackParams[$transactionField] = $testTransactionId;
+        
+        // 添加支付类型对应的订单号字段（兼容第三方支付回调格式）
+        $orderNoField = self::$orderNoFields[$payType] ?? 'out_trade_no';
+        $callbackParams[$orderNoField] = $merchantTradeNo;
+        
+        // 构建测试回调URL
+        $baseUrl = request()->domain();
+        $testUrl = $baseUrl . '/api/payment/notify?' . http_build_query($callbackParams);
+        
+        // 返回测试网址，实际接入后应返回真实支付链接
+        return $testUrl;
     }
 }
 

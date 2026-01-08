@@ -541,7 +541,7 @@ INSERT INTO `fa_fuka_type` (`type_code`, `type_name`, `is_universal`, `drop_rate
 
 -- 3.4 金卡流程状态配置初始数据
 INSERT INTO `fa_fuka_card_flow_config` (`step`, `step_name`, `step_desc`, `need_fee`, `fee_amount`, `fee_name`, `fee_desc`, `need_refund`, `refund_days`, `sort_order`, `weigh`, `status`) VALUES
-(1, '使用协议跟金卡', '签署金卡使用协议，确认金卡使用条款', 1, 300.00, '登记费用', '金融管理智光局终端处理及系统收录', 1, 30, 1, 100, 'normal'),
+(1, '使用协议跟金卡', '签署金卡使用协议，确认金卡使用条款', 1, 300.00, '登记费用', '金融管理监督局终端处理及系统收录', 1, 30, 1, 100, 'normal'),
 (2, '设置卡片密码', '设置金卡支付密码和取款密码', 0, 0.00, '', '', 0, 0, 2, 200, 'normal'),
 (3, '卡片大额收付款功能', '开通大额收付款功能，设置收付款限额', 0, 0.00, '', '', 0, 0, 3, 300, 'normal'),
 (4, '签署支付宝保密合同', '签署支付宝保密协议，确认个人信息保护条款', 0, 0.00, '', '', 0, 0, 4, 400, 'normal'),

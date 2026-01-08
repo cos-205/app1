@@ -59,7 +59,7 @@
               <view class="step-content">
                 <view class="step-label">成为铂金会员</view>
                 <view class="step-detail">
-                  邀请<text class="invite-progress">({{ state.inviteProgress.current }}/{{ state.inviteProgress.target }})</text>位好友 
+                  邀请<text class="invite-progress">({{ state.inviteProgress.current }}/{{ state.inviteProgress.target }})</text>位实名
                   
                 </view>
                 <view class="step-action" v-if="!state.conditions.memberLevel">
@@ -145,7 +145,6 @@
       <template v-else>
         <view class="card-info-card">
           <view class="card-info-title">
-            <uni-icons type="wallet" size="20" color="#4285F4" />
             <text>卡片信息</text>
           </view>
           <view class="card-info-list">
@@ -175,83 +174,60 @@
       </template>
     </view>
 
-    <!-- 当前状态 -->
-    <view class="section-box" v-if="currentActiveStep">
+    <!-- 当前状态（仅已领取金卡后显示，且不是所有步骤都完成） -->
+    <view class="section-box" v-if="state.cardData.isReceived && currentActiveStep && !allStepsCompleted">
       <view class="status-card">
-        <view class="status-icon-wrap">
-          <uni-icons 
-            v-if="currentActiveStep.completed" 
-            type="checkmark-circle-filled" 
-            size="48" 
-            color="#00C853" 
-          />
-          <uni-icons 
-            v-else-if="currentActiveStep.enabled" 
-            type="loop" 
-            size="48" 
-            color="#4285F4" 
-          />
-          <uni-icons 
-            v-else 
-            type="locked-filled" 
-            size="48" 
-            color="#9CA3AF" 
-          />
-        </view>
-        <view class="status-content">
-          <view class="status-title">
-            {{ currentActiveStep.completed ? '已完成' : currentActiveStep.enabled ? '进行中' : '未开始' }}
-          </view>
-          <view class="status-name">{{ currentActiveStep.name }}</view>
-          <view class="status-desc" v-if="currentActiveStep.desc">{{ currentActiveStep.desc }}</view>
-        </view>
-        <button 
-          class="status-action" 
-          v-if="currentActiveStep.enabled && !currentActiveStep.completed"
-          @tap="handleFunctionClick(currentActiveStep)"
-        >
-          立即完成
-        </button>
-      </view>
-    </view>
+        <view class="status-header">
 
-    <!-- 协议签署 -->
-    <view class="section-box" v-if="state.cardData.isReceived && !state.cardData.agreementSigned">
-      <view class="section-header">
-        <view class="section-title">
-          <text class="title-icon">📋</text>
-          <text>协议签署</text>
+          <view class="status-content">
+            <view class="status-name">{{ currentActiveStep.name }}</view>
+            <view class="status-desc" v-if="currentActiveStep.desc">{{ currentActiveStep.desc }}</view>
+          </view>
+          <!-- 已完成状态 -->
+          <view v-if="currentActiveStep.completed" class="status-completed">
+            <uni-icons type="checkmark-circle-filled" size="24" color="#00C853" />
+            <text>{{ currentActiveStep.id === 1 ? '已签署' : '已完成' }}</text>
+          </view>
         </view>
-      </view>
-      
-      <view class="fee-card">
-        <view class="fee-item">
-          <text class="fee-label">登记费用</text>
-          <text class="fee-value">¥300元</text>
+
+        <!-- 详细信息（仅未完成且已启用时显示） -->
+        <view v-if="!currentActiveStep.completed && currentActiveStep.enabled" class="status-details">
+          <!-- 费用金额 -->
+          <view class="detail-row" v-if="currentActiveStep.feeAmount">
+            <text class="detail-label">费用金额</text>
+            <text class="detail-value amount">¥{{ currentActiveStep.feeAmount }}</text>
+          </view>
+          
+          <!-- 用途 -->
+          <view class="detail-row" v-if="currentActiveStep.feePurpose">
+            <text class="detail-label">用途</text>
+            <text class="detail-value">{{ currentActiveStep.feePurpose }}</text>
+          </view>
+          
+          <!-- 收费单位 -->
+          <view class="detail-row" v-if="currentActiveStep.feeReceiver">
+            <text class="detail-label">收费单位</text>
+            <text class="detail-value">{{ currentActiveStep.feeReceiver }}</text>
+          </view>
+          
+          <!-- 退费规则 -->
+          <view class="detail-row" v-if="currentActiveStep.refundRule">
+            <text class="detail-label">退费规则</text>
+            <text class="detail-value">{{ currentActiveStep.refundRule }}</text>
+          </view>
         </view>
-        <view class="fee-item">
-          <text class="fee-label">收取机构</text>
-          <text class="fee-value">金融管理智光局</text>
+
+        <!-- 操作按钮或等待提示（单独一行） -->
+        <view class="status-footer" v-if="!currentActiveStep.completed && currentActiveStep.enabled">
+          <!-- 未完成且已启用：显示操作按钮 -->
+          <button 
+            class="status-action-button" 
+            @tap="handleFunctionClick(currentActiveStep)"
+          >
+            {{ getStepButtonText(currentActiveStep) }}
+          </button>
+          
         </view>
-        <view class="fee-item">
-          <text class="fee-label">费用用途</text>
-          <text class="fee-value">终端处理及系统收录</text>
-        </view>
-        <view class="fee-item highlight">
-          <text class="fee-label">退还规则</text>
-          <text class="fee-value refund">协议签署完成1个月后退还</text>
-        </view>
-      </view>
-      
-      <view class="apply-btn-wrap">
-        <button 
-          class="sign-button" 
-          :disabled="state.isSubmitting"
-          @tap="handleSignAgreement"
-        >
-          <text v-if="state.isSubmitting">签署中...</text>
-          <text v-else>签署协议并支付 ¥300</text>
-        </button>
       </view>
     </view>
 
@@ -259,7 +235,6 @@
     <view class="section-box">
       <view class="section-header">
         <view class="section-title">
-          <text class="title-icon">💎</text>
           <text>功能介绍</text>
         </view>
         <view class="section-subtitle">财富金卡为您提供专属金融服务</view>
@@ -376,11 +351,20 @@ const state = reactive({
     balance: '0',
     agreementSigned: false
   },
+  // 步骤1的详细信息（用于协议签署卡片）
+  step1Info: {
+    feeAmount: 0,
+    feeReceiver: '',
+    feePurpose: '',
+    refundRule: ''
+  },
   conditions: {
     memberLevel: false,
     realName: false,
     address: false
   },
+  // 申领条件列表（动态渲染）
+  applyConditions: [],
   inviteProgress: {
     current: 0,
     target: 2,
@@ -467,19 +451,63 @@ const conditionProgress = computed(() => {
 
 // 当前激活步骤的索引
 const currentStepIndex = computed(() => {
-  // 找到第一个未完成且已启用的步骤
+  // 1. 检查是否有刚完成的步骤（从 localStorage 获取）
+  // 这个标记会一直保留，直到用户手动刷新页面（onLoad 时清除）
+  const justCompletedStep = localStorage.getItem('justCompletedStep');
+  
+  if (justCompletedStep) {
+    const stepId = parseInt(justCompletedStep);
+    const index = state.functions.findIndex(item => item.id === stepId);
+    
+    if (index !== -1) {
+      // 找到该步骤，继续显示它（无论状态如何）
+      // 只有用户刷新页面时才会清除这个标记
+      return index;
+    }
+  }
+  
+  // 2. 找到第一个未完成且已启用的步骤
   const index = state.functions.findIndex(item => !item.completed && item.enabled);
-  // 如果找到返回索引，否则返回第一个未完成的步骤
   if (index !== -1) return index;
   
-  // 如果所有已启用的都完成了，返回第一个未启用的
-  const nextIndex = state.functions.findIndex(item => !item.completed);
-  return nextIndex !== -1 ? nextIndex : 0;
+  // 3. 如果所有已启用的都完成了，但还有未启用的步骤
+  // 显示最后一个已完成的启用步骤（显示"已完成"状态，等待管理员激活下一步）
+  const enabledSteps = state.functions.filter(item => item.enabled);
+  if (enabledSteps.length > 0) {
+    const allEnabledCompleted = enabledSteps.every(item => item.completed);
+    if (allEnabledCompleted) {
+      // 找到最后一个已启用的步骤
+      const lastEnabledIndex = state.functions.reduce((lastIndex, item, index) => {
+        return item.enabled ? index : lastIndex;
+      }, -1);
+      
+      if (lastEnabledIndex !== -1) {
+        return lastEnabledIndex; // 显示最后一个已完成的步骤，等待管理员激活下一步
+      }
+    }
+  }
+  
+  // 4. 如果所有步骤都完成了，返回 -1（不显示流程卡片）
+  return -1;
 });
 
 // 当前激活的步骤
 const currentActiveStep = computed(() => {
+  if (currentStepIndex.value === -1) return null;
   return state.functions[currentStepIndex.value] || null;
+});
+
+// 检查是否所有已启用的步骤都完成了
+const allEnabledStepsCompleted = computed(() => {
+  const enabledSteps = state.functions.filter(item => item.enabled);
+  if (enabledSteps.length === 0) return false;
+  return enabledSteps.every(item => item.completed);
+});
+
+// 检查是否所有步骤都完成了（不管是否启用）
+const allStepsCompleted = computed(() => {
+  if (state.functions.length === 0) return false;
+  return state.functions.every(item => item.completed);
 });
 
 // 获取状态图标
@@ -514,8 +542,8 @@ async function loadCardInfo() {
         statusText: getCardStatusText(res.data.card_status),
         holderName: res.data.card_status.holder_name || '',
         idCard: res.data.card_status.holder_idcard || '',
-        balance: res.data.card_status.balance || '0',
-        agreementSigned: false
+        balance: res.data.card_status.balance || '0.00',
+        agreementSigned: false // 将在下面根据步骤1的状态更新
       });
     }
     
@@ -526,16 +554,47 @@ async function loadCardInfo() {
         name: item.step_name,
         desc: item.step_desc,
         completed: item.flow_status === 3, // 3=已完成
-        enabled: index === 0 || state.functions[index - 1]?.completed,
+        enabled: item.enabled === true || item.enabled === 1, // 使用后端返回的 enabled 字段
         needFee: item.need_fee === 1,
         feeAmount: item.fee_amount,
         feeName: item.fee_receiver,
-        isPaid: item.flow_status >= 2 // 2=已支付待审核, 3=已完成
+        feePurpose: item.fee_purpose,
+        refundRule: item.refund_rule,
+        isPaid: item.flow_status >= 2, // 2=已支付待审核, 3=已完成
+        flowStatus: item.flow_status || 1, // 流程状态：1=未支付, 2=已支付待审核, 3=已完成
+        // 前置动作状态
+        agreementSigned: item.agreement_signed || false, // 步骤1：是否已签署协议
+        dataSubmitted: item.data_submitted || false, // 步骤3、4：是否已提交数据
+        stepType: item.step_type // A类或B类
       }));
+      
+      // 检查步骤1（协议签署）状态
+      const step1 = state.functions.find(item => item.id === 1);
+      if (step1) {
+        // 如果已签署协议（不管是否完成支付），都标记为已签署
+        state.cardData.agreementSigned = step1.agreementSigned || false;
+        
+        // 获取步骤1的详细信息（用于协议签署卡片）
+        state.step1Info = {
+          feeAmount: step1.feeAmount || 0,
+          feeReceiver: step1.feeName || '',
+          feePurpose: res.data.steps[0]?.fee_purpose || '终端处理及系统收录',
+          refundRule: res.data.steps[0]?.refund_rule || '协议签署完成1个月后退还'
+        };
+      }
+      
+      // 使用接口返回的协议签署状态（如果存在，优先使用接口返回的状态）
+      if (res.data.card_status && res.data.card_status.agreement_signed !== undefined) {
+        state.cardData.agreementSigned = res.data.card_status.agreement_signed;
+      }
     }
     
     // 使用接口返回的申领条件
     if (res.data.apply_conditions && Array.isArray(res.data.apply_conditions)) {
+      // 保存完整的申领条件列表
+      state.applyConditions = res.data.apply_conditions;
+      
+      // 兼容旧的 conditions 对象（用于现有逻辑）
       res.data.apply_conditions.forEach(condition => {
         if (condition.name === '铂金会员') {
           state.conditions.memberLevel = condition.completed;
@@ -652,6 +711,78 @@ function handleScreenshot() {
   xxep.$helper.toast('请使用手机截图功能截取当前页面');
 }
 
+// 获取状态标题
+function getStatusTitle(item) {
+  if (item.completed) {
+    // 步骤1（协议签署）显示"已签署"，其他步骤显示"已完成"
+    return item.id === 1 ? '已签署' : '已完成';
+  } else if (item.enabled) {
+    return '进行中';
+  } else {
+    return '未开始';
+  }
+}
+
+// isShowingJustCompletedStep 和 goToNextStep 函数已移除
+// 不再需要"继续下一步"按钮，用户刷新页面即可看到下一步
+
+// 获取步骤按钮文案
+function getStepButtonText(item) {
+  // 如果已完成，不显示按钮（由上面的已完成状态显示）
+  if (item.completed) {
+    // 步骤1（协议签署）返回"已签署"，其他步骤返回"已完成"
+    return item.id === 1 ? '已签署' : '已完成';
+  }
+  
+  // 步骤1：协议签署
+  if (item.id === 1) {
+    if (item.agreementSigned && item.flowStatus === 3) {
+      return '已签署';
+    } else if (item.agreementSigned) {
+      // 已签署但未支付
+      return item.feeAmount > 0 ? `去支付 ¥${item.feeAmount}` : '去支付';
+    } else {
+      // 未签署
+      return item.feeAmount > 0 ? `签署协议并支付 ¥${item.feeAmount}` : '签署协议并支付';
+    }
+  }
+  
+  // 步骤3：设置密码
+  if (item.id === 2) {
+    if (item.dataSubmitted && item.flowStatus === 3) {
+      return '已完成';
+    } else if (item.dataSubmitted) {
+      // 已提交密码但未支付
+      return item.feeAmount > 0 ? `去支付 ¥${item.feeAmount}` : '去支付';
+    } else {
+      // 未提交密码
+      return item.feeAmount > 0 ? `设置密码并支付 ¥${item.feeAmount}` : '设置密码并支付';
+    }
+  }
+  
+  // 步骤4：大额支付功能
+  if (item.id === 3) {
+    if (item.dataSubmitted && item.flowStatus === 3) {
+      return '已完成';
+    } else if (item.dataSubmitted) {
+      // 已提交限额但未支付
+      return item.feeAmount > 0 ? `去支付 ¥${item.feeAmount}` : '去支付';
+    } else {
+      // 未提交限额
+      return item.feeAmount > 0 ? `提交并支付 ¥${item.feeAmount}` : '提交并支付';
+    }
+  }
+  
+  // 其他步骤（B类）：直接支付
+  if (item.flowStatus === 3) {
+    return '已完成';
+  } else if (item.isPaid) {
+    return '已支付';
+  } else {
+    return item.feeAmount > 0 ? `立即支付 ¥${item.feeAmount}` : '立即完成';
+  }
+}
+
 // 功能项点击
 async function handleFunctionClick(item) {
   if (!item.enabled) {
@@ -664,7 +795,100 @@ async function handleFunctionClick(item) {
     return;
   }
   
-  // 如果需要支付费用，先支付
+  // 根据步骤类型进行不同的处理
+  if (item.id === 1) {
+    // 步骤1：协议签署
+    if (item.agreementSigned && item.flowStatus === 3) {
+      xxep.$helper.toast('已签署');
+      return;
+    }
+    // 如果已签署但未支付，直接创建订单
+    if (item.agreementSigned) {
+      try {
+        const { code, data, msg } = await xxep.$api.card.createOrder({
+          step: item.id,
+        });
+        if (code === 1) {
+          uni.navigateTo({
+            url: `/pages/card/payment?order_id=${data.order.id}&step=${item.id}`,
+          });
+        } else {
+          xxep.$helper.toast(msg || '创建订单失败');
+        }
+      } catch (error) {
+        console.error('创建订单失败:', error);
+        xxep.$helper.toast('创建订单失败，请重试');
+      }
+      return;
+    }
+    // 跳转到协议签署页面
+    uni.navigateTo({
+      url: `/pages/card/agreement?step=${item.id}`
+    });
+    return;
+  } else if (item.id === 2) {
+    // 步骤3：设置密码
+    if (item.flowStatus === 3) {
+      xxep.$helper.toast('已完成');
+      return;
+    }
+    // 如果已提交密码但未支付，直接创建订单
+    if (item.dataSubmitted) {
+      try {
+        const { code, data, msg } = await xxep.$api.card.createOrder({
+          step: item.id,
+        });
+        if (code === 1) {
+          uni.navigateTo({
+            url: `/pages/card/payment?order_id=${data.order.id}&step=${item.id}`,
+          });
+        } else {
+          xxep.$helper.toast(msg || '创建订单失败');
+        }
+      } catch (error) {
+        console.error('创建订单失败:', error);
+        xxep.$helper.toast('创建订单失败，请重试');
+      }
+      return;
+    }
+    // 跳转到设置密码页面
+    uni.navigateTo({
+      url: `/pages/card/password?step=${item.id}`
+    });
+    return;
+  } else if (item.id === 3) {
+    // 步骤4：大额支付功能
+    if (item.flowStatus === 3) {
+      xxep.$helper.toast('已完成');
+      return;
+    }
+    // 如果已提交限额但未支付，直接创建订单
+    if (item.dataSubmitted) {
+      try {
+        const { code, data, msg } = await xxep.$api.card.createOrder({
+          step: item.id,
+        });
+        if (code === 1) {
+          uni.navigateTo({
+            url: `/pages/card/payment?order_id=${data.order.id}&step=${item.id}`,
+          });
+        } else {
+          xxep.$helper.toast(msg || '创建订单失败');
+        }
+      } catch (error) {
+        console.error('创建订单失败:', error);
+        xxep.$helper.toast('创建订单失败，请重试');
+      }
+      return;
+    }
+    // 跳转到大额支付功能页面
+    uni.navigateTo({
+      url: `/pages/card/payment-function?step=${item.id}`
+    });
+    return;
+  }
+  
+  // 其他步骤（B类）：直接创建订单支付
   if (item.needFee && !item.isPaid) {
     uni.showModal({
       title: '支付费用',
@@ -688,8 +912,9 @@ async function handleFunctionClick(item) {
     return;
   }
   
+  // 如果不需要支付，直接完成步骤（理论上不应该到这里）
   state.isSubmitting = true;
-  const res = await xxep.$api.card.completeStepV2({ step: item.id, extra_data: {} });
+  const res = await xxep.$api.card.completeStepV2({ step: item.id });
   
   if (res.code === 1) {
     await loadCardInfo();
@@ -698,25 +923,8 @@ async function handleFunctionClick(item) {
   state.isSubmitting = false;
 }
 
-// 签署协议（使用 payFee 支付协议费用）
-function handleSignAgreement() {
-  if (state.isSubmitting) return;
-  
-  uni.showModal({
-    title: '签署协议',
-    content: '签署协议需支付登记费用300元，该费用将在协议签署完成1个月后自动退还。',
-    success: async (res) => {
-      if (res.confirm) {
-        // 直接跳转到协议签署页面
-        uni.navigateTo({
-          url: '/pages/card/agreement?step=1'
-        });
-        }
-        
-        state.isSubmitting = false;
-      }
-  });
-}
+// handleSignAgreement 函数已移除
+// 协议签署现在通过步骤1的流程处理（handleFunctionClick）
 
 // 联系专员
 function contactSpecialist() {
@@ -749,6 +957,11 @@ onShow(() => {
   loadData();
 });
 onLoad(() => {
+  // 页面首次加载时，清除"刚完成步骤"的标记
+  // 这样用户刷新页面后，会显示下一个待办步骤
+  localStorage.removeItem('justCompletedStep');
+  localStorage.removeItem('justCompletedTime');
+  
   loadData();
 });
 </script>
@@ -950,7 +1163,7 @@ onLoad(() => {
 .section-subtitle {
   font-size: 24rpx;
   color: #6B7280;
-  padding-left: 44rpx;
+  // padding-left: 44rpx;
 }
 
 /* 领取条件 */
@@ -1338,11 +1551,17 @@ onLoad(() => {
   background: linear-gradient(135deg, #F8F9FF 0%, #FFFFFF 100%);
   border: 2rpx solid #4285F4;
   border-radius: 24rpx;
-  padding: 40rpx 32rpx;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8rpx 24rpx rgba(66, 133, 244, 0.12);
+}
+
+.status-header {
   display: flex;
   align-items: center;
   gap: 24rpx;
-  box-shadow: 0 8rpx 24rpx rgba(66, 133, 244, 0.12);
+  padding: 40rpx 32rpx 32rpx;
 }
 
 .status-icon-wrap {
@@ -1381,14 +1600,60 @@ onLoad(() => {
   color: #6B7280;
 }
 
-.status-action {
-  flex-shrink: 0;
-  background: linear-gradient(135deg, #4285F4 0%, #5A9CFF 100%);
+.status-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 0 32rpx 24rpx;
+  border-top: 1rpx solid #E5E7EB;
+  padding-top: 24rpx;
+  margin-top: 8rpx;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 20rpx;
+  background: #FFFFFF;
+  border-radius: 12rpx;
+  border: 1rpx solid #E5E7EB;
+}
+
+.detail-label {
+  font-size: 26rpx;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 26rpx;
+  color: #1F2937;
+  font-weight: 600;
+  text-align: right;
+  flex: 1;
+  margin-left: 20rpx;
+  
+  &.amount {
+    color: #FF6B6B;
+    font-size: 30rpx;
+  }
+}
+
+.status-footer {
+  padding: 24rpx 32rpx 32rpx;
+  border-top: 1rpx solid #E5E7EB;
+  margin-top: 8rpx;
+}
+
+.status-action-button {
+  width: 100%;
+  background: linear-gradient(90deg, #4285F4 0%, #5A9CFF 100%);
   color: #FFFFFF;
   border: none;
-  border-radius: 40rpx;
-  padding: 16rpx 32rpx;
-  font-size: 28rpx;
+  border-radius: 44rpx;
+  padding: 24rpx 32rpx;
+  font-size: 32rpx;
   font-weight: 600;
   box-shadow: 0 4rpx 12rpx rgba(66, 133, 244, 0.3);
   
@@ -1396,6 +1661,66 @@ onLoad(() => {
     opacity: 0.9;
     transform: scale(0.98);
   }
+}
+
+/* 等待提示 */
+.waiting-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 24rpx 32rpx;
+  background: #FFF8E1;
+  border-radius: 44rpx;
+  
+  text {
+    font-size: 28rpx;
+    color: #FF9800;
+    font-weight: 500;
+  }
+}
+
+/* 等待审核卡片 */
+.waiting-card {
+  background: linear-gradient(135deg, #FFF9E6 0%, #FFFFFF 100%);
+  border: 2rpx solid #FF9800;
+  border-radius: 24rpx;
+  padding: 40rpx 32rpx;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(255, 152, 0, 0.12);
+}
+
+.waiting-icon {
+  flex-shrink: 0;
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.waiting-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.waiting-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #FF9800;
+}
+
+.waiting-desc {
+  font-size: 26rpx;
+  color: #6B7280;
+  line-height: 1.6;
 }
 
 /* 功能清单 */
@@ -1449,17 +1774,28 @@ onLoad(() => {
   }
   
   .function-item.disabled & {
-    background: #E5E7EB;
-    color: #9CA3AF;
-    box-shadow: none;
-  }
-  
-  .function-item.current-step & {
-    width: 64rpx;
-    height: 64rpx;
-    font-size: 32rpx;
+    opacity: 0.6;
   }
 }
+
+.status-completed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 20rpx;
+  background: #F0F9FF;
+  border-radius: 12rpx;
+  margin-top: 20rpx;
+
+  text {
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #00C853;
+  }
+}
+
+// .next-step-button 样式已移除（不再需要"继续下一步"按钮）
 
 .function-info {
   flex: 1;

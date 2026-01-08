@@ -1,16 +1,25 @@
 <template>
-  <s-layout :title="state.stepInfo.step_name" navbar="inner" :bgStyle="{ color: '#F8F9FA' }">
+  <s-layout :title="state.stepInfo.step_name" :bgStyle="{ color: '#f5f5f5' }">
     <view class="confirm-page">
-      <!-- 步骤指示器 -->
-      <view class="step-indicator">
-        <text class="step-num">步骤 {{ state.stepInfo.step }}/9</text>
-        <text class="step-name">{{ state.stepInfo.step_name }}</text>
+      <!-- 已完成状态 -->
+      <view v-if="state.stepInfo.flow_status === 3" class="completed-container">
+        <view class="completed-icon">
+          <uni-icons type="checkmark-circle-filled" size="80" color="#00C853" />
+        </view>
+        <view class="completed-title">{{ state.stepInfo.step_name }}已完成</view>
+        <view class="completed-desc">您已成功完成本步骤并支付费用</view>
+        <view class="completed-tips">
+          <uni-icons type="info" size="16" color="#1890FF" />
+          <text>请继续完成后续步骤</text>
+        </view>
       </view>
 
+      <!-- 未完成时显示步骤信息 -->
+      <view v-else>
       <!-- 步骤说明 -->
       <view class="step-description">
         <view class="desc-icon">
-          <uni-icons type="info-filled" size="60" color="#667EEA" />
+          <uni-icons type="info-filled" size="60" color="#4285F4" />
         </view>
         <view class="desc-content">
           <view class="desc-title">{{ state.stepInfo.step_name }}</view>
@@ -65,12 +74,18 @@
           <text>• 完成全部9个步骤后，所有费用全额退还</text>
         </view>
       </view>
-    </view>
+      </view>
 
-    <!-- 底部按钮 -->
-    <template v-slot:footer>
+      <!-- 底部按钮 -->
       <view class="footer-buttons">
+        <!-- 已完成状态 -->
+        <view v-if="state.stepInfo.flow_status === 3" class="completed-status-btn">
+          <uni-icons type="checkmark-circle-filled" size="24" color="#00C853" />
+          <text class="completed-text">已完成</text>
+        </view>
+        <!-- 未完成时显示提交按钮 -->
         <button 
+          v-else
           class="submit-button" 
           :disabled="state.submitting"
           :loading="state.submitting"
@@ -79,7 +94,7 @@
           {{ state.submitting ? '处理中...' : '确认并支付 ¥' + state.stepInfo.fee_amount }}
         </button>
       </view>
-    </template>
+    </view>
   </s-layout>
 </template>
 
@@ -95,6 +110,7 @@ const state = reactive({
     step_name: '',
     description: '',
     fee_amount: 0,
+    flow_status: 1, // 流程状态：1=未支付, 2=已支付待审核, 3=已完成
   },
   submitting: false,
 });
@@ -117,8 +133,9 @@ async function loadStepInfo() {
         state.stepInfo = {
           step: stepConfig.step,
           step_name: stepConfig.step_name,
-          description: getStepDescription(stepConfig.step),
+          description: stepConfig.step_desc || getStepDescription(stepConfig.step),
           fee_amount: stepConfig.fee_amount,
+          flow_status: stepConfig.flow_status || 1, // 获取流程状态
         };
       }
     } else {
@@ -176,26 +193,67 @@ async function handleConfirm() {
   padding-bottom: 200rpx;
 }
 
-.step-indicator {
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+.completed-container {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  padding: 100rpx 30rpx;
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  margin-top: 40rpx;
 }
 
-.step-num {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.8);
+.completed-icon {
+  margin-bottom: 30rpx;
 }
 
-.step-name {
-  font-size: 32rpx;
+.completed-title {
+  font-size: 36rpx;
   font-weight: 600;
-  color: #FFFFFF;
+  color: #00C853;
+  margin-bottom: 20rpx;
 }
+
+.completed-desc {
+  font-size: 28rpx;
+  color: #666666;
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.completed-tips {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 20rpx 30rpx;
+  background: #E3F2FD;
+  border-radius: 12rpx;
+  
+  text {
+    font-size: 24rpx;
+    color: #1890FF;
+  }
+}
+
+.completed-status-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  width: 100%;
+  height: 100rpx;
+  background: #F0F0F0;
+  border-radius: 50rpx;
+  
+  .completed-text {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #00C853;
+  }
+}
+
+// 步骤指示器已移除
 
 .step-description {
   background: #FFFFFF;
@@ -293,7 +351,7 @@ async function handleConfirm() {
   width: 44rpx;
   height: 44rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: linear-gradient(90deg, #4285F4 0%, #5A9CFF 100%);
   color: #FFFFFF;
   font-size: 24rpx;
   font-weight: 600;
@@ -341,15 +399,15 @@ async function handleConfirm() {
 }
 
 .footer-buttons {
-  padding: 20rpx 30rpx;
-  background: #FFFFFF;
+  margin: 40rpx 0;
+  // background: #FFFFFF;
   border-top: 1px solid #F0F0F0;
 }
 
 .submit-button {
   width: 100%;
   height: 88rpx;
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: linear-gradient(90deg, #4285F4 0%, #5A9CFF 100%);
   border-radius: 44rpx;
   font-size: 32rpx;
   font-weight: 600;

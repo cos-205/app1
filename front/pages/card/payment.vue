@@ -1,11 +1,11 @@
 <template>
-  <s-layout title="支付订单" navbar="inner" :bgStyle="{ color: '#F8F9FA' }">
+  <s-layout title="支付订单"  :bgStyle="{ color: '#F5E8CE' }">
     <view class="payment-page">
       <!-- 订单信息卡片 -->
       <view class="order-card">
         <view class="order-header">
           <view class="step-info">
-            <text class="step-label">步骤{{ state.stepInfo.step }}</text>
+            <text class="step-label">备注</text>
             <text class="step-name">{{ state.stepInfo.step_name }}</text>
           </view>
           <view class="order-amount">
@@ -32,24 +32,6 @@
         <view class="method-list">
           <view 
             class="method-item"
-            :class="{ active: state.selectedMethod === 'wechat' }"
-            @tap="selectMethod('wechat')"
-          >
-            <view class="method-left">
-              <image class="method-icon" src="/static/pay/wechat.png" mode="aspectFit" />
-              <text class="method-name">微信支付</text>
-            </view>
-            <view class="method-right">
-              <uni-icons 
-                :type="state.selectedMethod === 'wechat' ? 'checkbox-filled' : 'circle'" 
-                size="24" 
-                :color="state.selectedMethod === 'wechat' ? '#07C160' : '#CCCCCC'" 
-              />
-            </view>
-          </view>
-
-          <view 
-            class="method-item"
             :class="{ active: state.selectedMethod === 'alipay' }"
             @tap="selectMethod('alipay')"
           >
@@ -66,14 +48,32 @@
             </view>
           </view>
 
-          <!-- #ifdef APP-PLUS -->
+          <view 
+            class="method-item"
+            :class="{ active: state.selectedMethod === 'wechat' }"
+            @tap="selectMethod('wechat')"
+          >
+            <view class="method-left">
+              <image class="method-icon" src="/static/pay/wechat.png" mode="aspectFit" />
+              <text class="method-name">微信支付</text>
+            </view>
+            <view class="method-right">
+              <uni-icons 
+                :type="state.selectedMethod === 'wechat' ? 'checkbox-filled' : 'circle'" 
+                size="24" 
+                :color="state.selectedMethod === 'wechat' ? '#07C160' : '#CCCCCC'" 
+              />
+            </view>
+          </view>
+
+          
           <view 
             class="method-item"
             :class="{ active: state.selectedMethod === 'unionpay' }"
             @tap="selectMethod('unionpay')"
           >
             <view class="method-left">
-              <image class="method-icon" src="/static/pay/unionpay.png" mode="aspectFit" />
+              <image class="method-icon" src="/static/pay/bank.png" mode="aspectFit" />
               <text class="method-name">云闪付</text>
             </view>
             <view class="method-right">
@@ -84,7 +84,6 @@
               />
             </view>
           </view>
-          <!-- #endif -->
         </view>
       </view>
 
@@ -103,28 +102,26 @@
     </view>
 
     <!-- 底部支付按钮 -->
-    <template v-slot:footer>
       <view class="payment-footer">
         <view class="footer-amount">
           <text class="footer-label">实付金额</text>
           <text class="footer-value">¥{{ state.orderInfo.amount }}</text>
         </view>
-        <button 
+        <view 
           class="pay-button" 
-          :disabled="state.paying || !state.selectedMethod"
+          :disabled="state.paying || state.selectedMethod === ''"
           :loading="state.paying"
           @tap="handlePay"
         >
           {{ state.paying ? '支付中...' : '立即支付' }}
-        </button>
+        </view>
       </view>
-    </template>
   </s-layout>
 </template>
 
 <script setup>
 import { reactive } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import xxep from '@/xxep';
 
 const state = reactive({
@@ -138,7 +135,7 @@ const state = reactive({
     amount: 0,
     createtime: '',
   },
-  selectedMethod: 'wechat',
+  selectedMethod: 'alipay',
   paying: false,
 });
 
@@ -152,6 +149,33 @@ onLoad((options) => {
   }
 });
 
+// 页面显示时检查支付状态（用户从支付页面返回时）
+onShow(() => {
+  // 如果正在支付中，检查支付结果
+  if (state.paying && state.orderInfo.order_no) {
+    checkPaymentStatusOnce();
+  }
+});
+
+// 单次检查支付状态
+async function checkPaymentStatusOnce() {
+  try {
+    const { code, data } = await xxep.$api.card.paymentResult({
+      order_no: state.orderInfo.order_no,
+    });
+
+    if (code === 1 && data.pay_status === 1) {
+      // 支付成功
+      state.paying = false;
+      uni.redirectTo({
+        url: '/pages/card/payment-result?status=success&step=' + state.stepInfo.step,
+      });
+    }
+  } catch (error) {
+    console.error('检查支付状态失败:', error);
+  }
+}
+
 // 加载订单信息
 async function loadOrderInfo() {
   try {
@@ -159,15 +183,16 @@ async function loadOrderInfo() {
       order_id: state.orderId,
     });
     
-    if (code === 1) {
+    if (code === 1 && data.order) {
+      const order = data.order;
       state.orderInfo = {
-        order_no: data.order_no,
-        amount: data.amount,
-        createtime: data.createtime,
+        order_no: order.order_no || '',
+        amount: order.amount || 0,
+        createtime: formatTime(order.createtime),
       };
       state.stepInfo = {
-        step: data.step_id,
-        step_name: data.step_name,
+        step: order.step_id || 0,
+        step_name: order.step_name || '',
       };
     } else {
       xxep.$helper.toast(msg || '订单信息加载失败');
@@ -176,6 +201,19 @@ async function loadOrderInfo() {
     console.error('加载订单信息失败:', error);
     xxep.$helper.toast('加载失败，请重试');
   }
+}
+
+// 格式化时间
+function formatTime(timestamp) {
+  if (!timestamp) return '';
+  const date = new Date(timestamp * 1000);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 // 选择支付方式
@@ -216,8 +254,30 @@ async function handlePay() {
 
 // 调起支付
 async function callPay(payParams) {
-  // 根据不同平台调起不同支付
+  const paymentUrl = payParams.payment_url || payParams.pay_url;
+  
+  if (!paymentUrl) {
+    xxep.$helper.toast('支付参数错误');
+    state.paying = false;
+    return;
+  }
+
+  // #ifdef H5
+  // H5环境：使用 window.open 在新窗口打开支付页面
+  window.open(paymentUrl, '_blank');
+  // 跳转后开始轮询支付结果
+  checkPaymentResult();
+  // #endif
+
+  // #ifdef APP-PLUS
+  // APP环境：使用系统默认浏览器打开支付页面
+  plus.runtime.openURL(paymentUrl);
+  // 跳转后开始轮询支付结果
+  checkPaymentResult();
+  // #endif
+
   // #ifdef MP-WEIXIN
+  // 小程序环境：使用微信支付
   if (state.selectedMethod === 'wechat') {
     uni.requestPayment({
       ...payParams,
@@ -235,32 +295,6 @@ async function callPay(payParams) {
     xxep.$helper.toast('小程序仅支持微信支付');
     state.paying = false;
   }
-  // #endif
-
-  // #ifdef H5
-  // H5支付跳转
-  if (payParams.pay_url) {
-    window.location.href = payParams.pay_url;
-  } else {
-    xxep.$helper.toast('支付参数错误');
-    state.paying = false;
-  }
-  // #endif
-
-  // #ifdef APP-PLUS
-  // APP支付
-  uni.requestPayment({
-    provider: state.selectedMethod,
-    orderInfo: payParams,
-    success: () => {
-      handlePaySuccess();
-    },
-    fail: (err) => {
-      console.error('支付失败:', err);
-      xxep.$helper.toast('支付已取消');
-      state.paying = false;
-    },
-  });
   // #endif
 }
 
@@ -479,6 +513,11 @@ async function checkPaymentResult() {
   padding: 20rpx 30rpx;
   background: #FFFFFF;
   border-top: 1px solid #F0F0F0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
 }
 
 .footer-amount {
@@ -501,7 +540,7 @@ async function checkPaymentResult() {
 .pay-button {
   width: 400rpx;
   height: 88rpx;
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: linear-gradient(90deg, #4285F4 0%, #5A9CFF 100%);
   border-radius: 44rpx;
   font-size: 32rpx;
   font-weight: 600;
@@ -510,10 +549,6 @@ async function checkPaymentResult() {
   display: flex;
   align-items: center;
   justify-content: center;
-
-  &[disabled] {
-    opacity: 0.6;
-  }
 }
 </style>
 

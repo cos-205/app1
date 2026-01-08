@@ -2,7 +2,6 @@
 
 namespace app\api\job;
 
-use think\Log;
 use think\queue\Job;
 use addons\cus\listener\Fuka;
 
@@ -50,7 +49,10 @@ class Common
      */
     public function failed($data)
     {
-        Log::error('用户实名认证队列任务最终失败', $data);
+        output_log('error', [
+            'title' => '用户实名认证队列任务最终失败',
+            'data' => $data
+        ]);
     }
 }
 

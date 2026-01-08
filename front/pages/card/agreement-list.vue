@@ -96,10 +96,8 @@
           <text>• 如有疑问请联系客服咨询</text>
         </view>
       </view>
-    </view>
 
-    <!-- 底部按钮 -->
-    <template v-slot:footer>
+      <!-- 底部按钮 -->
       <view class="footer-buttons">
         <button class="back-button" @tap="goBack">
           返回金卡
@@ -109,7 +107,7 @@
           <text>刷新进度</text>
         </button>
       </view>
-    </template>
+    </view>
   </s-layout>
 </template>
 

@@ -1,11 +1,6 @@
 <template>
-  <s-layout title="协议签署" navbar="inner" :bgStyle="{ color: '#F8F9FA' }">
+  <s-layout title="协议签署" :bgStyle="{ color: '#F8F9FA' }">
     <view class="agreement-page">
-      <!-- 步骤指示器 -->
-      <view class="step-indicator">
-        <text class="step-num">步骤 1/9</text>
-        <text class="step-name">协议签署</text>
-      </view>
 
       <!-- 协议内容 -->
       <view class="agreement-content">
@@ -94,41 +89,54 @@
       </view>
 
       <!-- 同意协议 -->
-      <view class="agree-section">
+      <view class="agree-section" v-if="state.flowStatus !== 3">
         <checkbox-group @change="handleAgreeChange">
           <label class="agree-checkbox">
             <checkbox 
-              :checked="state.agreed" 
-              :disabled="!state.canAgree"
+              :checked="state.agreed || state.agreementSigned" 
+              :disabled="!state.canAgree || state.agreementSigned"
               color="#667EEA" 
             />
             <text>我已阅读并同意《财富金卡使用协议》</text>
           </label>
         </checkbox-group>
       </view>
+      
+      <!-- 已签署提示 -->
+      <view class="signed-tips" v-if="state.flowStatus === 3">
+        <uni-icons type="checkmark-circle-filled" size="20" color="#00C853" />
+        <text>您已成功签署协议并完成支付</text>
+      </view>
     </view>
 
     <!-- 底部按钮 -->
-    <template v-slot:footer>
-      <view class="footer-buttons">
+    <view class="footer-buttons">
+        <!-- 如果已完成，显示已签署状态 -->
+        <view v-if="state.flowStatus === 3" class="completed-status">
+          <uni-icons type="checkmark-circle-filled" size="24" color="#00C853" />
+          <text class="completed-text">已签署</text>
+        </view>
+        <!-- 如果未完成，显示操作按钮 -->
         <button 
+          v-else
           class="submit-button" 
-          :disabled="!state.agreed || state.submitting"
+          :disabled="(!state.agreed && !state.agreementSigned) || state.submitting"
           :loading="state.submitting"
           @tap="handleSubmit"
         >
-          {{ state.submitting ? '提交中...' : '同意并继续' }}
+          {{ state.submitting ? '提交中...' : 
+             state.agreementSigned ? (state.feeAmount > 0 ? `去支付 ¥${state.feeAmount}` : '去支付') : 
+             (state.feeAmount > 0 ? `签署协议并支付 ¥${state.feeAmount}` : '签署协议并继续') }}
         </button>
-        <view class="footer-tips">
+        <view class="footer-tips" v-if="state.flowStatus !== 3">
           <text>点击继续即表示您已阅读并同意本协议</text>
         </view>
       </view>
-    </template>
   </s-layout>
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue';
+import { reactive, onMounted, onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import xxep from '@/xxep';
 
@@ -139,6 +147,9 @@ const state = reactive({
   canAgree: false,
   remainTime: 10, // 阅读时长要求（秒）
   submitting: false,
+  agreementSigned: false, // 是否已签署协议
+  flowStatus: 1, // 流程状态：1=未支付, 2=已支付待审核, 3=已完成
+  feeAmount: 0, // 费用金额
 });
 
 let readTimer = null;
@@ -157,14 +168,50 @@ onMounted(() => {
 // 加载用户信息
 async function loadUserInfo() {
   try {
-    const userInfo = xxep.$store('user').userInfo;
-    state.userInfo = {
-      realname: userInfo.realname,
-      idcard: userInfo.idcard,
-      mobile: userInfo.mobile,
-    };
+    // 从 flowConfig 接口获取最新的卡片信息和流程配置
+    const { code, data } = await xxep.$api.card.flowConfig();
+    if (code === 1) {
+      // 获取卡片信息
+      if (data.card_status) {
+        state.userInfo = {
+          realname: data.card_status.holder_name || '',
+          idcard: data.card_status.holder_idcard || '',
+          mobile: xxep.$store('user').userInfo.mobile || '',
+        };
+        // 检查是否已签署协议
+        state.agreementSigned = data.card_status.agreement_signed || false;
+      }
+      
+      // 获取步骤1的费用信息和状态
+      if (data.steps && Array.isArray(data.steps)) {
+        const step1 = data.steps.find(item => item.step === 1);
+        if (step1) {
+          state.feeAmount = step1.fee_amount || 0;
+          state.flowStatus = step1.flow_status || 1;
+          // 如果已签署协议，更新状态
+          if (step1.agreement_signed) {
+            state.agreementSigned = true;
+          }
+        }
+      }
+    } else {
+      // 兜底：从 store 获取
+      const userInfo = xxep.$store('user').userInfo;
+      state.userInfo = {
+        realname: userInfo.realname || '',
+        idcard: userInfo.idcard || '',
+        mobile: userInfo.mobile || '',
+      };
+    }
   } catch (error) {
     console.error('加载用户信息失败:', error);
+    // 兜底：从 store 获取
+    const userInfo = xxep.$store('user').userInfo;
+    state.userInfo = {
+      realname: userInfo.realname || '',
+      idcard: userInfo.idcard || '',
+      mobile: userInfo.mobile || '',
+    };
   }
 }
 
@@ -192,6 +239,28 @@ async function handleSubmit() {
     return;
   }
 
+  // 检查是否已签署协议
+  if (state.agreementSigned) {
+    // 如果已签署，直接跳转到支付页面（如果有未支付的订单）
+    try {
+      const { code, data, msg } = await xxep.$api.card.createOrder({
+        step: state.step,
+      });
+
+      if (code === 1) {
+        uni.redirectTo({
+          url: `/pages/card/payment?order_id=${data.order.id}&step=${state.step}`,
+        });
+      } else {
+        xxep.$helper.toast(msg || '创建订单失败');
+      }
+    } catch (error) {
+      console.error('创建订单失败:', error);
+      xxep.$helper.toast('创建订单失败，请重试');
+    }
+    return;
+  }
+
   // 检查用户信息是否完整
   if (!state.userInfo.realname || !state.userInfo.idcard) {
     uni.showModal({
@@ -211,7 +280,21 @@ async function handleSubmit() {
   state.submitting = true;
 
   try {
-    // 先创建支付订单
+    // 1. 先签署协议
+    const { code: signCode, msg: signMsg } = await xxep.$api.card.signAgreement({
+      step: state.step,
+    });
+
+    if (signCode !== 1) {
+      xxep.$helper.toast(signMsg || '签署协议失败');
+      state.submitting = false;
+      return;
+    }
+
+    // 更新本地状态
+    state.agreementSigned = true;
+
+    // 2. 签署成功后，创建支付订单
     const { code, data, msg } = await xxep.$api.card.createOrder({
       step: state.step,
     });
@@ -243,11 +326,10 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .agreement-page {
   padding: 20rpx;
-  padding-bottom: 300rpx;
 }
 
 .step-indicator {
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: linear-gradient(135deg, #667EEA 0%, #667EEA 100%);
   border-radius: 16rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
@@ -409,7 +491,7 @@ onUnmounted(() => {
 .submit-button {
   width: 100%;
   height: 88rpx;
-  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  background: linear-gradient(135deg, #667EEA 0%, #667EEA 100%);
   border-radius: 44rpx;
   font-size: 32rpx;
   font-weight: 600;
@@ -428,6 +510,40 @@ onUnmounted(() => {
   text {
     font-size: 22rpx;
     color: #999999;
+  }
+}
+
+.completed-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 24rpx;
+  background: #F0F9FF;
+  border-radius: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.completed-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #00C853;
+}
+
+.signed-tips {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 24rpx;
+  background: #F0F9FF;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+
+  text {
+    font-size: 28rpx;
+    color: #00C853;
+    font-weight: 500;
   }
 }
 </style>
