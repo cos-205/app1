@@ -5,7 +5,6 @@
     navbar="custom"
     :bgStyle="template.style?.background"
     :navbarStyle="template.style?.navbar"
-    onShareAppMessage
     :showFloatButton="true"
   >
     <s-block v-for="(item, index) in template.data" :key="index" :styles="item.style">

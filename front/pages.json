@@ -134,6 +134,32 @@
       }
     },
     {
+      "path": "pages/user/bind-alipay",
+      "style": {
+        "navigationBarTitleText": "绑定支付宝",
+        "navigationStyle": "custom"
+      },
+      "meta": {
+        "auth": true,
+        "sync": false,
+        "title": "绑定支付宝",
+        "group": "用户中心"
+      }
+    },
+    {
+      "path": "pages/user/bind-wechat",
+      "style": {
+        "navigationBarTitleText": "绑定微信",
+        "navigationStyle": "custom"
+      },
+      "meta": {
+        "auth": true,
+        "sync": false,
+        "title": "绑定微信",
+        "group": "用户中心"
+      }
+    },
+    {
       "path": "pages/index/fuka",
       "style": {
         "navigationBarTitleText": "我的福卡"

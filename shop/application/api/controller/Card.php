@@ -75,7 +75,7 @@ class Card extends Api
                 $card->card_no = 'CARD' . date('Ymd') . str_pad($user->id, 6, '0', STR_PAD_LEFT);
             }
 
-            $card->apply_status = 1; // 审核中
+            $card->apply_status = 2; // 审核中
             $card->apply_time = time();
             $card->save();
 

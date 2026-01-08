@@ -164,6 +164,32 @@ export default {
         auth: true,
       },
     }),
+  
+  // 绑定支付宝
+  bindAlipay: (data) =>
+    request({
+      url: '/api/user/bindAlipay',
+      method: 'POST',
+      data,
+      custom: {
+        showLoading: true,
+        loadingMsg: '绑定中',
+        auth: true,
+      },
+    }),
+  
+  // 绑定微信
+  bindWechat: (data) =>
+    request({
+      url: '/api/user/bindWechat',
+      method: 'POST',
+      data,
+      custom: {
+        showLoading: true,
+        loadingMsg: '绑定中',
+        auth: true,
+      },
+    }),
 
   address: {
     default: () =>

@@ -576,7 +576,7 @@ class User extends Api
     public function getTeamMembers()
     {
         $user = $this->auth->getUserinfo();
-        
+
         // 使用参数类型转换，符合安全规范
         $params = $this->request->only(['level', 'page', 'limit']);
         $level = isset($params['level']) ? (int)$params['level'] : 0;
@@ -621,7 +621,7 @@ class User extends Api
                 $targetUserIds[] = $userId;
                 $memberLevel[$userId] = 2;
             }
-            
+
             // 获取3级成员
             if ($level == 3 || $level == 0) {
                 if (!empty($level2Users)) {
@@ -707,12 +707,12 @@ class User extends Api
         }
 
         $params = $this->request->only(['realname', 'idcard']);
-        
+
         // 参数验证
         if (empty($params['realname'])) {
             $this->error('请输入真实姓名');
         }
-        
+
         if (empty($params['idcard'])) {
             $this->error('请输入身份证号码');
         }
@@ -767,15 +767,133 @@ class User extends Api
     {
         $Wi = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
         $ValideCode = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
-        
+
         $sum = 0;
         for ($i = 0; $i < 17; $i++) {
             $sum += $Wi[$i] * intval(substr($idcard, $i, 1));
         }
-        
+
         $valCodePosition = $sum % 11;
         $lastChar = strtoupper(substr($idcard, 17, 1));
-        
+
         return $lastChar === $ValideCode[$valCodePosition];
+    }
+
+    /**
+     * 绑定支付宝账号
+     * 
+     * @ApiMethod (POST)
+     * @ApiParams (name="account", type="string", required=true, description="支付宝账号（手机号或邮箱）")
+     */
+    public function bindAlipay()
+    {
+        // 获取当前登录用户
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录', null, 401);
+        }
+
+        // 获取提交的支付宝账号
+        $account = $this->request->post('account', '');
+        $account = trim($account);
+
+        // 验证账号不能为空
+        if (empty($account)) {
+            $this->error('请输入支付宝账号');
+        }
+
+        // 验证账号格式（手机号或邮箱）
+        $isMobile = preg_match('/^1[3-9]\d{9}$/', $account);
+        $isEmail = preg_match('/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/', $account);
+
+        if (!$isMobile && !$isEmail) {
+            $this->error('请输入正确的手机号或邮箱');
+        }
+
+        // 检查该支付宝账号是否已被其他用户绑定
+        $existUser = \app\common\model\User::where('alipay_account', $account)
+            ->where('id', '<>', $user->id)
+            ->find();
+
+        if ($existUser) {
+            $this->error('该支付宝账号已被其他用户绑定');
+        }
+
+        $user->alipay_account = $account;
+        $user->alipay_bind_time = time();
+        $user->save();
+        $this->success('绑定成功', [
+            'alipay_account' => $account,
+            'bind_time' => date('Y-m-d H:i:s', $user->alipay_bind_time)
+        ]);
+    }
+
+    /**
+     * 绑定微信号
+     * 
+     * @ApiMethod (POST)
+     * @ApiParams (name="account", type="string", required=true, description="微信号")
+     */
+    public function bindWechat()
+    {
+        // 获取当前登录用户
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录', null, 401);
+        }
+
+        // 获取提交的微信号
+        $account = $this->request->post('account', '');
+        $account = trim($account);
+
+        // 验证账号不能为空
+        if (empty($account)) {
+            $this->error('请输入微信号');
+        }
+
+        // 验证微信号格式（6-20位，字母、数字、下划线、减号）
+        if (!preg_match('/^[a-zA-Z0-9_-]{6,20}$/', $account)) {
+            $this->error('微信号格式不正确（6-20位字母、数字、下划线、减号）');
+        }
+
+        // 检查该微信号是否已被其他用户绑定
+        $existUser = \app\common\model\User::where('wechat_account', $account)
+            ->where('id', '<>', $user->id)
+            ->find();
+
+        if ($existUser) {
+            $this->error('该微信号已被其他用户绑定');
+        }
+
+        $user->wechat_account = $account;
+        $user->wechat_bind_time = time();
+        $user->save();
+        $this->success('绑定成功', [
+            'wechat_account' => $account,
+            'bind_time' => date('Y-m-d H:i:s', $user->wechat_bind_time)
+        ]);
+    }
+
+    /**
+     * 获取绑定状态
+     * 
+     * @ApiMethod (GET)
+     */
+    public function getBindStatus()
+    {
+        // 获取当前登录用户
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录', null, 401);
+        }
+
+        $this->success('获取成功', [
+            'alipay_account' => $user->alipay_account ?: '',
+            'alipay_bind_time' => $user->alipay_bind_time ? date('Y-m-d H:i:s', $user->alipay_bind_time) : '',
+            'wechat_account' => $user->wechat_account ?: '',
+            'wechat_bind_time' => $user->wechat_bind_time ? date('Y-m-d H:i:s', $user->wechat_bind_time) : '',
+            'is_alipay_bind' => !empty($user->alipay_account),
+            'is_wechat_bind' => !empty($user->wechat_account),
+        ]);
     }
 }
