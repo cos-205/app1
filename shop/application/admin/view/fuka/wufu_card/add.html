@@ -1,0 +1,45 @@
+<form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('User_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-user_id" data-rule="required" min="0" data-source="user/user/index" data-field="nickname" class="form-control selectpage" name="row[user_id]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Fuka_ids')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-fuka_ids" data-rule="required" data-source="fuka/index" data-multiple="true" class="form-control selectpage" name="row[fuka_ids]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Is_used')}:</label>
+        <div class="col-xs-12 col-sm-8">
+                        
+            <select  id="c-is_used" data-rule="required" class="form-control selectpicker" name="row[is_used]">
+                {foreach name="isUsedList" item="vo"}
+                    <option value="{$key}" {in name="key" value="0"}selected{/in}>{$vo}</option>
+                {/foreach}
+            </select>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Exchange_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-exchange_id" data-rule="required" min="0" data-source="exchange/index" class="form-control selectpage" name="row[exchange_id]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Used_time')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-used_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[used_time]" type="text" value="{:date('Y-m-d H:i:s')}">
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+        </div>
+    </div>
+</form>

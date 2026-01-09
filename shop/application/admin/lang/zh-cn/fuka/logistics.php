@@ -1,0 +1,32 @@
+<?php
+
+return [
+    'Id'                 => 'ID',
+    'Order_type'         => '订单类型',
+    'Order_type 1'       => '福卡兑换',
+    'Order_type 2'       => '财富金卡',
+    'Order_id'           => '订单ID',
+    'User_id'            => '用户ID',
+    'Address_id'         => '收货地址ID(关联fa_cus_user_address.id)',
+    'Logistics_status'   => '物流状态',
+    'Logistics_status 0' => '待发货',
+    'Logistics_status 1' => '已发货',
+    'Logistics_status 2' => '运输中',
+    'Logistics_status 3' => '待取件',
+    'Logistics_status 4' => '已签收',
+    'Logistics_company'  => '物流公司',
+    'Logistics_no'       => '物流单号',
+    'Send_time'          => '发货时间',
+    'Receive_time'       => '签收时间',
+    'Logistics_info'     => '物流跟踪信息:JSON格式',
+    'Remark'             => '备注',
+    'Createtime'         => '创建时间',
+    'Updatetime'         => '更新时间',
+    'Deletetime'         => '删除时间',
+    'Weigh'              => '权重:数值越大越靠前',
+    'Status'             => '状态',
+    'Status normal'      => '正常',
+    'Set status to normal'=> '设为正常',
+    'Status hidden'      => '隐藏',
+    'Set status to hidden'=> '设为隐藏'
+];

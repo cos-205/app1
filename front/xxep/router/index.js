@@ -89,7 +89,7 @@ const _go = (
       });
       setTimeout(() => {
         uni.navigateTo({
-          url: '/pages/user/address/list',
+          url: '/pages/user/address/edit',
         });
       }, 1500);
       return;

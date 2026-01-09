@@ -1,0 +1,31 @@
+<?php
+
+return [
+    'Id'             => 'ID',
+    'Level'          => '等级',
+    'Level 0'        => '普通',
+    'Level 1'        => '铂金',
+    'Level 2'        => '黄金',
+    'Level 3'        => '钻石',
+    'Level 4'        => '黑金',
+    'Level 5'        => '至尊',
+    'Name'           => '等级名称',
+    'Invite_count'   => '升级所需邀请人数',
+    'Can_get_card'   => '可领取财富金卡',
+    'Can_get_card 1' => '是',
+    'Can_get_card 0' => '否',
+    'Dividend_money' => '每月分红金额(万元)',
+    'Icon'           => '等级图标',
+    'Bg_color'       => '背景色',
+    'Description'    => '等级说明',
+    'Rights'         => '权益说明:JSON格式',
+    'Createtime'     => '创建时间',
+    'Updatetime'     => '更新时间',
+    'Deletetime'     => '删除时间',
+    'Weigh'          => '权重:数值越大越靠前',
+    'Status'         => '状态',
+    'Status normal'  => '正常',
+    'Set status to normal'=> '设为正常',
+    'Status hidden'  => '隐藏',
+    'Set status to hidden'=> '设为隐藏'
+];

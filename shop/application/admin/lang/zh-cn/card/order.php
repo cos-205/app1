@@ -1,0 +1,32 @@
+<?php
+
+return [
+    'Id'                    => 'ID',
+    'Order_no'              => '订单号',
+    'Merchant_trade_no'     => '商户支付单号（用于第三方支付）',
+    'User_id'               => '用户ID',
+    'Card_id'               => '金卡ID',
+    'Step_id'               => '步骤ID',
+    'Step_name'             => '步骤名称',
+    'Order_type'            => '订单类型',
+    'Related_id'            => '关联ID',
+    'Amount'                => '金额',
+    'Pay_type'              => '支付方式:wechat/alipay/unionpay',
+    'Pay_status'            => '支付状态',
+    'Pay_status 0'          => '未支付',
+    'Pay_status 1'          => '已支付',
+    'Pay_status 2'          => '已退款',
+    'Pay_time'              => '支付时间',
+    'Transaction_id'        => '第三方交易号',
+    'Pay_url'               => '支付链接',
+    'Refund_status'         => '退款状态',
+    'Refund_status 0'       => '未退款',
+    'Refund_status 1'       => '退款中',
+    'Refund_status 2'       => '已退款',
+    'Refund_time'           => '退款时间',
+    'Refund_transaction_id' => '退款交易号',
+    'Refund_amount'         => '退款金额',
+    'Createtime'            => '创建时间',
+    'Updatetime'            => '更新时间',
+    'Deletetime'            => '删除时间'
+];

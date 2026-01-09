@@ -1,0 +1,32 @@
+<?php
+
+return [
+    'Id'            => 'ID',
+    'User_id'       => '用户ID',
+    'Fuka_type_id'  => '福卡类型ID',
+    'Type_code'     => '类型编码',
+    'Type_name'     => '类型名称',
+    'Source_type'   => '获得方式',
+    'Source_type 1' => '签到',
+    'Source_type 2' => '邀请',
+    'Source_type 3' => '任务',
+    'Source_type 4' => '购买',
+    'Source_type 5' => '团队',
+    'Source_type 6' => '抽奖',
+    'Source_id'     => '来源ID',
+    'Is_used'       => '是否已使用',
+    'Is_used 1'     => '是',
+    'Is_used 0'     => '否',
+    'Exchange_id'   => '兑换记录ID',
+    'Used_time'     => '使用时间',
+    'Remark'        => '备注',
+    'Createtime'    => '创建时间',
+    'Updatetime'    => '更新时间',
+    'Deletetime'    => '删除时间',
+    'Weigh'         => '权重:数值越大越靠前',
+    'Status'        => '状态',
+    'Status normal' => '正常',
+    'Set status to normal'=> '设为正常',
+    'Status hidden' => '隐藏',
+    'Set status to hidden'=> '设为隐藏'
+];

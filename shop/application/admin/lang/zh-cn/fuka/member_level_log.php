@@ -1,0 +1,31 @@
+<?php
+
+return [
+    'Id'            => 'ID',
+    'User_id'       => '用户ID',
+    'Old_level'     => '原等级',
+    'Old_level 0'   => '普通',
+    'Old_level 1'   => '铂金',
+    'Old_level 2'   => '黄金',
+    'Old_level 3'   => '钻石',
+    'Old_level 4'   => '黑金',
+    'Old_level 5'   => '至尊',
+    'New_level'     => '新等级',
+    'New_level 0'   => '普通',
+    'New_level 1'   => '铂金',
+    'New_level 2'   => '黄金',
+    'New_level 3'   => '钻石',
+    'New_level 4'   => '黑金',
+    'New_level 5'   => '至尊',
+    'Invite_count'  => '升级时的邀请人数',
+    'Remark'        => '备注',
+    'Createtime'    => '创建时间',
+    'Updatetime'    => '更新时间',
+    'Deletetime'    => '删除时间',
+    'Weigh'         => '权重:数值越大越靠前',
+    'Status'        => '状态',
+    'Status normal' => '正常',
+    'Set status to normal'=> '设为正常',
+    'Status hidden' => '隐藏',
+    'Set status to hidden'=> '设为隐藏'
+];

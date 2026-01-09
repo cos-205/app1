@@ -1,0 +1,123 @@
+{include file="/cus/common/script" /}
+
+<div id="index" class="wealth-card-index panel panel-default panel-intro" v-cloak>
+    <el-container class="panel-block">
+        <el-header class="sa-header">
+            <div class="sa-title sa-flex sa-row-between">
+                <div class="sa-title-left">
+                    <div class="left-name">财富金卡管理</div>
+                    <sa-filter-condition v-model="state.filter" @filter-delete="onChangeFilter">
+                    </sa-filter-condition>
+                </div>
+                <div class="sa-title-right">
+                    <el-button class="sa-button-refresh" icon="RefreshRight" @click="getData"></el-button>
+                    <el-button class="sa-button-refresh" icon="Search" @click="onOpenFilter"></el-button>
+                    {if $auth->check('cus/fuka/wealth_card/add')}
+                    <el-button icon="Plus" type="primary" @click="onAdd">添加</el-button>
+                    {/if}
+                </div>
+            </div>
+        </el-header>
+        <el-main class="sa-main">
+            <el-table height="100%" class="sa-table" :data="state.data" stripe @selection-change="onChangeSelection"
+                @sort-change="onChangeSort">
+                <el-table-column type="selection" width="48" align="center"></el-table-column>
+                <el-table-column prop="id" label="ID" min-width="90" sortable="custom"> </el-table-column>
+                <el-table-column label="卡号" min-width="150">
+                    <template #default="scope">
+                        <div class="sa-table-line-1">
+                            {{ scope.row.card_no || '-' }}
+                        </div>
+                    </template>
+                </el-table-column>
+                <el-table-column label="用户" min-width="120">
+                    <template #default="scope">
+                        <div v-if="scope.row.user">
+                            <div class="sa-table-line-1">{{ scope.row.user.nickname || scope.row.user.username || '-' }}</div>
+                            <div class="sa-table-line-1" style="color: #999; font-size: 12px;">ID: {{ scope.row.user_id }}</div>
+                        </div>
+                        <span v-else>-</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="持卡人" min-width="100">
+                    <template #default="scope">
+                        <div class="sa-table-line-1">
+                            {{ scope.row.holder_name || '-' }}
+                        </div>
+                    </template>
+                </el-table-column>
+                <el-table-column label="余额" min-width="100" sortable="custom">
+                    <template #default="scope">
+                        <span style="color: #f56c6c; font-weight: bold;">¥{{ scope.row.card_balance || '0.00' }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="流程状态" min-width="120">
+                    <template #default="scope">
+                        <el-tag :type="getFlowStatusType(scope.row.flow_status)">
+                            {{ scope.row.flow_status_text }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="申领状态" min-width="120">
+                    <template #default="scope">
+                        <el-tag :type="getApplyStatusType(scope.row.apply_status)">
+                            {{ scope.row.apply_status_text }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="激活状态" min-width="100">
+                    <template #default="scope">
+                        <el-tag :type="scope.row.is_active == 1 ? 'success' : 'info'">
+                            {{ scope.row.is_active_text }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="创建时间" width="172" sortable="custom">
+                    <template #default="scope">
+                        {{ scope.row.createtime || '-' }}
+                    </template>
+                </el-table-column>
+                <el-table-column fixed="right" label="操作" min-width="200">
+                    <template #default="scope">
+                        <el-button type="primary" link @click="onDetail(scope.row.id)">详情</el-button>
+                        {if $auth->check('cus/fuka/wealth_card/edit')}
+                        <el-button type="primary" link @click="onEdit(scope.row.id)">编辑</el-button>
+                        {/if}
+                        <el-button type="info" link @click="onViewFlows(scope.row.id)">流程</el-button>
+                        <el-button type="warning" link @click="onViewOrders(scope.row.id)">订单</el-button>
+                        <el-popconfirm width="fit-content" confirm-button-text="确认" cancel-button-text="取消"
+                            title="确认删除这条记录?" @confirm="onDelete(scope.row.id)">
+                            <template #reference>
+                                {if $auth->check('cus/fuka/wealth_card/delete')}
+                                <el-button type="danger" link>删除</el-button>
+                                {/if}
+                            </template>
+                        </el-popconfirm>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-main>
+        <el-footer class="sa-footer sa-flex sa-row-between sa-flex-wrap">
+            <div class="sa-batch sa-flex">
+                <div class="tip">
+                    已选择 <span>{{batchHandle.data.length}}</span> 项</div>
+                <div class="sa-flex">
+                    {if $auth->check('cus/fuka/wealth_card/edit')}
+                    <el-button type="success" :disabled="!batchHandle.data.length" @click="onBatchHandle('activate')">激活
+                    </el-button>
+                    {/if}
+                    {if $auth->check('cus/fuka/wealth_card/edit')}
+                    <el-button type="warning" :disabled="!batchHandle.data.length" @click="onBatchHandle('deactivate')">禁用
+                    </el-button>
+                    {/if}
+                    {if $auth->check('cus/fuka/wealth_card/delete')}
+                    <el-button type="danger" :disabled="!batchHandle.data.length" @click="onBatchHandle('delete')">删除
+                    </el-button>
+                    {/if}
+                </div>
+            </div>
+            <sa-pagination v-model="pagination" @pagination-change="getData"></sa-pagination>
+        </el-footer>
+    </el-container>
+    <sa-filter v-model="state.filter" @filter-change="onChangeFilter"></sa-filter>
+</div>
