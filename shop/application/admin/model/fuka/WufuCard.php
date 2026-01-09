@@ -73,7 +73,7 @@ class WufuCard extends Model
      */
     public function type()
     {
-        return $this->belongsTo('app\admin\model\fuka\Type', 'type_id', 'id')->field('id,name,icon,is_universal');
+        return $this->belongsTo('app\admin\model\fuka\Type', 'type_id', 'id')->field('id,type_name,type_code,icon,is_universal');
     }
 
     /**

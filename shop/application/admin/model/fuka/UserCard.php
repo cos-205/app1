@@ -29,7 +29,8 @@ class UserCard extends Model
         'is_used_text',
         'used_time_text',
         'status_text',
-        'user_info'
+        'user_info',
+        'fuka_type_info'
     ];
     
 
@@ -105,6 +106,15 @@ class UserCard extends Model
     }
 
     /**
+     * 关联福卡类型表
+     * @return \think\model\relation\BelongsTo
+     */
+    public function fukaType()
+    {
+        return $this->belongsTo('app\admin\model\fuka\Type', 'fuka_type_id', 'id')->field('id,type_name,type_code,icon,is_universal');
+    }
+
+    /**
      * 关联五福卡
      * @return \think\model\relation\BelongsTo
      */
@@ -126,6 +136,28 @@ class UserCard extends Model
             $nickname = $user['nickname'] ?? '';
             $mobile = $user['mobile'] ?? '';
             return $nickname ? ($nickname . ($mobile ? ' (' . $mobile . ')' : '')) : ($mobile ?: '');
+        }
+        return '';
+    }
+
+    /**
+     * 获取福卡类型信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getFukaTypeInfoAttr($value, $data)
+    {
+        // 优先使用关联数据
+        if (isset($data['fuka_type']) && $data['fuka_type']) {
+            $type = $data['fuka_type'];
+            $name = $type['type_name'] ?? '';
+            $icon = $type['icon'] ?? '';
+            return $icon ? ($icon . ' ' . $name) : $name;
+        }
+        // 如果没有关联数据，使用冗余字段
+        if (isset($data['type_name']) && $data['type_name']) {
+            return $data['type_name'];
         }
         return '';
     }

@@ -42,7 +42,33 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         },
                         {field: 'fuka_type_id', title: __('Fuka_type_id'), visible: false},
                         {field: 'type_code', title: __('Type_code'), operate: 'LIKE', visible: false},
-                        {field: 'type_name', title: __('Type_name'), operate: 'LIKE'},
+                        {
+                            field: 'type_name', 
+                            title: __('Type_name'), 
+                            operate: 'LIKE',
+                            formatter: function(value, row, index) {
+                                // 显示福卡类型信息：图标 + 类型名称
+                                if (row.fuka_type && row.fuka_type.type_name) {
+                                    var typeName = row.fuka_type.type_name;
+                                    var icon = row.fuka_type.icon || '';
+                                    if (icon) {
+                                        // 如果图标不包含空格，添加 fa fa- 前缀
+                                        icon = icon.indexOf(' ') > -1 ? icon : 'fa fa-' + icon;
+                                        return '<i class="' + icon + '"></i> ' + typeName;
+                                    }
+                                    return typeName;
+                                }
+                                // 如果没有关联数据，使用type_name字段
+                                if (row.type_name) {
+                                    return row.type_name;
+                                }
+                                // 如果有fuka_type_info格式化字段，使用它
+                                if (row.fuka_type_info) {
+                                    return row.fuka_type_info;
+                                }
+                                return value || '-';
+                            }
+                        },
                         {
                             field: 'source_type', 
                             title: __('Source_type'), 
@@ -52,10 +78,22 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 if (row.source_type_text) {
                                     return row.source_type_text;
                                 }
-                                return Table.api.formatter.normal(value, row, index);
+                                // 如果没有格式化字段，使用searchList映射
+                                var sourceTypeMap = {
+                                    "1": __('Source_type 1'),
+                                    "2": __('Source_type 2'),
+                                    "3": __('Source_type 3'),
+                                    "4": __('Source_type 4'),
+                                    "5": __('Source_type 5'),
+                                    "6": __('Source_type 6')
+                                };
+                                if (value && sourceTypeMap[value]) {
+                                    return sourceTypeMap[value];
+                                }
+                                return value || '-';
                             }
                         },
-                        {field: 'source_id', title: __('Source_id')},
+                        {field: 'source_id', title: __('Source_id'), visible: false},
                         {
                             field: 'is_used', 
                             title: __('Is_used'), 
@@ -69,7 +107,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             }
                         },
                         {field: 'exchange_id', title: __('Exchange_id'), visible: false},
-                        {field: 'used_time', title: __('Used_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
+                        {field: 'used_time', title: __('Used_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime, visible: false},
                         {field: 'remark', title: __('Remark'), operate: 'LIKE', table: table, class: 'autocontent', formatter: Table.api.formatter.content, visible: false},
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'updatetime', title: __('Updatetime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime, visible: false},

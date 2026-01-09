@@ -2,7 +2,7 @@
 
 return [
     'Id'         => 'ID',
-    'Step_id'    => '关联的金卡步骤ID',
+    'Step_id'    => '关联的金卡流程步骤',
     'Flow_step'  => '流程步骤:1-5',
     'Flow_name'  => '流程名称',
     'Flow_desc'  => '流程描述',

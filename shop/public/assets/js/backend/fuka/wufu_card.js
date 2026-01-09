@@ -43,9 +43,15 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             title: __('Type_id'),
                             formatter: function(value, row, index) {
                                 // 显示福卡类型：图标 + 名称
-                                if (row.type && row.type.name) {
-                                    var icon = row.type.icon ? row.type.icon + ' ' : '';
-                                    return icon + row.type.name;
+                                if (row.type && row.type.type_name) {
+                                    var typeName = row.type.type_name;
+                                    var icon = row.type.icon || '';
+                                    if (icon) {
+                                        // 如果图标不包含空格，添加 fa fa- 前缀
+                                        icon = icon.indexOf(' ') > -1 ? icon : 'fa fa-' + icon;
+                                        return '<i class="' + icon + '"></i> ' + typeName;
+                                    }
+                                    return typeName;
                                 }
                                 return value || '-';
                             }

@@ -47,7 +47,7 @@ class UserCard extends Backend
         
         // 使用with预加载关联数据，避免N+1查询
         $list = $this->model
-            ->with(['user', 'wufuCard'])
+            ->with(['user', 'fukaType', 'wufuCard'])
             ->where($where)
             ->order($sort, $order)
             ->paginate($limit);
