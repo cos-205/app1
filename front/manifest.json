@@ -1,7 +1,7 @@
 {
     "name" : "Cus",
-    "appid" : "__UNI__082C0BA",
-    "description" : "Cus是由SheepJS团队开发，使用Uniapp+Vue3技术驱动的在线商城系统，内含诸多功能与丰富的活动，期待您的使用和反馈。",
+    "appid" : "__UNI__GADB0C9D",
+    "description" : "",
     "versionName" : "3.1.0",
     "versionCode" : 310,
     "transformPx" : false,
@@ -79,7 +79,7 @@
                 "urltypes" : "cus",
                 "capabilities" : {
                     "entitlements" : {
-                        "com.apple.developer.associated-domains" : [ "applinks:cus.sheepjs.com" ]
+                        "com.apple.developer.associated-domains" : [ "" ]
                     }
                 },
                 "idfa" : true
@@ -90,15 +90,15 @@
                 "oauth" : {
                     "apple" : {},
                     "weixin" : {
-                        "appid" : "wxae7a0c156da9383b",
-                        "UniversalLinks" : "https://cus.sheepjs.com/uni-universallinks/__UNI__082C0BA/"
+                        "appid" : "",
+                        "UniversalLinks" : ""
                     }
                 },
                 "payment" : {
                     "weixin" : {
                         "__platform__" : [ "ios", "android" ],
-                        "appid" : "wxae7a0c156da9383b",
-                        "UniversalLinks" : "https://cus.sheepjs.com/uni-universallinks/__UNI__082C0BA/"
+                        "appid" : "",
+                        "UniversalLinks" : ""
                     },
                     "alipay" : {
                         "__platform__" : [ "ios", "android" ]
@@ -106,8 +106,8 @@
                 },
                 "share" : {
                     "weixin" : {
-                        "appid" : "wxae7a0c156da9383b",
-                        "UniversalLinks" : "https://cus.sheepjs.com/uni-universallinks/__UNI__082C0BA/"
+                        "appid" : "",
+                        "UniversalLinks" : ""
                     }
                 }
             },
@@ -169,7 +169,7 @@
         "versionCode" : 100
     },
     "mp-weixin" : {
-        "appid" : "wx39cd0799d4567dd0",
+        "appid" : "",
         "setting" : {
             "urlCheck" : false,
             "minified" : true,
@@ -200,7 +200,7 @@
         "template" : "index.html",
         "router" : {
             "mode" : "hash",
-            "base" : "./"
+            "base" : "/h5/"
         },
         "sdkConfigs" : {
             "maps" : {}
@@ -216,7 +216,7 @@
         }
     },
     "vueVersion" : "3",
-    "_spaceID" : "192b4892-5452-4e1d-9f09-eee1ece40639",
+    "_spaceID" : "",
     "locale" : "zh-Hans",
     "fallbackLocale" : "zh-Hans"
 }

@@ -3,6 +3,7 @@
 namespace app\admin\controller\card;
 
 use app\common\controller\Backend;
+use fast\Date;
 
 /**
  * 金卡支付订单管理
@@ -64,6 +65,107 @@ class Order extends Backend
         
         $result = ['total' => $list->total(), 'rows' => $list->items()];
         return json($result);
+    }
+
+    /**
+     * 订单统计
+     */
+    public function statistics()
+    {
+        // 获取筛选参数
+        $startTime = $this->request->get('start_time', '');
+        $endTime = $this->request->get('end_time', '');
+        $payStatus = $this->request->get('pay_status', '');
+        $payType = $this->request->get('pay_type', '');
+        
+        // 构建查询条件
+        $where = [];
+        if ($startTime) {
+            $where['createtime'] = ['>=', strtotime($startTime)];
+        }
+        if ($endTime) {
+            $where['createtime'] = ['<=', strtotime($endTime . ' 23:59:59')];
+        }
+        if ($startTime && $endTime) {
+            $where['createtime'] = ['between', [strtotime($startTime), strtotime($endTime . ' 23:59:59')]];
+        }
+        if ($payStatus !== '') {
+            $where['pay_status'] = $payStatus;
+        }
+        if ($payType) {
+            $where['pay_type'] = $payType;
+        }
+        
+        // 今日时间范围
+        $todayStart = Date::unixtime('day', 0);
+        $todayEnd = Date::unixtime('day', 0, 'end');
+        
+        // 基础统计
+        $totalAmount = $this->model->where($where)->where('pay_status', 1)->sum('amount') ?: 0;
+        $totalCount = $this->model->where($where)->count() ?: 0;
+        
+        // 今日统计
+        $todayWhere = $where;
+        $todayWhere['createtime'] = ['between', [$todayStart, $todayEnd]];
+        $todayAmount = $this->model->where($todayWhere)->where('pay_status', 1)->sum('amount') ?: 0;
+        $todayCount = $this->model->where($todayWhere)->count() ?: 0;
+        
+        // 支付状态统计
+        $successWhere = $where;
+        $successWhere['pay_status'] = 1;
+        $successAmount = $this->model->where($successWhere)->sum('amount') ?: 0;
+        $successCount = $this->model->where($successWhere)->count() ?: 0;
+        
+        $failWhere = $where;
+        $failWhere['pay_status'] = 0;
+        $failAmount = $this->model->where($failWhere)->sum('amount') ?: 0;
+        $failCount = $this->model->where($failWhere)->count() ?: 0;
+        
+        $refundWhere = $where;
+        $refundWhere['pay_status'] = 2;
+        $refundAmount = $this->model->where($refundWhere)->sum('amount') ?: 0;
+        $refundCount = $this->model->where($refundWhere)->count() ?: 0;
+        
+        // 金额分组统计
+        $amountGroupWhere = $where;
+        $amountGroupWhere['pay_status'] = 1;
+        $amountGroup = $this->model
+            ->where($amountGroupWhere)
+            ->field('amount, COUNT(*) as count, SUM(amount) as total_amount')
+            ->group('amount')
+            ->order('amount', 'asc')
+            ->select();
+        
+        // 渠道统计
+        $channelStatsWhere = $where;
+        $channelStatsWhere['pay_status'] = 1;
+        $channelStats = $this->model
+            ->where($channelStatsWhere)
+            ->field('pay_type, COUNT(*) as count, SUM(amount) as total_amount')
+            ->group('pay_type')
+            ->select();
+        
+        // 准备视图数据
+        $this->view->assign([
+            'total_amount' => $totalAmount,
+            'total_count' => $totalCount,
+            'today_amount' => $todayAmount,
+            'today_count' => $todayCount,
+            'success_amount' => $successAmount,
+            'success_count' => $successCount,
+            'fail_amount' => $failAmount,
+            'fail_count' => $failCount,
+            'refund_amount' => $refundAmount,
+            'refund_count' => $refundCount,
+            'amount_group' => $amountGroup,
+            'channel_stats' => $channelStats,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'pay_status' => $payStatus,
+            'pay_type' => $payType,
+        ]);
+        
+        return $this->view->fetch();
     }
 
 }

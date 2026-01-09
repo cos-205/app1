@@ -30,6 +30,10 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'group.name', title: __('Group')},
                         {field: 'username', title: __('Username'), operate: 'LIKE'},
                         {field: 'nickname', title: __('Nickname'), operate: 'LIKE'},
+                        {field: 'realname', title: __('Realname'), operate: 'LIKE', visible: false},
+                        {field: 'idcard', title: __('Idcard'), operate: 'LIKE', visible: false},
+                        {field: 'is_realname', title: __('Is_realname'), searchList: {"1":__('Is_realname 1'),"0":__('Is_realname 0')}, formatter: Table.api.formatter.normal, visible: false},
+                        {field: 'realname_time', title: __('Realname_time'), formatter: Table.api.formatter.datetime, operate: 'RANGE', addclass: 'datetimerange', visible: false},
                         {field: 'email', title: __('Email'), operate: 'LIKE'},
                         {field: 'mobile', title: __('Mobile'), operate: 'LIKE'},
                         {field: 'avatar', title: __('Avatar'), events: Table.api.events.image, formatter: Table.api.formatter.image, operate: false},
@@ -42,6 +46,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'loginip', title: __('Loginip'), formatter: Table.api.formatter.search},
                         {field: 'jointime', title: __('Jointime'), formatter: Table.api.formatter.datetime, operate: 'RANGE', addclass: 'datetimerange', sortable: true},
                         {field: 'joinip', title: __('Joinip'), formatter: Table.api.formatter.search},
+                        {field: 'is_open_wechat_pay', title: __('Is_open_wechat_pay'), searchList: {"1":__('Is_open_wechat_pay 1'),"0":__('Is_open_wechat_pay 0')}, formatter: Table.api.formatter.normal, visible: false},
+                        {field: 'is_open_alipay_pay', title: __('Is_open_alipay_pay'), searchList: {"1":__('Is_open_alipay_pay 1'),"0":__('Is_open_alipay_pay 0')}, formatter: Table.api.formatter.normal, visible: false},
+                        {field: 'is_open_payment', title: __('Is_open_payment'), searchList: {"1":__('Is_open_payment 1'),"0":__('Is_open_payment 0')}, formatter: Table.api.formatter.normal, visible: false},
                         {field: 'status', title: __('Status'), formatter: Table.api.formatter.status, searchList: {normal: __('Normal'), hidden: __('Hidden')}},
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]
