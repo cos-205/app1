@@ -30,22 +30,88 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'id', title: __('Id')},
                         {field: 'order_no', title: __('Order_no'), operate: 'LIKE'},
                         {field: 'merchant_trade_no', title: __('Merchant_trade_no'), operate: 'LIKE'},
-                        {field: 'user_id', title: __('User_id')},
-                        {field: 'card_id', title: __('Card_id')},
+                        {
+                            field: 'user_id', 
+                            title: __('User_id'),
+                            formatter: function(value, row, index) {
+                                // 显示用户信息：用户名 (手机号)
+                                if (row.user && row.user.nickname) {
+                                    var mobile = row.user.mobile ? ' (' + row.user.mobile + ')' : '';
+                                    return row.user.nickname + mobile;
+                                }
+                                return value || '-';
+                            }
+                        },
+                        {
+                            field: 'card_id', 
+                            title: __('Card_id'),
+                            formatter: function(value, row, index) {
+                                // 显示金卡信息：卡号 (持卡人)
+                                if (row.wealth_card && row.wealth_card.card_no) {
+                                    var holder = row.wealth_card.holder_name ? ' (' + row.wealth_card.holder_name + ')' : '';
+                                    return row.wealth_card.card_no + holder;
+                                }
+                                return value || '-';
+                            }
+                        },
                         {field: 'step_id', title: __('Step_id')},
                         {field: 'step_name', title: __('Step_name'), operate: 'LIKE'},
                         {field: 'order_type', title: __('Order_type'), operate: 'LIKE'},
                         {field: 'related_id', title: __('Related_id')},
-                        {field: 'amount', title: __('Amount'), operate:'BETWEEN'},
+                        {
+                            field: 'amount', 
+                            title: __('Amount'), 
+                            operate:'BETWEEN',
+                            formatter: function(value, row, index) {
+                                // 格式化金额显示
+                                if (value || value === 0) {
+                                    return '¥' + parseFloat(value).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                                return '¥0.00';
+                            }
+                        },
                         {field: 'pay_type', title: __('Pay_type'), operate: 'LIKE'},
-                        {field: 'pay_status', title: __('Pay_status'), searchList: {"0":__('Pay_status 0'),"1":__('Pay_status 1'),"2":__('Pay_status 2')}, formatter: Table.api.formatter.status},
+                        {
+                            field: 'pay_status', 
+                            title: __('Pay_status'), 
+                            searchList: {"0":__('Pay_status 0'),"1":__('Pay_status 1'),"2":__('Pay_status 2')}, 
+                            formatter: function(value, row, index) {
+                                // 显示支付状态文字
+                                if (row.pay_status_text) {
+                                    return row.pay_status_text;
+                                }
+                                return Table.api.formatter.status(value, row, index);
+                            }
+                        },
                         {field: 'pay_time', title: __('Pay_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'transaction_id', title: __('Transaction_id'), operate: 'LIKE'},
                         {field: 'pay_url', title: __('Pay_url'), operate: 'LIKE', formatter: Table.api.formatter.url},
-                        {field: 'refund_status', title: __('Refund_status'), searchList: {"0":__('Refund_status 0'),"1":__('Refund_status 1'),"2":__('Refund_status 2')}, formatter: Table.api.formatter.status},
+                        {
+                            field: 'refund_status', 
+                            title: __('Refund_status'), 
+                            searchList: {"0":__('Refund_status 0'),"1":__('Refund_status 1'),"2":__('Refund_status 2')}, 
+                            formatter: function(value, row, index) {
+                                // 显示退款状态文字
+                                if (row.refund_status_text) {
+                                    return row.refund_status_text;
+                                }
+                                return Table.api.formatter.status(value, row, index);
+                            }
+                        },
                         {field: 'refund_time', title: __('Refund_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'refund_transaction_id', title: __('Refund_transaction_id'), operate: 'LIKE'},
-                        {field: 'refund_amount', title: __('Refund_amount'), operate:'BETWEEN'},
+                        {
+                            field: 'refund_amount', 
+                            title: __('Refund_amount'), 
+                            operate:'BETWEEN',
+                            formatter: function(value, row, index) {
+                                // 格式化金额显示
+                                if (value || value === 0) {
+                                    return '¥' + parseFloat(value).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                                return '¥0.00';
+                            }
+                        },
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'updatetime', title: __('Updatetime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}

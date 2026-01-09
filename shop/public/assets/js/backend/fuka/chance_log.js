@@ -28,12 +28,45 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     [
                         {checkbox: true},
                         {field: 'id', title: __('Id')},
-                        {field: 'user_id', title: __('User_id')},
-                        {field: 'change_type', title: __('Change_type'), searchList: {"1":__('Change_type 1'),"2":__('Change_type 2')}, formatter: Table.api.formatter.normal},
+                        {
+                            field: 'user_id', 
+                            title: __('User_id'),
+                            formatter: function(value, row, index) {
+                                // 显示用户信息：用户名 (手机号)
+                                if (row.user && row.user.nickname) {
+                                    var mobile = row.user.mobile ? ' (' + row.user.mobile + ')' : '';
+                                    return row.user.nickname + mobile;
+                                }
+                                return value || '-';
+                            }
+                        },
+                        {
+                            field: 'change_type', 
+                            title: __('Change_type'), 
+                            searchList: {"1":__('Change_type 1'),"2":__('Change_type 2')}, 
+                            formatter: function(value, row, index) {
+                                // 显示变动类型文字
+                                if (row.change_type_text) {
+                                    return row.change_type_text;
+                                }
+                                return Table.api.formatter.normal(value, row, index);
+                            }
+                        },
                         {field: 'change_count', title: __('Change_count')},
                         {field: 'before_count', title: __('Before_count')},
                         {field: 'after_count', title: __('After_count')},
-                        {field: 'source_type', title: __('Source_type'), searchList: {"1":__('Source_type 1'),"2":__('Source_type 2'),"3":__('Source_type 3'),"4":__('Source_type 4'),"5":__('Source_type 5')}, formatter: Table.api.formatter.normal},
+                        {
+                            field: 'source_type', 
+                            title: __('Source_type'), 
+                            searchList: {"1":__('Source_type 1'),"2":__('Source_type 2'),"3":__('Source_type 3'),"4":__('Source_type 4'),"5":__('Source_type 5')}, 
+                            formatter: function(value, row, index) {
+                                // 显示来源类型文字
+                                if (row.source_type_text) {
+                                    return row.source_type_text;
+                                }
+                                return Table.api.formatter.normal(value, row, index);
+                            }
+                        },
                         {field: 'source_id', title: __('Source_id')},
                         {field: 'remark', title: __('Remark'), operate: 'LIKE', table: table, class: 'autocontent', formatter: Table.api.formatter.content},
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},

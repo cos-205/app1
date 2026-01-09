@@ -28,7 +28,9 @@ class DividendRecord extends Model
         'member_level_text',
         'send_status_text',
         'send_time_text',
-        'status_text'
+        'status_text',
+        'user_info',
+        'dividend_money_text'
     ];
     
 
@@ -94,5 +96,51 @@ class DividendRecord extends Model
         return $value === '' ? null : ($value && !is_numeric($value) ? strtotime($value) : $value);
     }
 
+    /**
+     * 关联用户表
+     * @return \think\model\relation\BelongsTo
+     */
+    public function user()
+    {
+        return $this->belongsTo('app\admin\model\cus\user\User', 'user_id', 'id')->field('id,username,nickname,mobile,avatar');
+    }
+
+    /**
+     * 关联会员等级配置
+     * @return \think\model\relation\BelongsTo
+     */
+    public function memberLevel()
+    {
+        return $this->belongsTo('app\admin\model\fuka\MemberLevel', 'member_level', 'level')->field('id,level,name,dividend_money');
+    }
+
+    /**
+     * 获取用户信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getUserInfoAttr($value, $data)
+    {
+        if (isset($data['user']) && $data['user']) {
+            $user = $data['user'];
+            $nickname = $user['nickname'] ?? '';
+            $mobile = $user['mobile'] ?? '';
+            return $nickname ? ($nickname . ($mobile ? ' (' . $mobile . ')' : '')) : ($mobile ?: '');
+        }
+        return '';
+    }
+
+    /**
+     * 获取分红金额格式化显示
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getDividendMoneyTextAttr($value, $data)
+    {
+        $money = $data['dividend_money'] ?? 0;
+        return '¥' . number_format($money, 2);
+    }
 
 }

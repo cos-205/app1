@@ -27,7 +27,8 @@ class UserStatistics extends Model
     protected $append = [
         'is_team_leader_text',
         'last_update_time_text',
-        'status_text'
+        'status_text',
+        'user_info'
     ];
     
 
@@ -80,5 +81,30 @@ class UserStatistics extends Model
         return $value === '' ? null : ($value && !is_numeric($value) ? strtotime($value) : $value);
     }
 
+    /**
+     * 关联用户表
+     * @return \think\model\relation\BelongsTo
+     */
+    public function user()
+    {
+        return $this->belongsTo('app\admin\model\cus\user\User', 'user_id', 'id')->field('id,username,nickname,mobile,avatar');
+    }
+
+    /**
+     * 获取用户信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getUserInfoAttr($value, $data)
+    {
+        if (isset($data['user']) && $data['user']) {
+            $user = $data['user'];
+            $nickname = $user['nickname'] ?? '';
+            $mobile = $user['mobile'] ?? '';
+            return $nickname ? ($nickname . ($mobile ? ' (' . $mobile . ')' : '')) : ($mobile ?: '');
+        }
+        return '';
+    }
 
 }

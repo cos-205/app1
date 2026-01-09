@@ -35,7 +35,9 @@ class CardFlowLog extends Model
         'need_refund_text',
         'is_refund_fee_text',
         'refund_fee_time_text',
-        'status_text'
+        'status_text',
+        'fee_text',
+        'refund_fee_text'
     ];
     
 
@@ -189,5 +191,37 @@ class CardFlowLog extends Model
         return $value === '' ? null : ($value && !is_numeric($value) ? strtotime($value) : $value);
     }
 
+    /**
+     * 关联财富金卡
+     * @return \think\model\relation\BelongsTo
+     */
+    public function wealthCard()
+    {
+        return $this->belongsTo('app\admin\model\fuka\WealthCard', 'card_id', 'id')->field('id,card_no,holder_name,user_id');
+    }
+
+    /**
+     * 获取金额格式化显示
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getFeeTextAttr($value, $data)
+    {
+        $fee = $data['fee'] ?? 0;
+        return '¥' . number_format($fee, 2);
+    }
+
+    /**
+     * 获取退款金额格式化显示
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getRefundFeeTextAttr($value, $data)
+    {
+        $refundFee = $data['refund_fee'] ?? 0;
+        return '¥' . number_format($refundFee, 2);
+    }
 
 }

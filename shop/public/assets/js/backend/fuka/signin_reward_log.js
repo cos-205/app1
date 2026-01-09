@@ -28,14 +28,69 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     [
                         {checkbox: true},
                         {field: 'id', title: __('Id')},
-                        {field: 'user_id', title: __('User_id')},
+                        {
+                            field: 'user_id', 
+                            title: __('User_id'),
+                            formatter: function(value, row, index) {
+                                // 显示用户信息：用户名 (手机号)
+                                if (row.user && row.user.nickname) {
+                                    var mobile = row.user.mobile ? ' (' + row.user.mobile + ')' : '';
+                                    return row.user.nickname + mobile;
+                                }
+                                return value || '-';
+                            }
+                        },
                         {field: 'signin_id', title: __('Signin_id')},
-                        {field: 'rule_id', title: __('Rule_id')},
+                        {
+                            field: 'rule_id', 
+                            title: __('Rule_id'),
+                            formatter: function(value, row, index) {
+                                // 显示规则信息：规则名称 (连续X天)
+                                if (row.signin_reward_rule && row.signin_reward_rule.name) {
+                                    var days = row.signin_reward_rule.days ? ' (连续' + row.signin_reward_rule.days + '天)' : '';
+                                    return row.signin_reward_rule.name + days;
+                                }
+                                return value || '-';
+                            }
+                        },
                         {field: 'days', title: __('Days')},
-                        {field: 'reward_type', title: __('Reward_type'), searchList: {"1":__('Reward_type 1'),"2":__('Reward_type 2')}, formatter: Table.api.formatter.normal},
-                        {field: 'reward_money', title: __('Reward_money'), operate:'BETWEEN'},
+                        {
+                            field: 'reward_type', 
+                            title: __('Reward_type'), 
+                            searchList: {"1":__('Reward_type 1'),"2":__('Reward_type 2')}, 
+                            formatter: function(value, row, index) {
+                                // 显示奖励类型文字
+                                if (row.reward_type_text) {
+                                    return row.reward_type_text;
+                                }
+                                return Table.api.formatter.normal(value, row, index);
+                            }
+                        },
+                        {
+                            field: 'reward_money', 
+                            title: __('Reward_money'), 
+                            operate:'BETWEEN',
+                            formatter: function(value, row, index) {
+                                // 格式化金额显示
+                                if (value || value === 0) {
+                                    return '¥' + parseFloat(value).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                                return '¥0.00';
+                            }
+                        },
                         {field: 'reward_chance', title: __('Reward_chance')},
-                        {field: 'is_received', title: __('Is_received'), searchList: {"1":__('Is_received 1'),"0":__('Is_received 0')}, formatter: Table.api.formatter.normal},
+                        {
+                            field: 'is_received', 
+                            title: __('Is_received'), 
+                            searchList: {"1":__('Is_received 1'),"0":__('Is_received 0')}, 
+                            formatter: function(value, row, index) {
+                                // 显示领取状态文字
+                                if (row.is_received_text) {
+                                    return row.is_received_text;
+                                }
+                                return Table.api.formatter.normal(value, row, index);
+                            }
+                        },
                         {field: 'receive_time', title: __('Receive_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'wallet_log_id', title: __('Wallet_log_id')},
                         {field: 'remark', title: __('Remark'), operate: 'LIKE', table: table, class: 'autocontent', formatter: Table.api.formatter.content},

@@ -28,7 +28,11 @@ class Order extends Model
         'pay_status_text',
         'pay_time_text',
         'refund_status_text',
-        'refund_time_text'
+        'refund_time_text',
+        'user_info',
+        'order_amount_text',
+        'pay_amount_text',
+        'refund_amount_text'
     ];
     
 
@@ -83,5 +87,75 @@ class Order extends Model
         return $value === '' ? null : ($value && !is_numeric($value) ? strtotime($value) : $value);
     }
 
+    /**
+     * 关联用户表
+     * @return \think\model\relation\BelongsTo
+     */
+    public function user()
+    {
+        return $this->belongsTo('app\admin\model\cus\user\User', 'user_id', 'id')->field('id,username,nickname,mobile,avatar');
+    }
+
+    /**
+     * 关联财富金卡
+     * @return \think\model\relation\BelongsTo
+     */
+    public function wealthCard()
+    {
+        return $this->belongsTo('app\admin\model\fuka\WealthCard', 'card_id', 'id')->field('id,card_no,holder_name,user_id');
+    }
+
+    /**
+     * 获取用户信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getUserInfoAttr($value, $data)
+    {
+        if (isset($data['user']) && $data['user']) {
+            $user = $data['user'];
+            $nickname = $user['nickname'] ?? '';
+            $mobile = $user['mobile'] ?? '';
+            return $nickname ? ($nickname . ($mobile ? ' (' . $mobile . ')' : '')) : ($mobile ?: '');
+        }
+        return '';
+    }
+
+    /**
+     * 获取订单金额格式化显示
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getOrderAmountTextAttr($value, $data)
+    {
+        $amount = $data['order_amount'] ?? 0;
+        return '¥' . number_format($amount, 2);
+    }
+
+    /**
+     * 获取支付金额格式化显示
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getPayAmountTextAttr($value, $data)
+    {
+        $amount = $data['pay_amount'] ?? 0;
+        return '¥' . number_format($amount, 2);
+    }
+
+    /**
+     * 获取退款金额格式化显示
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getRefundAmountTextAttr($value, $data)
+    {
+        $amount = $data['refund_amount'] ?? 0;
+        return '¥' . number_format($amount, 2);
+    }
 
 }

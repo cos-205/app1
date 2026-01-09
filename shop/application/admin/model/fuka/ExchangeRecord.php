@@ -34,7 +34,10 @@ class ExchangeRecord extends Model
         'is_get_certificate_text',
         'pay_certificate_time_text',
         'complete_time_text',
-        'status_text'
+        'status_text',
+        'user_info',
+        'prize_info',
+        'used_cards_count'
     ];
     
 
@@ -174,5 +177,89 @@ class ExchangeRecord extends Model
         return $value === '' ? null : ($value && !is_numeric($value) ? strtotime($value) : $value);
     }
 
+    /**
+     * 关联用户表
+     * @return \think\model\relation\BelongsTo
+     */
+    public function user()
+    {
+        return $this->belongsTo('app\admin\model\cus\user\User', 'user_id', 'id')->field('id,username,nickname,mobile,avatar');
+    }
+
+    /**
+     * 关联奖品表
+     * @return \think\model\relation\BelongsTo
+     */
+    public function prize()
+    {
+        return $this->belongsTo('app\admin\model\fuka\Prize', 'prize_id', 'id')->field('id,name,image,price,type');
+    }
+
+    /**
+     * 关联使用的五福卡
+     * @return \think\model\relation\HasMany
+     */
+    public function wufuCards()
+    {
+        return $this->hasMany('app\admin\model\fuka\WufuCard', 'exchange_record_id', 'id')->with(['type']);
+    }
+
+    /**
+     * 关联物流信息
+     * @return \think\model\relation\BelongsTo
+     */
+    public function logistics()
+    {
+        return $this->belongsTo('app\admin\model\fuka\Logistics', 'logistics_id', 'id');
+    }
+
+    /**
+     * 获取用户信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getUserInfoAttr($value, $data)
+    {
+        if (isset($data['user']) && $data['user']) {
+            $user = $data['user'];
+            $nickname = $user['nickname'] ?? '';
+            $mobile = $user['mobile'] ?? '';
+            return $nickname ? ($nickname . ($mobile ? ' (' . $mobile . ')' : '')) : ($mobile ?: '');
+        }
+        return '';
+    }
+
+    /**
+     * 获取奖品信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getPrizeInfoAttr($value, $data)
+    {
+        if (isset($data['prize']) && $data['prize']) {
+            $prize = $data['prize'];
+            $name = $prize['name'] ?? '';
+            $image = $prize['image'] ?? '';
+            return $name . ($image ? ' [有图]' : '');
+        }
+        // 如果没有关联数据，使用prize_name字段
+        return $data['prize_name'] ?? '';
+    }
+
+    /**
+     * 获取使用的五福卡数量
+     * @param $value
+     * @param $data
+     * @return int
+     */
+    public function getUsedCardsCountAttr($value, $data)
+    {
+        if (isset($data['wufu_cards']) && is_array($data['wufu_cards'])) {
+            return count($data['wufu_cards']);
+        }
+        return 0;
+    }
 
 }

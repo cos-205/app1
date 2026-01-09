@@ -28,9 +28,55 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     [
                         {checkbox: true},
                         {field: 'id', title: __('Id')},
-                        {field: 'user_id', title: __('User_id')},
-                        {field: 'old_level', title: __('Old_level'), searchList: {"0":__('Old_level 0'),"1":__('Old_level 1'),"2":__('Old_level 2'),"3":__('Old_level 3'),"4":__('Old_level 4'),"5":__('Old_level 5')}, formatter: Table.api.formatter.normal},
-                        {field: 'new_level', title: __('New_level'), searchList: {"0":__('New_level 0'),"1":__('New_level 1'),"2":__('New_level 2'),"3":__('New_level 3'),"4":__('New_level 4'),"5":__('New_level 5')}, formatter: Table.api.formatter.normal},
+                        {
+                            field: 'user_id', 
+                            title: __('User_id'),
+                            formatter: function(value, row, index) {
+                                // 显示用户信息：用户名 (手机号)
+                                if (row.user && row.user.nickname) {
+                                    var mobile = row.user.mobile ? ' (' + row.user.mobile + ')' : '';
+                                    return row.user.nickname + mobile;
+                                }
+                                return value || '-';
+                            }
+                        },
+                        {
+                            field: 'old_level', 
+                            title: __('Old_level'), 
+                            searchList: {"0":__('Old_level 0'),"1":__('Old_level 1'),"2":__('Old_level 2'),"3":__('Old_level 3'),"4":__('Old_level 4'),"5":__('Old_level 5')}, 
+                            formatter: function(value, row, index) {
+                                // 显示旧等级文字
+                                if (row.old_level_text) {
+                                    return row.old_level_text;
+                                }
+                                return Table.api.formatter.normal(value, row, index);
+                            }
+                        },
+                        {
+                            field: 'new_level', 
+                            title: __('New_level'), 
+                            searchList: {"0":__('New_level 0'),"1":__('New_level 1'),"2":__('New_level 2'),"3":__('New_level 3'),"4":__('New_level 4'),"5":__('New_level 5')}, 
+                            formatter: function(value, row, index) {
+                                // 显示新等级文字
+                                if (row.new_level_text) {
+                                    return row.new_level_text;
+                                }
+                                return Table.api.formatter.normal(value, row, index);
+                            }
+                        },
+                        {
+                            field: 'level_change',
+                            title: '等级变化',
+                            formatter: function(value, row, index) {
+                                // 显示等级变化：旧等级 → 新等级
+                                if (row.level_change) {
+                                    return row.level_change;
+                                }
+                                var oldLevel = row.old_level_text || row.old_level || '0';
+                                var newLevel = row.new_level_text || row.new_level || '0';
+                                return oldLevel + ' → ' + newLevel;
+                            }
+                        },
                         {field: 'invite_count', title: __('Invite_count')},
                         {field: 'remark', title: __('Remark'), operate: 'LIKE', table: table, class: 'autocontent', formatter: Table.api.formatter.content},
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},

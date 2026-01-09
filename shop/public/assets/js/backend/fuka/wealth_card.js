@@ -28,15 +28,59 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     [
                         {checkbox: true},
                         {field: 'id', title: __('Id')},
-                        {field: 'user_id', title: __('User_id')},
+                        {
+                            field: 'user_id', 
+                            title: __('User_id'),
+                            formatter: function(value, row, index) {
+                                // 显示用户信息：用户名 (手机号)
+                                if (row.user && row.user.nickname) {
+                                    var mobile = row.user.mobile ? ' (' + row.user.mobile + ')' : '';
+                                    return row.user.nickname + mobile;
+                                }
+                                return value || '-';
+                            }
+                        },
                         {field: 'card_no', title: __('Card_no'), operate: 'LIKE'},
                         {field: 'holder_name', title: __('Holder_name'), operate: 'LIKE'},
                         {field: 'holder_idcard', title: __('Holder_idcard'), operate: 'LIKE'},
-                        {field: 'card_balance', title: __('Card_balance'), operate:'BETWEEN'},
+                        {
+                            field: 'card_balance', 
+                            title: __('Card_balance'), 
+                            operate:'BETWEEN',
+                            formatter: function(value, row, index) {
+                                // 格式化金额显示
+                                if (value || value === 0) {
+                                    return '¥' + parseFloat(value).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                                return '¥0.00';
+                            }
+                        },
                         {field: 'card_password', title: __('Card_password'), operate: 'LIKE', table: table, class: 'autocontent', formatter: Table.api.formatter.content},
                         {field: 'withdraw_password', title: __('Withdraw_password'), operate: 'LIKE', table: table, class: 'autocontent', formatter: Table.api.formatter.content},
-                        {field: 'flow_status', title: __('Flow_status'), searchList: {"0":__('Flow_status 0'),"1-8":__('Flow_status 1-8')}, formatter: Table.api.formatter.status},
-                        {field: 'apply_status', title: __('Apply_status'), searchList: {"0":__('Apply_status 0'),"1":__('Apply_status 1'),"2":__('Apply_status 2'),"3":__('Apply_status 3'),"4":__('Apply_status 4'),"5":__('Apply_status 5'),"6":__('Apply_status 6')}, formatter: Table.api.formatter.status},
+                        {
+                            field: 'flow_status', 
+                            title: __('Flow_status'), 
+                            searchList: {"0":__('Flow_status 0'),"1-8":__('Flow_status 1-8')}, 
+                            formatter: function(value, row, index) {
+                                // 显示流程状态文字
+                                if (row.flow_status_text) {
+                                    return row.flow_status_text;
+                                }
+                                return Table.api.formatter.status(value, row, index);
+                            }
+                        },
+                        {
+                            field: 'apply_status', 
+                            title: __('Apply_status'), 
+                            searchList: {"0":__('Apply_status 0'),"1":__('Apply_status 1'),"2":__('Apply_status 2'),"3":__('Apply_status 3'),"4":__('Apply_status 4'),"5":__('Apply_status 5'),"6":__('Apply_status 6')}, 
+                            formatter: function(value, row, index) {
+                                // 显示申领状态文字
+                                if (row.apply_status_text) {
+                                    return row.apply_status_text;
+                                }
+                                return Table.api.formatter.status(value, row, index);
+                            }
+                        },
                         {field: 'apply_time', title: __('Apply_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'audit_time', title: __('Audit_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'audit_remark', title: __('Audit_remark'), operate: 'LIKE', table: table, class: 'autocontent', formatter: Table.api.formatter.content},

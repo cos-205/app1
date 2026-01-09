@@ -27,7 +27,9 @@ class MemberLevelLog extends Model
     protected $append = [
         'old_level_text',
         'new_level_text',
-        'status_text'
+        'status_text',
+        'user_info',
+        'level_change'
     ];
     
 

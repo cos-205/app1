@@ -25,7 +25,9 @@ class CardBalanceLog extends Model
 
     // 追加属性
     protected $append = [
-        'change_type_text'
+        'change_type_text',
+        'change_amount_text',
+        'balance_text'
     ];
     
 
@@ -43,7 +45,38 @@ class CardBalanceLog extends Model
         return $list[$value] ?? '';
     }
 
+    /**
+     * 关联财富金卡
+     * @return \think\model\relation\BelongsTo
+     */
+    public function wealthCard()
+    {
+        return $this->belongsTo('app\admin\model\fuka\WealthCard', 'card_id', 'id')->field('id,card_no,holder_name,user_id');
+    }
 
+    /**
+     * 获取变动金额格式化显示
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getChangeAmountTextAttr($value, $data)
+    {
+        $amount = $data['change_amount'] ?? 0;
+        $prefix = $amount >= 0 ? '+' : '';
+        return $prefix . '¥' . number_format(abs($amount), 2);
+    }
 
+    /**
+     * 获取余额格式化显示
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getBalanceTextAttr($value, $data)
+    {
+        $balance = $data['balance'] ?? 0;
+        return '¥' . number_format($balance, 2);
+    }
 
 }

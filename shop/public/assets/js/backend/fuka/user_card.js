@@ -28,13 +28,46 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     [
                         {checkbox: true},
                         {field: 'id', title: __('Id')},
-                        {field: 'user_id', title: __('User_id')},
+                        {
+                            field: 'user_id', 
+                            title: __('User_id'),
+                            formatter: function(value, row, index) {
+                                // 显示用户信息：用户名 (手机号)
+                                if (row.user && row.user.nickname) {
+                                    var mobile = row.user.mobile ? ' (' + row.user.mobile + ')' : '';
+                                    return row.user.nickname + mobile;
+                                }
+                                return value || '-';
+                            }
+                        },
                         {field: 'fuka_type_id', title: __('Fuka_type_id')},
                         {field: 'type_code', title: __('Type_code'), operate: 'LIKE'},
                         {field: 'type_name', title: __('Type_name'), operate: 'LIKE'},
-                        {field: 'source_type', title: __('Source_type'), searchList: {"1":__('Source_type 1'),"2":__('Source_type 2'),"3":__('Source_type 3'),"4":__('Source_type 4'),"5":__('Source_type 5'),"6":__('Source_type 6')}, formatter: Table.api.formatter.normal},
+                        {
+                            field: 'source_type', 
+                            title: __('Source_type'), 
+                            searchList: {"1":__('Source_type 1'),"2":__('Source_type 2'),"3":__('Source_type 3'),"4":__('Source_type 4'),"5":__('Source_type 5'),"6":__('Source_type 6')}, 
+                            formatter: function(value, row, index) {
+                                // 显示来源类型文字
+                                if (row.source_type_text) {
+                                    return row.source_type_text;
+                                }
+                                return Table.api.formatter.normal(value, row, index);
+                            }
+                        },
                         {field: 'source_id', title: __('Source_id')},
-                        {field: 'is_used', title: __('Is_used'), searchList: {"1":__('Is_used 1'),"0":__('Is_used 0')}, formatter: Table.api.formatter.normal},
+                        {
+                            field: 'is_used', 
+                            title: __('Is_used'), 
+                            searchList: {"1":__('Is_used 1'),"0":__('Is_used 0')}, 
+                            formatter: function(value, row, index) {
+                                // 显示使用状态文字
+                                if (row.is_used_text) {
+                                    return row.is_used_text;
+                                }
+                                return Table.api.formatter.normal(value, row, index);
+                            }
+                        },
                         {field: 'exchange_id', title: __('Exchange_id')},
                         {field: 'used_time', title: __('Used_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'remark', title: __('Remark'), operate: 'LIKE', table: table, class: 'autocontent', formatter: Table.api.formatter.content},

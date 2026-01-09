@@ -29,7 +29,8 @@ class Logistics extends Model
         'logistics_status_text',
         'send_time_text',
         'receive_time_text',
-        'status_text'
+        'status_text',
+        'user_info'
     ];
     
 
@@ -107,5 +108,32 @@ class Logistics extends Model
         return $value === '' ? null : ($value && !is_numeric($value) ? strtotime($value) : $value);
     }
 
+    /**
+     * 关联用户表（通过订单关联）
+     * @return \think\model\relation\BelongsTo
+     */
+    public function user()
+    {
+        // 根据order_type关联不同的订单表获取用户信息
+        // 这里先不实现，因为需要根据order_type判断关联哪个表
+        return $this->belongsTo('app\admin\model\cus\user\User', 'user_id', 'id')->field('id,username,nickname,mobile,avatar');
+    }
+
+    /**
+     * 获取用户信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getUserInfoAttr($value, $data)
+    {
+        if (isset($data['user']) && $data['user']) {
+            $user = $data['user'];
+            $nickname = $user['nickname'] ?? '';
+            $mobile = $user['mobile'] ?? '';
+            return $nickname ? ($nickname . ($mobile ? ' (' . $mobile . ')' : '')) : ($mobile ?: '');
+        }
+        return '';
+    }
 
 }

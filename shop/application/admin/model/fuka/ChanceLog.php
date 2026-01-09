@@ -27,7 +27,8 @@ class ChanceLog extends Model
     protected $append = [
         'change_type_text',
         'source_type_text',
-        'status_text'
+        'status_text',
+        'user_info'
     ];
     
 

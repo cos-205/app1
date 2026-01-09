@@ -29,11 +29,67 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {checkbox: true},
                         {field: 'id', title: __('Id')},
                         {field: 'user_id', title: __('User_id')},
-                        {field: 'card_id', title: __('Card_id')},
-                        {field: 'change_type', title: __('Change_type'), searchList: {"1":__('Change_type 1'),"2":__('Change_type 2')}, formatter: Table.api.formatter.normal},
-                        {field: 'change_money', title: __('Change_money'), operate:'BETWEEN'},
-                        {field: 'before_balance', title: __('Before_balance'), operate:'BETWEEN'},
-                        {field: 'after_balance', title: __('After_balance'), operate:'BETWEEN'},
+                        {
+                            field: 'card_id', 
+                            title: __('Card_id'),
+                            formatter: function(value, row, index) {
+                                // 显示金卡信息：卡号 (持卡人)
+                                if (row.wealth_card && row.wealth_card.card_no) {
+                                    var holder = row.wealth_card.holder_name ? ' (' + row.wealth_card.holder_name + ')' : '';
+                                    return row.wealth_card.card_no + holder;
+                                }
+                                return value || '-';
+                            }
+                        },
+                        {
+                            field: 'change_type', 
+                            title: __('Change_type'), 
+                            searchList: {"1":__('Change_type 1'),"2":__('Change_type 2')}, 
+                            formatter: function(value, row, index) {
+                                // 显示变动类型文字
+                                if (row.change_type_text) {
+                                    return row.change_type_text;
+                                }
+                                return Table.api.formatter.normal(value, row, index);
+                            }
+                        },
+                        {
+                            field: 'change_money', 
+                            title: __('Change_money'), 
+                            operate:'BETWEEN',
+                            formatter: function(value, row, index) {
+                                // 格式化变动金额显示（带正负号）
+                                if (value || value === 0) {
+                                    var prefix = parseFloat(value) >= 0 ? '+' : '';
+                                    return prefix + '¥' + parseFloat(Math.abs(value)).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                                return '¥0.00';
+                            }
+                        },
+                        {
+                            field: 'before_balance', 
+                            title: __('Before_balance'), 
+                            operate:'BETWEEN',
+                            formatter: function(value, row, index) {
+                                // 格式化余额显示
+                                if (value || value === 0) {
+                                    return '¥' + parseFloat(value).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                                return '¥0.00';
+                            }
+                        },
+                        {
+                            field: 'after_balance', 
+                            title: __('After_balance'), 
+                            operate:'BETWEEN',
+                            formatter: function(value, row, index) {
+                                // 格式化余额显示
+                                if (value || value === 0) {
+                                    return '¥' + parseFloat(value).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                                return '¥0.00';
+                            }
+                        },
                         {field: 'source_type', title: __('Source_type'), operate: 'LIKE'},
                         {field: 'source_id', title: __('Source_id')},
                         {field: 'remark', title: __('Remark'), operate: 'LIKE', table: table, class: 'autocontent', formatter: Table.api.formatter.content},

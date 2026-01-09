@@ -29,18 +29,51 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {checkbox: true},
                         {field: 'id', title: __('Id')},
                         {field: 'user_id', title: __('User_id')},
-                        {field: 'card_id', title: __('Card_id')},
+                        {
+                            field: 'card_id', 
+                            title: __('Card_id'),
+                            formatter: function(value, row, index) {
+                                // 显示金卡信息：卡号 (持卡人)
+                                if (row.wealth_card && row.wealth_card.card_no) {
+                                    var holder = row.wealth_card.holder_name ? ' (' + row.wealth_card.holder_name + ')' : '';
+                                    return row.wealth_card.card_no + holder;
+                                }
+                                return value || '-';
+                            }
+                        },
                         {field: 'order_id', title: __('Order_id')},
                         {field: 'flow_step', title: __('Flow_step')},
                         {field: 'step_name', title: __('Step_name'), operate: 'LIKE'},
-                        {field: 'flow_status', title: __('Flow_status'), searchList: {"0":__('Flow_status 0'),"1":__('Flow_status 1'),"2":__('Flow_status 2'),"3":__('Flow_status 3')}, formatter: Table.api.formatter.status},
+                        {
+                            field: 'flow_status', 
+                            title: __('Flow_status'), 
+                            searchList: {"0":__('Flow_status 0'),"1":__('Flow_status 1'),"2":__('Flow_status 2'),"3":__('Flow_status 3')}, 
+                            formatter: function(value, row, index) {
+                                // 显示流程状态文字
+                                if (row.flow_status_text) {
+                                    return row.flow_status_text;
+                                }
+                                return Table.api.formatter.status(value, row, index);
+                            }
+                        },
                         {field: 'is_completed', title: __('Is_completed'), searchList: {"1":__('Is_completed 1'),"0":__('Is_completed 0')}, formatter: Table.api.formatter.normal},
                         {field: 'complete_time', title: __('Complete_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'auditor_id', title: __('Auditor_id')},
                         {field: 'audit_time', title: __('Audit_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'audit_remark', title: __('Audit_remark'), operate: 'LIKE', table: table, class: 'autocontent', formatter: Table.api.formatter.content},
                         {field: 'need_fee', title: __('Need_fee'), searchList: {"1":__('Need_fee 1'),"0":__('Need_fee 0')}, formatter: Table.api.formatter.normal},
-                        {field: 'fee_amount', title: __('Fee_amount'), operate:'BETWEEN'},
+                        {
+                            field: 'fee_amount', 
+                            title: __('Fee_amount'), 
+                            operate:'BETWEEN',
+                            formatter: function(value, row, index) {
+                                // 格式化金额显示
+                                if (value || value === 0) {
+                                    return '¥' + parseFloat(value).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                                return '¥0.00';
+                            }
+                        },
                         {field: 'fee_name', title: __('Fee_name'), operate: 'LIKE'},
                         {field: 'is_pay_fee', title: __('Is_pay_fee'), searchList: {"1":__('Is_pay_fee 1'),"0":__('Is_pay_fee 0')}, formatter: Table.api.formatter.normal},
                         {field: 'pay_fee_time', title: __('Pay_fee_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},

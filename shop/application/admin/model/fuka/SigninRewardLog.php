@@ -28,7 +28,9 @@ class SigninRewardLog extends Model
         'reward_type_text',
         'is_received_text',
         'receive_time_text',
-        'status_text'
+        'status_text',
+        'user_info',
+        'reward_money_text'
     ];
     
 
@@ -94,5 +96,51 @@ class SigninRewardLog extends Model
         return $value === '' ? null : ($value && !is_numeric($value) ? strtotime($value) : $value);
     }
 
+    /**
+     * 关联用户表
+     * @return \think\model\relation\BelongsTo
+     */
+    public function user()
+    {
+        return $this->belongsTo('app\admin\model\cus\user\User', 'user_id', 'id')->field('id,username,nickname,mobile,avatar');
+    }
+
+    /**
+     * 关联签到奖励规则
+     * @return \think\model\relation\BelongsTo
+     */
+    public function signinRewardRule()
+    {
+        return $this->belongsTo('app\admin\model\fuka\SigninRewardRule', 'rule_id', 'id')->field('id,name,days,reward_type,reward_money,reward_chance');
+    }
+
+    /**
+     * 获取用户信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getUserInfoAttr($value, $data)
+    {
+        if (isset($data['user']) && $data['user']) {
+            $user = $data['user'];
+            $nickname = $user['nickname'] ?? '';
+            $mobile = $user['mobile'] ?? '';
+            return $nickname ? ($nickname . ($mobile ? ' (' . $mobile . ')' : '')) : ($mobile ?: '');
+        }
+        return '';
+    }
+
+    /**
+     * 获取奖励金额格式化显示
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getRewardMoneyTextAttr($value, $data)
+    {
+        $money = $data['reward_money'] ?? 0;
+        return '¥' . number_format($money, 2);
+    }
 
 }

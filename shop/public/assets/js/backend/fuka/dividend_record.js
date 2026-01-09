@@ -28,11 +28,59 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     [
                         {checkbox: true},
                         {field: 'id', title: __('Id')},
-                        {field: 'user_id', title: __('User_id')},
-                        {field: 'member_level', title: __('Member_level'), searchList: {"0":__('Member_level 0'),"1":__('Member_level 1'),"2":__('Member_level 2'),"3":__('Member_level 3'),"4":__('Member_level 4'),"5":__('Member_level 5')}, formatter: Table.api.formatter.normal},
+                        {
+                            field: 'user_id', 
+                            title: __('User_id'),
+                            formatter: function(value, row, index) {
+                                // 显示用户信息：用户名 (手机号)
+                                if (row.user && row.user.nickname) {
+                                    var mobile = row.user.mobile ? ' (' + row.user.mobile + ')' : '';
+                                    return row.user.nickname + mobile;
+                                }
+                                return value || '-';
+                            }
+                        },
+                        {
+                            field: 'member_level', 
+                            title: __('Member_level'), 
+                            searchList: {"0":__('Member_level 0'),"1":__('Member_level 1'),"2":__('Member_level 2'),"3":__('Member_level 3'),"4":__('Member_level 4'),"5":__('Member_level 5')}, 
+                            formatter: function(value, row, index) {
+                                // 显示会员等级文字
+                                if (row.member_level_text) {
+                                    return row.member_level_text;
+                                }
+                                // 如果有关联的会员等级配置，显示名称
+                                if (row.member_level && row.member_level.name) {
+                                    return row.member_level.name;
+                                }
+                                return Table.api.formatter.normal(value, row, index);
+                            }
+                        },
                         {field: 'dividend_month', title: __('Dividend_month'), operate: 'LIKE'},
-                        {field: 'dividend_money', title: __('Dividend_money'), operate:'BETWEEN'},
-                        {field: 'send_status', title: __('Send_status'), searchList: {"0":__('Send_status 0'),"1":__('Send_status 1'),"2":__('Send_status 2')}, formatter: Table.api.formatter.status},
+                        {
+                            field: 'dividend_money', 
+                            title: __('Dividend_money'), 
+                            operate:'BETWEEN',
+                            formatter: function(value, row, index) {
+                                // 格式化金额显示
+                                if (value || value === 0) {
+                                    return '¥' + parseFloat(value).toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                                return '¥0.00';
+                            }
+                        },
+                        {
+                            field: 'send_status', 
+                            title: __('Send_status'), 
+                            searchList: {"0":__('Send_status 0'),"1":__('Send_status 1'),"2":__('Send_status 2')}, 
+                            formatter: function(value, row, index) {
+                                // 显示发送状态文字
+                                if (row.send_status_text) {
+                                    return row.send_status_text;
+                                }
+                                return Table.api.formatter.status(value, row, index);
+                            }
+                        },
                         {field: 'send_time', title: __('Send_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'send_channel', title: __('Send_channel'), operate: 'LIKE'},
                         {field: 'send_account', title: __('Send_account'), operate: 'LIKE'},

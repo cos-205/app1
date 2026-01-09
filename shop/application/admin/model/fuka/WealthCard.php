@@ -35,7 +35,9 @@ class WealthCard extends Model
         'is_active_text',
         'active_time_text',
         'is_open_large_pay_text',
-        'status_text'
+        'status_text',
+        'user_info',
+        'card_balance_text'
     ];
     
 
@@ -187,5 +189,69 @@ class WealthCard extends Model
         return $value === '' ? null : ($value && !is_numeric($value) ? strtotime($value) : $value);
     }
 
+    /**
+     * 关联用户表
+     * @return \think\model\relation\BelongsTo
+     */
+    public function user()
+    {
+        return $this->belongsTo('app\admin\model\cus\user\User', 'user_id', 'id')->field('id,username,nickname,mobile,avatar');
+    }
+
+    /**
+     * 关联流程日志
+     * @return \think\model\relation\HasMany
+     */
+    public function cardFlowLogs()
+    {
+        return $this->hasMany('app\admin\model\fuka\CardFlowLog', 'card_id', 'id')->order('createtime', 'desc');
+    }
+
+    /**
+     * 关联余额变动日志
+     * @return \think\model\relation\HasMany
+     */
+    public function cardBalanceLogs()
+    {
+        return $this->hasMany('app\admin\model\fuka\CardBalanceLog', 'card_id', 'id')->order('createtime', 'desc');
+    }
+
+    /**
+     * 关联物流信息（通过物流单号）
+     * @return \think\model\relation\HasOne
+     */
+    public function logistics()
+    {
+        return $this->hasOne('app\admin\model\fuka\Logistics', 'logistics_no', 'logistics_no');
+    }
+
+    /**
+     * 获取用户信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getUserInfoAttr($value, $data)
+    {
+        if (isset($data['user']) && $data['user']) {
+            $user = $data['user'];
+            $nickname = $user['nickname'] ?? '';
+            $mobile = $user['mobile'] ?? '';
+            return $nickname ? ($nickname . ($mobile ? ' (' . $mobile . ')' : '')) : ($mobile ?: '');
+        }
+        return '';
+    }
+
+    /**
+     * 获取金额格式化显示
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getCardBalanceTextAttr($value, $data)
+    {
+        $balance = $data['card_balance'] ?? 0;
+        return '¥' . number_format($balance, 2);
+    }
 
 }

@@ -28,11 +28,44 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     [
                         {checkbox: true},
                         {field: 'id', title: __('Id')},
-                        {field: 'order_type', title: __('Order_type'), searchList: {"1":__('Order_type 1'),"2":__('Order_type 2')}, formatter: Table.api.formatter.normal},
+                        {
+                            field: 'order_type', 
+                            title: __('Order_type'), 
+                            searchList: {"1":__('Order_type 1'),"2":__('Order_type 2')}, 
+                            formatter: function(value, row, index) {
+                                // 显示订单类型文字
+                                if (row.order_type_text) {
+                                    return row.order_type_text;
+                                }
+                                return Table.api.formatter.normal(value, row, index);
+                            }
+                        },
                         {field: 'order_id', title: __('Order_id')},
-                        {field: 'user_id', title: __('User_id')},
+                        {
+                            field: 'user_id', 
+                            title: __('User_id'),
+                            formatter: function(value, row, index) {
+                                // 显示用户信息：用户名 (手机号)
+                                if (row.user && row.user.nickname) {
+                                    var mobile = row.user.mobile ? ' (' + row.user.mobile + ')' : '';
+                                    return row.user.nickname + mobile;
+                                }
+                                return value || '-';
+                            }
+                        },
                         {field: 'address_id', title: __('Address_id')},
-                        {field: 'logistics_status', title: __('Logistics_status'), searchList: {"0":__('Logistics_status 0'),"1":__('Logistics_status 1'),"2":__('Logistics_status 2'),"3":__('Logistics_status 3'),"4":__('Logistics_status 4')}, formatter: Table.api.formatter.status},
+                        {
+                            field: 'logistics_status', 
+                            title: __('Logistics_status'), 
+                            searchList: {"0":__('Logistics_status 0'),"1":__('Logistics_status 1'),"2":__('Logistics_status 2'),"3":__('Logistics_status 3'),"4":__('Logistics_status 4')}, 
+                            formatter: function(value, row, index) {
+                                // 显示物流状态文字
+                                if (row.logistics_status_text) {
+                                    return row.logistics_status_text;
+                                }
+                                return Table.api.formatter.status(value, row, index);
+                            }
+                        },
                         {field: 'logistics_company', title: __('Logistics_company'), operate: 'LIKE'},
                         {field: 'logistics_no', title: __('Logistics_no'), operate: 'LIKE'},
                         {field: 'send_time', title: __('Send_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},

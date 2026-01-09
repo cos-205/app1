@@ -32,10 +32,41 @@ class ExchangeRecord extends Backend
 
 
     /**
-     * 默认生成的控制器所继承的父类中有index/add/edit/del/multi五个基础方法、destroy/restore/recyclebin三个回收站方法
-     * 因此在当前控制器中可不用编写增删改查的代码,除非需要自己控制这部分逻辑
-     * 需要将application/admin/library/traits/Backend.php中对应的方法复制到当前控制器,然后进行修改
+     * 查看（重写index方法以支持关联查询）
      */
-
+    public function index()
+    {
+        //设置过滤方法
+        $this->request->filter(['strip_tags', 'trim']);
+        if (false === $this->request->isAjax()) {
+            return $this->view->fetch();
+        }
+        //如果发送的来源是 Selectpage，则转发到 Selectpage
+        if ($this->request->request('keyField')) {
+            return $this->selectpage();
+        }
+        list($where, $sort, $order, $offset, $limit) = $this->buildparams();
+        
+        // 使用with预加载关联数据，避免N+1查询
+        $list = $this->model
+            ->with(['user', 'prize', 'wufuCards'])
+            ->where($where)
+            ->order($sort, $order)
+            ->paginate($limit);
+        
+        // 处理每条记录，添加格式化数据
+        foreach ($list as $k => $v) {
+            // 格式化费用字段
+            if (isset($v['pickup_code_fee'])) {
+                $v['pickup_code_fee_text'] = '¥' . number_format($v['pickup_code_fee'], 2);
+            }
+            if (isset($v['certificate_fee'])) {
+                $v['certificate_fee_text'] = '¥' . number_format($v['certificate_fee'], 2);
+            }
+        }
+        
+        $result = ['total' => $list->total(), 'rows' => $list->items()];
+        return json($result);
+    }
 
 }

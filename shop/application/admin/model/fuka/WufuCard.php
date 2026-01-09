@@ -26,7 +26,9 @@ class WufuCard extends Model
     // 追加属性
     protected $append = [
         'is_used_text',
-        'used_time_text'
+        'used_time_text',
+        'user_info',
+        'type_info'
     ];
     
 
@@ -56,5 +58,65 @@ class WufuCard extends Model
         return $value === '' ? null : ($value && !is_numeric($value) ? strtotime($value) : $value);
     }
 
+    /**
+     * 关联用户表
+     * @return \think\model\relation\BelongsTo
+     */
+    public function user()
+    {
+        return $this->belongsTo('app\admin\model\cus\user\User', 'user_id', 'id')->field('id,username,nickname,mobile,avatar');
+    }
+
+    /**
+     * 关联福卡类型表
+     * @return \think\model\relation\BelongsTo
+     */
+    public function type()
+    {
+        return $this->belongsTo('app\admin\model\fuka\Type', 'type_id', 'id')->field('id,name,icon,is_universal');
+    }
+
+    /**
+     * 关联兑换记录
+     * @return \think\model\relation\BelongsTo
+     */
+    public function exchangeRecord()
+    {
+        return $this->belongsTo('app\admin\model\fuka\ExchangeRecord', 'exchange_record_id', 'id');
+    }
+
+    /**
+     * 获取用户信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getUserInfoAttr($value, $data)
+    {
+        if (isset($data['user']) && $data['user']) {
+            $user = $data['user'];
+            $nickname = $user['nickname'] ?? '';
+            $mobile = $user['mobile'] ?? '';
+            return $nickname ? ($nickname . ($mobile ? ' (' . $mobile . ')' : '')) : ($mobile ?: '');
+        }
+        return '';
+    }
+
+    /**
+     * 获取福卡类型信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getTypeInfoAttr($value, $data)
+    {
+        if (isset($data['type']) && $data['type']) {
+            $type = $data['type'];
+            $name = $type['name'] ?? '';
+            $icon = $type['icon'] ?? '';
+            return $icon ? ($icon . ' ' . $name) : $name;
+        }
+        return '';
+    }
 
 }

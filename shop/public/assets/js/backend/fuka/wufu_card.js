@@ -26,9 +26,53 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     [
                         {checkbox: true},
                         {field: 'id', title: __('Id')},
-                        {field: 'user_id', title: __('User_id')},
-                        {field: 'is_used', title: __('Is_used'), searchList: {"1":__('Is_used 1'),"0":__('Is_used 0')}, formatter: Table.api.formatter.normal},
-                        {field: 'exchange_id', title: __('Exchange_id')},
+                        {
+                            field: 'user_id', 
+                            title: __('User_id'),
+                            formatter: function(value, row, index) {
+                                // 显示用户信息：用户名 (手机号)
+                                if (row.user && row.user.nickname) {
+                                    var mobile = row.user.mobile ? ' (' + row.user.mobile + ')' : '';
+                                    return row.user.nickname + mobile;
+                                }
+                                return value || '-';
+                            }
+                        },
+                        {
+                            field: 'type_id',
+                            title: __('Type_id'),
+                            formatter: function(value, row, index) {
+                                // 显示福卡类型：图标 + 名称
+                                if (row.type && row.type.name) {
+                                    var icon = row.type.icon ? row.type.icon + ' ' : '';
+                                    return icon + row.type.name;
+                                }
+                                return value || '-';
+                            }
+                        },
+                        {
+                            field: 'is_used', 
+                            title: __('Is_used'), 
+                            searchList: {"1":__('Is_used 1'),"0":__('Is_used 0')}, 
+                            formatter: function(value, row, index) {
+                                // 显示使用状态文字
+                                if (row.is_used_text) {
+                                    return row.is_used_text;
+                                }
+                                return Table.api.formatter.normal(value, row, index);
+                            }
+                        },
+                        {
+                            field: 'exchange_id', 
+                            title: __('Exchange_id'),
+                            formatter: function(value, row, index) {
+                                // 显示兑换记录ID，如果有兑换记录则显示详情
+                                if (row.exchange_record && row.exchange_record.id) {
+                                    return value + ' (已兑换)';
+                                }
+                                return value || '-';
+                            }
+                        },
                         {field: 'used_time', title: __('Used_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'updatetime', title: __('Updatetime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
