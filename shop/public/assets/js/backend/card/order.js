@@ -54,10 +54,10 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 return value || '-';
                             }
                         },
-                        {field: 'step_id', title: __('Step_id')},
+                        {field: 'step_id', title: __('Step_id'), visible: false},
                         {field: 'step_name', title: __('Step_name'), operate: 'LIKE'},
                         {field: 'order_type', title: __('Order_type'), operate: 'LIKE'},
-                        {field: 'related_id', title: __('Related_id')},
+                        {field: 'related_id', title: __('Related_id'), visible: false},
                         {
                             field: 'amount', 
                             title: __('Amount'), 
@@ -85,7 +85,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         },
                         {field: 'pay_time', title: __('Pay_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
                         {field: 'transaction_id', title: __('Transaction_id'), operate: 'LIKE'},
-                        {field: 'pay_url', title: __('Pay_url'), operate: 'LIKE', formatter: Table.api.formatter.url},
+                        {field: 'pay_url', title: __('Pay_url'), operate: 'LIKE', formatter: Table.api.formatter.url, visible: false},
                         {
                             field: 'refund_status', 
                             title: __('Refund_status'), 
@@ -113,7 +113,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             }
                         },
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
-                        {field: 'updatetime', title: __('Updatetime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
+                        {field: 'updatetime', title: __('Updatetime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime, visible: false},
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]
                 ]

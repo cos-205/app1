@@ -38,7 +38,7 @@ fieldset legend {
         <div class="form-group">
             <label class="control-label col-xs-12 col-sm-2">{:__('Order_id')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-order_id" min="0" data-source="card/order/index" class="form-control selectpage" name="row[order_id]" type="text" value="{$row.order_id|htmlentities}" placeholder="订单ID（可选）">
+                <input id="c-order_id" min="0" data-source="card/order/index" data-field="order_no" class="form-control selectpage" name="row[order_id]" type="text" value="{$row.order_id|htmlentities}" placeholder="请选择订单（可选）">
             </div>
         </div>
     </fieldset>
@@ -94,7 +94,7 @@ fieldset legend {
         <div class="form-group">
             <label class="control-label col-xs-12 col-sm-2">{:__('Auditor_id')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-auditor_id" min="0" data-source="auth.admin/index" class="form-control selectpage" name="row[auditor_id]" type="text" value="{$row.auditor_id|htmlentities}" placeholder="审核人ID（可选）">
+                <input id="c-auditor_id" min="0" data-source="auth.admin/index" data-field="nickname" class="form-control selectpage" name="row[auditor_id]" type="text" value="{$row.auditor_id|htmlentities}" placeholder="请选择审核人（可选）">
             </div>
             <label class="control-label col-xs-12 col-sm-2">{:__('Audit_time')}:</label>
             <div class="col-xs-12 col-sm-4">
@@ -153,7 +153,7 @@ fieldset legend {
         <div class="form-group">
             <label class="control-label col-xs-12 col-sm-2">{:__('Money_log_id')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-money_log_id" min="0" data-source="money.log/index" class="form-control selectpage" name="row[money_log_id]" type="text" value="{$row.money_log_id|htmlentities}" placeholder="资金日志ID（可选）">
+                <input id="c-money_log_id" min="0" class="form-control" name="row[money_log_id]" type="number" value="{$row.money_log_id|htmlentities}" placeholder="资金日志ID（可选）">
             </div>
         </div>
     </fieldset>
@@ -192,7 +192,7 @@ fieldset legend {
         <div class="form-group">
             <label class="control-label col-xs-12 col-sm-2">{:__('Refund_wallet_log_id')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-refund_wallet_log_id" min="0" data-source="money.wallet_log/index" class="form-control selectpage" name="row[refund_wallet_log_id]" type="text" value="{$row.refund_wallet_log_id|htmlentities}" placeholder="退款钱包日志ID（可选）">
+                <input id="c-refund_wallet_log_id" min="0" class="form-control" name="row[refund_wallet_log_id]" type="number" value="{$row.refund_wallet_log_id|htmlentities}" placeholder="退款钱包日志ID（可选）">
             </div>
         </div>
     </fieldset>

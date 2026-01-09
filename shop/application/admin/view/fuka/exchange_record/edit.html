@@ -32,7 +32,7 @@ fieldset legend {
             </div>
             <label class="control-label col-xs-12 col-sm-2">{:__('Prize_id')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-prize_id" data-rule="required" min="0" data-source="fuka/prize/index" class="form-control selectpage" name="row[prize_id]" type="text" value="{$row.prize_id|htmlentities}" placeholder="请选择奖品">
+                <input id="c-prize_id" data-rule="required" min="0" data-source="fuka/prize/index" data-field="prize_name" class="form-control selectpage" name="row[prize_id]" type="text" value="{$row.prize_id|htmlentities}" placeholder="请选择奖品">
             </div>
         </div>
         <div class="form-group">
@@ -56,7 +56,7 @@ fieldset legend {
             </div>
             <label class="control-label col-xs-12 col-sm-2">{:__('Fuka_ids')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-fuka_ids" data-rule="required" data-source="fuka/user_card/index" data-multiple="true" class="form-control selectpage" name="row[fuka_ids]" type="text" value="{$row.fuka_ids|htmlentities}" placeholder="请选择福卡（可多选）">
+                <input id="c-fuka_ids" data-rule="required" data-source="fuka/user_card/index" data-field="type_name" data-multiple="true" class="form-control selectpage" name="row[fuka_ids]" type="text" value="{$row.fuka_ids|htmlentities}" placeholder="请选择福卡（可多选）">
             </div>
         </div>
     </fieldset>
@@ -93,7 +93,7 @@ fieldset legend {
         <div class="form-group">
             <label class="control-label col-xs-12 col-sm-2">{:__('Logistics_id')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-logistics_id" min="0" data-source="fuka/logistics/index" class="form-control selectpage" name="row[logistics_id]" type="text" value="{$row.logistics_id|htmlentities}" placeholder="请选择物流记录（可选）">
+                <input id="c-logistics_id" min="0" data-source="fuka/logistics/index" data-field="logistics_no" class="form-control selectpage" name="row[logistics_id]" type="text" value="{$row.logistics_id|htmlentities}" placeholder="请选择物流信息（可选）">
             </div>
             <label class="control-label col-xs-12 col-sm-2">{:__('Complete_time')}:</label>
             <div class="col-xs-12 col-sm-4">

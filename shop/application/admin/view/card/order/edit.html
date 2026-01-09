@@ -53,7 +53,7 @@ fieldset legend {
         <div class="form-group">
             <label class="control-label col-xs-12 col-sm-2">{:__('Step_id')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-step_id" data-source="fuka/card_flow_config/index" class="form-control selectpage" name="row[step_id]" type="text" value="{$row.step_id|htmlentities}" placeholder="步骤ID（可选）">
+                <input id="c-step_id" data-source="fuka/card_flow_config/index" data-field="step_name" class="form-control selectpage" name="row[step_id]" type="text" value="{$row.step_id|htmlentities}" placeholder="请选择流程配置（可选）">
             </div>
             <label class="control-label col-xs-12 col-sm-2">{:__('Step_name')}:</label>
             <div class="col-xs-12 col-sm-4">
@@ -77,7 +77,7 @@ fieldset legend {
             </div>
             <label class="control-label col-xs-12 col-sm-2">{:__('Related_id')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-related_id" data-source="fuka/exchange_record/index" class="form-control selectpage" name="row[related_id]" type="text" value="{$row.related_id|htmlentities}" placeholder="关联ID（可选）">
+                <input id="c-related_id" data-source="fuka/exchange_record/index" data-field="prize_name" class="form-control selectpage" name="row[related_id]" type="text" value="{$row.related_id|htmlentities}" placeholder="请选择兑换记录（可选）">
             </div>
         </div>
     </fieldset>
@@ -102,7 +102,7 @@ fieldset legend {
         <div class="form-group">
             <label class="control-label col-xs-12 col-sm-2">{:__('Transaction_id')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-transaction_id" data-source="money.transaction/index" class="form-control selectpage" name="row[transaction_id]" type="text" value="{$row.transaction_id|htmlentities}" placeholder="交易ID（可选）">
+                <input id="c-transaction_id" class="form-control" name="row[transaction_id]" type="text" value="{$row.transaction_id|htmlentities}" placeholder="交易记录ID（可选）">
             </div>
             <label class="control-label col-xs-12 col-sm-2">{:__('Pay_url')}:</label>
             <div class="col-xs-12 col-sm-4">
@@ -131,7 +131,7 @@ fieldset legend {
         <div class="form-group">
             <label class="control-label col-xs-12 col-sm-2">{:__('Refund_transaction_id')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-refund_transaction_id" data-source="money.transaction/index" class="form-control selectpage" name="row[refund_transaction_id]" type="text" value="{$row.refund_transaction_id|htmlentities}" placeholder="退款交易ID（可选）">
+                <input id="c-refund_transaction_id" class="form-control" name="row[refund_transaction_id]" type="text" value="{$row.refund_transaction_id|htmlentities}" placeholder="退款交易记录ID（可选）">
             </div>
             <label class="control-label col-xs-12 col-sm-2">{:__('Refund_amount')}:</label>
             <div class="col-xs-12 col-sm-4">

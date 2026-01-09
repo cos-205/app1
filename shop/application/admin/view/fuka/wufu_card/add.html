@@ -32,7 +32,7 @@ fieldset legend {
             </div>
             <label class="control-label col-xs-12 col-sm-2">{:__('Fuka_ids')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-fuka_ids" data-rule="required" data-source="fuka/user_card/index" data-multiple="true" class="form-control selectpage" name="row[fuka_ids]" type="text" value="" placeholder="请选择福卡（可多选）">
+                <input id="c-fuka_ids" data-rule="required" data-source="fuka/user_card/index" data-field="type_name" data-multiple="true" class="form-control selectpage" name="row[fuka_ids]" type="text" value="" placeholder="请选择福卡（可多选）">
             </div>
         </div>
         <div class="form-group">
@@ -46,7 +46,7 @@ fieldset legend {
             </div>
             <label class="control-label col-xs-12 col-sm-2">{:__('Exchange_id')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-exchange_id" min="0" data-source="fuka/exchange_record/index" class="form-control selectpage" name="row[exchange_id]" type="text" value="" placeholder="兑换记录ID（可选）">
+                <input id="c-exchange_id" min="0" data-source="fuka/exchange_record/index" data-field="prize_name" class="form-control selectpage" name="row[exchange_id]" type="text" value="" placeholder="请选择兑换记录（可选）">
             </div>
         </div>
         <div class="form-group">

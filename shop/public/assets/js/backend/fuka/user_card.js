@@ -40,8 +40,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 return value || '-';
                             }
                         },
-                        {field: 'fuka_type_id', title: __('Fuka_type_id')},
-                        {field: 'type_code', title: __('Type_code'), operate: 'LIKE'},
+                        {field: 'fuka_type_id', title: __('Fuka_type_id'), visible: false},
+                        {field: 'type_code', title: __('Type_code'), operate: 'LIKE', visible: false},
                         {field: 'type_name', title: __('Type_name'), operate: 'LIKE'},
                         {
                             field: 'source_type', 
@@ -68,12 +68,12 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 return Table.api.formatter.normal(value, row, index);
                             }
                         },
-                        {field: 'exchange_id', title: __('Exchange_id')},
+                        {field: 'exchange_id', title: __('Exchange_id'), visible: false},
                         {field: 'used_time', title: __('Used_time'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
-                        {field: 'remark', title: __('Remark'), operate: 'LIKE', table: table, class: 'autocontent', formatter: Table.api.formatter.content},
+                        {field: 'remark', title: __('Remark'), operate: 'LIKE', table: table, class: 'autocontent', formatter: Table.api.formatter.content, visible: false},
                         {field: 'createtime', title: __('Createtime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
-                        {field: 'updatetime', title: __('Updatetime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime},
-                        {field: 'weigh', title: __('Weigh'), operate: false},
+                        {field: 'updatetime', title: __('Updatetime'), operate:'RANGE', addclass:'datetimerange', autocomplete:false, formatter: Table.api.formatter.datetime, visible: false},
+                        {field: 'weigh', title: __('Weigh'), operate: false, visible: false},
                         {field: 'status', title: __('Status'), searchList: {"normal":__('Status normal'),"hidden":__('Status hidden')}, formatter: Table.api.formatter.status},
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]

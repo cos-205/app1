@@ -28,7 +28,7 @@ fieldset legend {
         <div class="form-group">
             <label class="control-label col-xs-12 col-sm-2">{:__('Step_id')}:</label>
             <div class="col-xs-12 col-sm-4">
-                <input id="c-step_id" data-rule="required" data-source="fuka/card_flow_config/index" class="form-control selectpage" name="row[step_id]" type="text" value="{$row.step_id|htmlentities}" placeholder="请选择流程步骤">
+                <input id="c-step_id" data-rule="required" data-source="fuka/card_flow_config/index" data-field="step_name" class="form-control selectpage" name="row[step_id]" type="text" value="{$row.step_id|htmlentities}" placeholder="请选择流程配置">
             </div>
             <label class="control-label col-xs-12 col-sm-2">{:__('Flow_step')}:</label>
             <div class="col-xs-12 col-sm-4">
