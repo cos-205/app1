@@ -1,0 +1,71 @@
+/* 福卡金卡视图文件排版优化样式 */
+
+/* 字段分组样式 */
+fieldset {
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #fafafa;
+}
+
+fieldset legend {
+    width: auto;
+    padding: 0 10px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    border: none;
+}
+
+/* 两列布局优化 */
+.form-group .col-sm-4 {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* 字段标签优化 */
+.control-label {
+    font-weight: 500;
+    color: #555;
+}
+
+/* 输入框优化 */
+.form-control {
+    border-radius: 3px;
+}
+
+.form-control:focus {
+    border-color: #66afe9;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
+}
+
+/* 选择器优化 */
+.selectpage {
+    cursor: pointer;
+}
+
+/* 文本域优化 */
+textarea.form-control {
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* 单选按钮组优化 */
+.radio label {
+    margin-right: 15px;
+    font-weight: normal;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    fieldset {
+        padding: 10px;
+    }
+    
+    .form-group .col-sm-4 {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}

@@ -1,95 +1,120 @@
+<style>
+fieldset {
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #fafafa;
+}
+fieldset legend {
+    width: auto;
+    padding: 0 10px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    border: none;
+}
+.form-group .col-sm-4 {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+</style>
 <form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
 
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('User_id')}:</label>
-        <div class="col-xs-12 col-sm-8">
-            <input id="c-user_id" data-rule="required" min="0" data-source="user/user/index" data-field="nickname" class="form-control selectpage" name="row[user_id]" type="text" value="{$row.user_id|htmlentities}">
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Fuka_type_id')}:</label>
-        <div class="col-xs-12 col-sm-8">
-            <input id="c-fuka_type_id" data-rule="required" min="0" data-source="fuka/type/index" class="form-control selectpage" name="row[fuka_type_id]" type="text" value="{$row.fuka_type_id|htmlentities}">
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Type_code')}:</label>
-        <div class="col-xs-12 col-sm-8">
-            <input id="c-type_code" data-rule="required" class="form-control" name="row[type_code]" type="text" value="{$row.type_code|htmlentities}">
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Type_name')}:</label>
-        <div class="col-xs-12 col-sm-8">
-            <input id="c-type_name" data-rule="required" class="form-control" name="row[type_name]" type="text" value="{$row.type_name|htmlentities}">
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Source_type')}:</label>
-        <div class="col-xs-12 col-sm-8">
-                        
-            <select  id="c-source_type" data-rule="required" class="form-control selectpicker" name="row[source_type]">
-                {foreach name="sourceTypeList" item="vo"}
-                    <option value="{$key}" {in name="key" value="$row.source_type"}selected{/in}>{$vo}</option>
-                {/foreach}
-            </select>
-
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Source_id')}:</label>
-        <div class="col-xs-12 col-sm-8">
-            <input id="c-source_id" data-rule="required" min="0" data-source="source/index" class="form-control selectpage" name="row[source_id]" type="text" value="{$row.source_id|htmlentities}">
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Is_used')}:</label>
-        <div class="col-xs-12 col-sm-8">
-                        
-            <select  id="c-is_used" data-rule="required" class="form-control selectpicker" name="row[is_used]">
-                {foreach name="isUsedList" item="vo"}
-                    <option value="{$key}" {in name="key" value="$row.is_used"}selected{/in}>{$vo}</option>
-                {/foreach}
-            </select>
-
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Exchange_id')}:</label>
-        <div class="col-xs-12 col-sm-8">
-            <input id="c-exchange_id" data-rule="required" min="0" data-source="exchange/index" class="form-control selectpage" name="row[exchange_id]" type="text" value="{$row.exchange_id|htmlentities}">
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Used_time')}:</label>
-        <div class="col-xs-12 col-sm-8">
-            <input id="c-used_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[used_time]" type="text" value="{:$row.used_time?datetime($row.used_time):''}">
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Remark')}:</label>
-        <div class="col-xs-12 col-sm-8">
-            <input id="c-remark" data-rule="required" class="form-control" name="row[remark]" type="text" value="{$row.remark|htmlentities}">
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Weigh')}:</label>
-        <div class="col-xs-12 col-sm-8">
-            <input id="c-weigh" data-rule="required" class="form-control" name="row[weigh]" type="number" value="{$row.weigh|htmlentities}">
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Status')}:</label>
-        <div class="col-xs-12 col-sm-8">
-            
-            <div class="radio">
-            {foreach name="statusList" item="vo"}
-            <label for="row[status]-{$key}"><input id="row[status]-{$key}" name="row[status]" type="radio" value="{$key}" {in name="key" value="$row.status"}checked{/in} /> {$vo}</label> 
-            {/foreach}
+    <!-- 基本信息 -->
+    <fieldset>
+        <legend>基本信息</legend>
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">{:__('User_id')}:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-user_id" data-rule="required" min="0" data-source="user.user/index" data-field="nickname" class="form-control selectpage" name="row[user_id]" type="text" value="{$row.user_id|htmlentities}" placeholder="请选择用户">
             </div>
-
+            <label class="control-label col-xs-12 col-sm-2">{:__('Fuka_type_id')}:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-fuka_type_id" data-rule="required" min="0" data-source="fuka/type/index" class="form-control selectpage" name="row[fuka_type_id]" type="text" value="{$row.fuka_type_id|htmlentities}" placeholder="请选择福卡类型">
+            </div>
         </div>
-    </div>
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">{:__('Type_code')}:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-type_code" data-rule="required" class="form-control" name="row[type_code]" type="text" value="{$row.type_code|htmlentities}" placeholder="类型代码">
+            </div>
+            <label class="control-label col-xs-12 col-sm-2">{:__('Type_name')}:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-type_name" data-rule="required" class="form-control" name="row[type_name]" type="text" value="{$row.type_name|htmlentities}" placeholder="类型名称">
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- 来源信息 -->
+    <fieldset>
+        <legend>来源信息</legend>
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">{:__('Source_type')}:</label>
+            <div class="col-xs-12 col-sm-4">
+                <select id="c-source_type" data-rule="required" class="form-control selectpicker" name="row[source_type]">
+                    {foreach name="sourceTypeList" item="vo"}
+                        <option value="{$key}" {in name="key" value="$row.source_type"}selected{/in}>{$vo}</option>
+                    {/foreach}
+                </select>
+            </div>
+            <label class="control-label col-xs-12 col-sm-2">{:__('Source_id')}:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-source_id" min="0" data-source="fuka/chance_log/index" class="form-control selectpage" name="row[source_id]" type="text" value="{$row.source_id|htmlentities}" placeholder="来源ID（可选）">
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- 使用信息 -->
+    <fieldset>
+        <legend>使用信息</legend>
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">{:__('Is_used')}:</label>
+            <div class="col-xs-12 col-sm-4">
+                <select id="c-is_used" data-rule="required" class="form-control selectpicker" name="row[is_used]">
+                    {foreach name="isUsedList" item="vo"}
+                        <option value="{$key}" {in name="key" value="$row.is_used"}selected{/in}>{$vo}</option>
+                    {/foreach}
+                </select>
+            </div>
+            <label class="control-label col-xs-12 col-sm-2">{:__('Exchange_id')}:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-exchange_id" min="0" data-source="fuka/exchange_record/index" class="form-control selectpage" name="row[exchange_id]" type="text" value="{$row.exchange_id|htmlentities}" placeholder="兑换记录ID（可选）">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">{:__('Used_time')}:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-used_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" name="row[used_time]" type="text" value="{:$row.used_time?datetime($row.used_time):''}">
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- 其他信息 -->
+    <fieldset>
+        <legend>其他信息</legend>
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">{:__('Remark')}:</label>
+            <div class="col-xs-12 col-sm-8">
+                <textarea id="c-remark" class="form-control" rows="3" name="row[remark]" placeholder="请输入备注信息">{$row.remark|htmlentities}</textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">{:__('Weigh')}:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-weigh" data-rule="required" class="form-control" name="row[weigh]" type="number" value="{$row.weigh|htmlentities}" placeholder="排序权重">
+            </div>
+            <label class="control-label col-xs-12 col-sm-2">{:__('Status')}:</label>
+            <div class="col-xs-12 col-sm-4">
+                <div class="radio">
+                {foreach name="statusList" item="vo"}
+                <label for="row[status]-{$key}"><input id="row[status]-{$key}" name="row[status]" type="radio" value="{$key}" {in name="key" value="$row.status"}checked{/in} /> {$vo}</label> 
+                {/foreach}
+                </div>
+            </div>
+        </div>
+    </fieldset>
     <div class="form-group layer-footer">
         <label class="control-label col-xs-12 col-sm-2"></label>
         <div class="col-xs-12 col-sm-8">
