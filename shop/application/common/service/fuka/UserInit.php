@@ -39,7 +39,7 @@ class UserInit
         }
 
         // 生成格式：INV + 用户ID（补零到6位）
-        $inviteCode = 'INV' . str_pad($this->user->id, 6, '0', STR_PAD_LEFT);
+        $inviteCode = 1100000 + $this->user->id;
 
         // 检查是否重复（理论上不会重复，但做个保险）
         $exists = UserModel::where('invite_code', $inviteCode)

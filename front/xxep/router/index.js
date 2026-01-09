@@ -65,6 +65,37 @@ const _go = (
     });
     return;
   }
+  //强制实名认证
+  if($store('user').isLogin){
+    if(!$store('user').userInfo.is_realname){
+      uni.showToast({
+        title: '请先完成实名认证',
+        icon: 'none',
+        duration: 1500,
+      });
+      setTimeout(() => {
+        uni.navigateTo({
+          url: '/pages/user/realname',
+        });
+      }, 1500);
+      return;
+    }
+    //强制填写收货地址
+    if($store('user').userInfo.addressTotal <= 0){
+      uni.showToast({
+        title: '请先填写收货地址',
+        icon: 'none',
+        duration: 1500,
+      });
+      setTimeout(() => {
+        uni.navigateTo({
+          url: '/pages/user/address/list',
+        });
+      }, 1500);
+      return;
+    }
+  }
+  
 
   url = page;
   if (!isEmpty(query)) {

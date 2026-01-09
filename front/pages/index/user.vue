@@ -10,6 +10,16 @@
     <s-block v-for="(item, index) in template.data" :key="index" :styles="item.style">
       <s-block-item :type="item.type" :data="item.data" :styles="item.style" />
     </s-block>
+    
+    <!-- 退出登录按钮 -->
+    <view class="ss-p-x-20 ss-p-b-40">
+        <button
+          class="logout-btn ss-reset-button ui-BG-Main ui-Shadow-Main"
+          @tap="onLogout"
+        >
+          退出登录
+        </button>
+      </view>
   </s-layout>
 </template>
 
@@ -38,6 +48,29 @@
   });
 
   onPageScroll(() => {});
+
+  // 退出登录
+  function onLogout() {
+    uni.showModal({
+      title: '提示',
+      content: '确认退出账号？',
+      success: async function (res) {
+        if (res.confirm) {
+          const result = await xxep.$store('user').logout();
+          if (result) {
+            xxep.$store('user').updateUserData();
+          }
+        }
+      },
+    });
+  }
 </script>
 
-<style></style>
+<style lang="scss" scoped>
+  .logout-btn {
+    width: 100%;
+    height: 80rpx;
+    border-radius: 40rpx;
+    font-size: 30rpx;
+  }
+</style>

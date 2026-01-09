@@ -17,14 +17,6 @@
             <view class="card-title">财富金卡</view>
           </view>
         </view>
-        
-        <!-- 状态标签 -->
-        <view class="card-status" v-if="state.cardData.statusText">
-          <view class="status-tag" :class="state.cardData.status">
-            <uni-icons :type="getStatusIcon()" size="16" color="#FFFFFF" />
-            <text>{{ state.cardData.statusText }}</text>
-          </view>
-        </view>
       </view>
     </view>
 

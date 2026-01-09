@@ -81,7 +81,7 @@ class User extends Common
         $user = UserModel::with(['parent_user', 'third_oauth'])->where('id', $user->id)->find();
 
         $user->hidden(['password', 'salt', 'createtime', 'updatetime', 'deletetime', 'remember_token', 'login_fail', 'login_ip', 'login_time']);
-
+        $user->addressTotal = \app\admin\model\cus\user\Address::where('user_id', $user->id)->count() ?? 0;
         $this->success('个人详情', $user);
     }
 
