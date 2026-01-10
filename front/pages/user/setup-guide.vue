@@ -98,9 +98,9 @@
               <text class="item-label">地址：</text>
               <text class="item-value">{{ state.addressInfo.fullAddress || '已设置' }}</text>
             </view>
-            <button class="edit-btn" @tap="goToAddress">
+            <!-- <button class="edit-btn" @tap="goToAddress">
               编辑地址
-            </button>
+            </button> -->
           </view>
         </view>
       </view>
@@ -245,7 +245,7 @@ function goToAddress() {
   }
   
   uni.navigateTo({
-    url: '/pages/user/address/list',
+    url: '/pages/user/address/edit',
   });
 }
 

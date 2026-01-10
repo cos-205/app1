@@ -62,7 +62,7 @@
         <view 
           class="ticket-count" 
           @tap="showTickets"
-          v-if="isLogin && !hideEntryTicket"
+          v-if="isLogin && appInfo.hide_entry_ticket === 0"
         >
           入场券：<text class="count">{{ displayTicketCount }}</text>张
         </view>
@@ -107,11 +107,6 @@
   
   // 获取应用配置（功能开关）
   const appInfo = computed(() => xxep.$store('app').info);
-  // 确保类型转换：配置值可能是字符串 '0'/'1' 或数字 0/1
-  const hideEntryTicket = computed(() => {
-    const value = appInfo.value?.hide_entry_ticket;
-    return value === 1 || value === '1' || value === true;
-  });
   
   // 接收参数
   const props = defineProps({

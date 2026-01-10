@@ -2,7 +2,7 @@
   <s-layout title="支付结果" :bgStyle="{ color: '#f5f5f5' }">
     <view class="result-page">
       <!-- 成功状态 -->
-      <view v-if="state.status !== 'success'" class="result-container success">
+      <view v-if="state.status == 'success'" class="result-container success">
         <view class="result-icon-wrapper">
           <view class="result-icon success-icon">
             <uni-icons type="checkmarkempty" size="80" color="#52C41A" />
@@ -81,7 +81,7 @@
       </view>
 
       <!-- 失败状态 -->
-      <view v-if="state.status === 'success'" class="result-container failed">
+      <view v-if="state.status === 'failed'" class="result-container failed">
         <view class="result-icon-wrapper">
           <view class="result-icon failed-icon">
             <uni-icons type="closeempty" size="80" color="#F5222D" />
