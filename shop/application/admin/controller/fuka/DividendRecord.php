@@ -47,7 +47,7 @@ class DividendRecord extends Backend
         
         // 使用with预加载关联数据，避免N+1查询
         $list = $this->model
-            ->with(['user', 'memberLevel'])
+            ->with(['user'])
             ->where($where)
             ->order($sort, $order)
             ->paginate($limit);
@@ -55,7 +55,26 @@ class DividendRecord extends Backend
         // 将模型集合转换为数组，确保关联数据和访问器属性正确序列化
         $rows = [];
         foreach ($list->items() as $item) {
-            $rows[] = $item->toArray();
+            try {
+                $row = $item->toArray();
+                
+                // 确保 member_level 字段值正确
+                $memberLevelValue = $item->getData('member_level');
+                if (!isset($row['member_level']) || is_object($row['member_level'])) {
+                    $row['member_level'] = $memberLevelValue;
+                }
+                
+                // 处理 user 关联对象
+                if (isset($row['user']) && is_object($row['user'])) {
+                    $row['user'] = $row['user']->toArray();
+                }
+                
+                $rows[] = $row;
+            } catch (\Exception $e) {
+                // 如果某条记录处理失败，记录错误但继续处理其他记录
+                \think\Log::error('DividendRecord index error: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+                continue;
+            }
         }
         
         $result = ['total' => $list->total(), 'rows' => $rows];

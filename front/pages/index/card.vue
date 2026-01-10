@@ -22,8 +22,41 @@
 
     <!-- 领取条件 / 卡片信息 -->
     <view class="section-box">
+      <!-- 审核中：显示审核中状态 -->
+      <template v-if="state.cardData.isAuditing">
+        <view class="audit-status-card">
+          <view class="audit-header">
+            <view class="audit-content">
+              <view class="audit-title">审核中</view>
+              <view class="audit-desc">您的金卡申请正在审核中，请耐心等待</view>
+            </view>
+          </view>
+          <view class="audit-info">
+            <view class="audit-item">
+              <view class="audit-label-wrap">
+                <uni-icons type="calendar" size="16" color="#FF9800" />
+                <text class="audit-label">申请时间</text>
+              </view>
+              <text class="audit-value">{{ state.cardData.applyTimeText || '--' }}</text>
+            </view>
+            <view class="audit-tips">
+              <view class="audit-tips-header">
+                <uni-icons type="info-filled" size="20" color="#1976D2" />
+                <text class="audit-tips-title">温馨提示</text>
+              </view>
+              <view class="audit-tips-content">
+                <view class="audit-tips-item">
+                  <text class="audit-tips-dot">•</text>
+                  <text class="audit-tips-text">审核通常需要1-3个工作日</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </template>
+      
       <!-- 未领取：显示领取条件 -->
-      <template v-if="!state.cardData.isReceived">
+      <template v-else-if="!state.cardData.isReceived">
         <view class="condition-card ss-m-b-20">
           <view class="condition-header">
             <view class="condition-title">
@@ -421,12 +454,14 @@ const state = reactive({
   showSuccessModal: false,
   cardData: {
     isReceived: false,
+    isAuditing: false, // 是否在审核中
     status: 'not-received',
     statusText: '',
     holderName: '',
     idCard: '',
     balance: '0',
-    agreementSigned: false
+    agreementSigned: false,
+    applyTimeText: '' // 申请时间文本
   },
   // 步骤1的详细信息（用于协议签署卡片）
   step1Info: {
@@ -595,14 +630,27 @@ async function loadCardInfo() {
   if (res.code === 1) {
     // 金卡信息
     if (res.data.card_status) {
+      const applyStatus = res.data.card_status.apply_status || 0;
+      const isAuditing = applyStatus === 1; // 审核中
+      const isReceived = applyStatus >= 2; // 审核通过或更高状态
+      
+      // 格式化申请时间
+      let applyTimeText = '';
+      if (res.data.card_status.apply_time) {
+        const applyTime = new Date(res.data.card_status.apply_time * 1000);
+        applyTimeText = `${applyTime.getFullYear()}-${String(applyTime.getMonth() + 1).padStart(2, '0')}-${String(applyTime.getDate()).padStart(2, '0')} ${String(applyTime.getHours()).padStart(2, '0')}:${String(applyTime.getMinutes()).padStart(2, '0')}`;
+      }
+      
       Object.assign(state.cardData, {
-        isReceived: res.data.card_status.apply_status >= 2,
+        isReceived: isReceived,
+        isAuditing: isAuditing,
         status: getCardStatus(res.data.card_status),
         statusText: getCardStatusText(res.data.card_status),
         holderName: res.data.card_status.holder_name || '',
         idCard: res.data.card_status.holder_idcard || '',
         balance: res.data.card_status.balance || '0.00',
-        agreementSigned: false // 将在下面根据步骤1的状态更新
+        agreementSigned: false, // 将在下面根据步骤1的状态更新
+        applyTimeText: applyTimeText
       });
     }
     
@@ -1185,6 +1233,7 @@ onLoad(() => {
 .step-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4rpx;
   padding: 8rpx 20rpx;
   background: linear-gradient(135deg, #4285F4 0%, #5A9CFF 100%);
@@ -1345,6 +1394,214 @@ onLoad(() => {
     font-size: 24rpx;
     color: #9CA3AF;
   }
+}
+
+/* 审核中状态卡片 */
+.audit-status-card {
+  background: linear-gradient(135deg, #FFF8E1 0%, #FFFFFF 100%);
+  border-radius: 24rpx;
+  padding: 40rpx 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(255, 152, 0, 0.12);
+  border: 2rpx solid #FFE082;
+  position: relative;
+  overflow: hidden;
+}
+
+.audit-status-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6rpx;
+  background: linear-gradient(90deg, #FF9800 0%, #FFC107 50%, #FF9800 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.audit-header {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  border-bottom: 2rpx solid #FFF3E0;
+}
+
+.audit-icon {
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #FF9800 0%, #FFC107 100%);
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 8rpx 16rpx rgba(255, 152, 0, 0.3);
+  position: relative;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 8rpx 16rpx rgba(255, 152, 0, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 12rpx 24rpx rgba(255, 152, 0, 0.4);
+  }
+}
+
+.audit-icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  animation: ripple 2s infinite;
+}
+
+@keyframes ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+.audit-content {
+  flex: 1;
+}
+
+.audit-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  background: linear-gradient(135deg, #FF9800 0%, #FF6F00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12rpx;
+  letter-spacing: 1rpx;
+}
+
+.audit-desc {
+  font-size: 28rpx;
+  color: #6B7280;
+  line-height: 1.6;
+}
+
+.audit-info {
+  padding-top: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.audit-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16rpx;
+  border: 1rpx solid #FFE082;
+  transition: all 0.3s ease;
+  box-shadow: 0 2rpx 8rpx rgba(255, 152, 0, 0.08);
+}
+
+.audit-item:active {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-2rpx);
+  box-shadow: 0 4rpx 12rpx rgba(255, 152, 0, 0.15);
+}
+
+.audit-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.audit-label {
+  font-size: 28rpx;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.audit-value {
+  font-size: 28rpx;
+  color: #1F2937;
+  font-weight: 600;
+}
+
+.audit-tips {
+  padding: 24rpx;
+  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+  border-radius: 16rpx;
+  border: 1rpx solid #90CAF9;
+  box-shadow: 0 2rpx 8rpx rgba(25, 118, 210, 0.1);
+}
+
+.audit-tips-header {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 16rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid rgba(25, 118, 210, 0.2);
+}
+
+.audit-tips-title {
+  font-size: 28rpx;
+  color: #1565C0;
+  font-weight: 600;
+}
+
+.audit-tips-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.audit-tips-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.audit-tips-dot {
+  flex-shrink: 0;
+  width: 8rpx;
+  height: 8rpx;
+  margin-top: 10rpx;
+  background: #1976D2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+}
+
+.audit-tips-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: #1565C0;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
 /* 功能介绍 */

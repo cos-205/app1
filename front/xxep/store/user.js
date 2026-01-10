@@ -16,6 +16,7 @@ const defaultUserInfo = {
   money: '--', // 余额
   commission: '--', // 佣金
   score: '--', // 积分
+  dividend_money: '--', // 分红余额（新增）
   verification: {}, // 认证字段
 };
 

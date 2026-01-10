@@ -15,7 +15,7 @@
     <!-- 分红余额 -->
     <view class="menu-item ss-flex-1 ss-flex-col ss-row-center ss-col-center">
       <view class="value-box ss-flex ss-col-bottom">
-        <view class="value-text">{{ userInfo.score }}</view>
+        <view class="value-text">{{ dividendBalance }}</view>
         <view class="unit-text ss-m-l-6">元</view>
       </view>
       <view class="menu-title">分红余额</view>
@@ -38,6 +38,16 @@
   
   // 获取应用配置（功能开关）
   const appInfo = computed(() => xxep.$store('app').info);
+  
+  // 分红余额（从 userInfo.dividend_money 获取，如果没有则显示0）
+  const dividendBalance = computed(() => {
+    const dividend = userInfo.value?.dividend_money;
+    if (dividend === undefined || dividend === null || dividend === '--') {
+      return '0.00';
+    }
+    // 确保显示为数字格式，保留2位小数
+    return parseFloat(dividend || 0).toFixed(2);
+  });
  
   // 提现功能
   function handleWithdraw() {

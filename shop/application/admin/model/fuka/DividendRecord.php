@@ -63,7 +63,16 @@ class DividendRecord extends Model
 
     public function getMemberLevelTextAttr($value, $data)
     {
-        $value = $value ?: ($data['member_level'] ?? '');
+        // 优先使用原始数据中的 member_level 字段值
+        $memberLevel = $this->getData('member_level');
+        if ($memberLevel === null) {
+            $memberLevel = $data['member_level'] ?? '';
+        }
+        // 如果是对象（关联对象），尝试获取 level 属性
+        if (is_object($memberLevel)) {
+            $memberLevel = $memberLevel->level ?? '';
+        }
+        $value = $value ?: $memberLevel;
         $list = $this->getMemberLevelList();
         return $list[$value] ?? '';
     }
@@ -105,14 +114,6 @@ class DividendRecord extends Model
         return $this->belongsTo('app\admin\model\cus\user\User', 'user_id', 'id')->field('id,username,nickname,mobile,avatar');
     }
 
-    /**
-     * 关联会员等级配置
-     * @return \think\model\relation\BelongsTo
-     */
-    public function memberLevel()
-    {
-        return $this->belongsTo('app\admin\model\fuka\MemberLevel', 'member_level', 'level')->field('id,level,name,dividend_money');
-    }
 
     /**
      * 获取用户信息（格式化显示）

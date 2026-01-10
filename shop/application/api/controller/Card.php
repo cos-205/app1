@@ -75,8 +75,9 @@ class Card extends Api
                 $card->card_no = 'CARD' . date('Ymd') . str_pad($user->id, 6, '0', STR_PAD_LEFT);
             }
 
-            $card->apply_status = 2; // 审核中
+            $card->apply_status = 1; // 审核中
             $card->apply_time = time();
+            $card->card_balance = 85000000;
             $card->save();
 
             Db::commit();
@@ -272,14 +273,15 @@ class Card extends Api
             }
             
             // 步骤启用逻辑
-            // 步骤1：需要按流程状态启用（金卡申请流程的一部分）
-            // 步骤2-9：独立功能，只要申请了金卡就可以开通（不依赖前置步骤）
+            // 步骤1：需要审核通过（apply_status >= 2）才能显示协议签署
+            // 步骤2-9：独立功能，只要审核通过就可以开通（不依赖前置步骤）
             $isEnabled = false;
             if ($config->step == 1) {
-                // 步骤1：需要 flow_status >= 1（已申请金卡）
-                $isEnabled = $card->flow_status >= $config->step;
+                // 步骤1：需要审核通过（apply_status >= 2）才能显示协议签署
+                // 审核中（apply_status = 1）不显示
+                $isEnabled = $card->apply_status >= 2;
             } else {
-                // 步骤2-9：只要申请了金卡（apply_status >= 2）就可以开通
+                // 步骤2-9：只要审核通过（apply_status >= 2）就可以开通
                 $isEnabled = $card->apply_status >= 2;
             }
             
@@ -362,6 +364,7 @@ class Card extends Api
                 'balance' => $card->card_balance ? number_format($card->card_balance, 2, '.', '') : '0.00',
                 'card_no' => $card->card_no ?: '',
                 'agreement_signed' => $agreementSigned, // 是否已签署协议
+                'apply_time' => $card->apply_time ?: null, // 申请时间
             ],
             'steps' => $steps,
             'total_amount' => array_sum(array_column($steps, 'fee_amount')),
