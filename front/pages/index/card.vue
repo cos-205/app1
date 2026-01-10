@@ -237,8 +237,8 @@
         </view>
       </view>
 
-      <!-- 协议处理流程卡片 -->
-      <view class="process-card">
+      <!-- 协议处理流程卡片先隐藏 -->
+      <view class="process-card" v-if="false">
         <view class="card-title">
           <view class="title-icon-wrapper">
             <view class="title-icon-wave"></view>
@@ -731,17 +731,17 @@ function goToInvite() {
   });
 }
 
-// 跳转到实名认证页面
+// 跳转到完善信息页面（实名认证+收货地址）
 function goToAuth() {
   uni.navigateTo({
-    url: '/pages/user/real'
+    url: '/pages/user/setup-required'
   });
 }
 
-// 跳转到收货地址页面
+// 跳转到收货地址页面（保留，用于其他场景）
 function goToAddress() {
   uni.navigateTo({
-    url: '/pages/user/address/list'
+    url: '/pages/user/address/edit'
   });
 }
 

@@ -14,8 +14,8 @@
               <image
                 v-if="agentInfo.level_info?.image"
                 class="tag-img"
-                :src="xxep.$url.cdn(agentInfo.level_info?.image)"
-                mode="aspectFill"
+                :src="agentInfo.level_info?.image"
+                mode="aspectFit"
               >
               </image>
               <text class="tag-title">{{ agentInfo.level_info?.name }}</text>
@@ -107,9 +107,8 @@
         line-height: 36rpx;
 
         .tag-img {
-          width: 36rpx;
-          height: 36rpx;
-          border-radius: 50%;
+          width: 60rpx;
+          height: 60rpx;
           margin-left: -2rpx;
         }
 

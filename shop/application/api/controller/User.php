@@ -8,6 +8,11 @@ use app\common\library\Sms;
 use fast\Random;
 use think\Config;
 use think\Validate;
+use think\Db;
+use app\admin\model\cus\user\Address as UserAddressModel;
+use app\admin\model\cus\data\Area;
+use app\common\model\fuka\MemberLevel;
+use app\common\model\User as UserModel;
 
 /**
  * 会员接口
@@ -414,10 +419,17 @@ class User extends Api
                 'name' => $level->name,
                 'desc' => $this->formatLevelDesc($level),
                 'inviteCount' => (int)$level->invite_count,
-                'icon' => $this->getLevelIcon($level->level),
+                'image' => $this->getLevelImage($level->level),
                 'color' => $this->getLevelColor($level->level),
             ];
         }
+
+        // 实时检测并升级会员等级（统计团队内所有实名用户）
+        $validInviteCount = $this->getTeamRealnameCount($userInfo->id);
+        $this->updateMemberLevelByInviteCount($userInfo, $validInviteCount);
+        
+        // 重新获取用户信息（可能已升级）
+        $userInfo = \app\common\model\User::get($user['id']);
 
         $data = [
             'inviteCode' => $inviteCode,
@@ -448,19 +460,13 @@ class User extends Api
     }
 
     /**
-     * 获取等级图标
+     * 获取等级图片
+     * 使用 @/static/level/ 目录下的图片
      */
-    private function getLevelIcon($level)
+    private function getLevelImage($level)
     {
-        $icons = [
-            0 => 'person',
-            1 => 'medal-filled',
-            2 => 'star-filled',
-            3 => 'fire-filled',
-            4 => 'flag-filled',
-            5 => 'gift-filled',
-        ];
-        return $icons[$level] ?? 'medal-filled';
+        // 返回静态资源路径，前端使用 @/static/level/{level}.png
+        return '/static/level/' . $level . '.png';
     }
 
     /**
@@ -534,10 +540,20 @@ class User extends Api
                 'name' => $level->name,
                 'inviteCount' => (int)$level->invite_count,
                 'dividendMoney' => (float)$level->dividend_money,
+                'image' => $this->getLevelImage($level->level), // 添加图片
             ];
         }
 
         // 获取当前等级配置
+        $currentLevel = (int)$userInfo->member_level;
+        $currentLevelConfig = \app\common\model\fuka\MemberLevel::where('level', $currentLevel)->find();
+
+        // 实时检测并升级会员等级（统计团队内所有实名用户）
+        $validInviteCount = $this->getTeamRealnameCount($userInfo->id);
+        $this->updateMemberLevelByInviteCount($userInfo, $validInviteCount);
+        
+        // 重新获取用户信息和等级配置（可能已升级）
+        $userInfo = \app\common\model\User::get($user['id']);
         $currentLevel = (int)$userInfo->member_level;
         $currentLevelConfig = \app\common\model\fuka\MemberLevel::where('level', $currentLevel)->find();
 
@@ -555,6 +571,7 @@ class User extends Api
                 'name' => $currentLevelConfig->name,
                 'inviteCount' => (int)$currentLevelConfig->invite_count,
                 'dividendMoney' => (float)$currentLevelConfig->dividend_money,
+                'image' => $this->getLevelImage($currentLevelConfig->level), // 添加图片
             ] : null,
         ];
 
@@ -746,6 +763,13 @@ class User extends Api
         $user->idcard = $params['idcard'];
         $user->is_realname = 1;
         $user->realname_time = time();
+        
+        // 自动更新nickname为实名认证的姓名
+        if (empty($user->nickname) || $user->nickname === $user->mobile) {
+            // 如果nickname为空或是手机号，则更新为实名姓名
+            $user->nickname = $params['realname'];
+        }
+        
         $user->save();
 
         // 将实名认证后续处理推送到队列（异步处理）
@@ -755,6 +779,190 @@ class User extends Api
             'realname' => $user->realname,
             'is_realname' => $user->is_realname,
         ]);
+    }
+
+    /**
+     * 完善信息（实名认证+收货地址）
+     * 
+     * @ApiMethod (POST)
+     * @ApiRoute  (/api/user/setupRequired)
+     * @ApiParams (name="realname", type="string", required=true, description="真实姓名")
+     * @ApiParams (name="idcard", type="string", required=true, description="身份证号码")
+     * @ApiParams (name="address", type="object", required=true, description="收货地址信息")
+     * @ApiReturn ({'code':'1','msg':'完善成功'})
+     */
+    public function setupRequired()
+    {
+        $user = $this->auth->getUser();
+        
+        // 检查是否已经完成
+        $hasAddress = UserAddressModel::where('user_id', $user->id)->count() > 0;
+        if ($user->is_realname && $hasAddress) {
+            $this->error('您已完成信息完善');
+        }
+        
+        $params = $this->request->only(['realname', 'idcard', 'address']);
+        
+        // 验证参数
+        if (empty($params['realname'])) {
+            $this->error('请输入真实姓名');
+        }
+        
+        if (empty($params['idcard'])) {
+            $this->error('请输入身份证号码');
+        }
+        
+        if (empty($params['address']) || !is_array($params['address'])) {
+            $this->error('请填写收货地址信息');
+        }
+        
+        $addressData = $params['address'];
+        
+        // 验证收货地址必填项
+        if (empty($addressData['consignee'])) {
+            $this->error('请输入收货人姓名');
+        }
+        
+        if (empty($addressData['mobile'])) {
+            $this->error('请输入手机号');
+        }
+        
+        if (empty($addressData['province_name']) || empty($addressData['city_name']) || empty($addressData['district_name'])) {
+            $this->error('请选择省市区');
+        }
+        
+        if (empty($addressData['address'])) {
+            $this->error('请输入详细地址');
+        }
+        
+        // 姓名格式验证：2-20个字符，只能包含中文、英文、·
+        if (!preg_match('/^[\x{4e00}-\x{9fa5}a-zA-Z·]{2,20}$/u', $params['realname'])) {
+            $this->error('请输入正确的姓名格式');
+        }
+        
+        // 身份证格式验证：18位，前17位数字，最后一位数字或X
+        $params['idcard'] = strtoupper($params['idcard']); // 转大写
+        if (!preg_match('/^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dX]$/', $params['idcard'])) {
+            $this->error('请输入正确的18位身份证号码');
+        }
+        
+        // 身份证校验码验证
+        if (!$this->checkIdcardValid($params['idcard'])) {
+            $this->error('身份证号码校验失败，请检查');
+        }
+        
+        // 检查身份证号是否已被使用
+        $existUser = \app\common\model\User::where('idcard', $params['idcard'])
+            ->where('id', '<>', $user->id)
+            ->find();
+        if ($existUser) {
+            $this->error('该身份证号已被使用');
+        }
+        
+        // 手机号验证
+        if (!preg_match('/^1[3-9]\d{9}$/', $addressData['mobile'])) {
+            $this->error('请输入正确的手机号');
+        }
+        
+        Db::startTrans();
+        try {
+            // 1. 处理实名认证
+            if (!$user->is_realname) {
+                // 更新用户信息
+                $user->realname = $params['realname'];
+                $user->idcard = $params['idcard'];
+                $user->is_realname = 1;
+                $user->realname_time = time();
+                
+                // 更新nickname为实名认证的姓名
+                if (empty($user->nickname) || $user->nickname === $user->mobile) {
+                    $user->nickname = $params['realname'];
+                }
+                
+                $user->save();
+                
+                // 将实名认证后续处理推送到队列（异步处理）
+                \think\Queue::push('app\api\job\Common@userRealnameAfter', ['user_id' => $user->id], 'common');
+            }
+            
+            // 2. 处理收货地址
+            $addressParams = [
+                'user_id' => $user->id,
+                'consignee' => $addressData['consignee'],
+                'mobile' => $addressData['mobile'],
+                'province_name' => $addressData['province_name'],
+                'city_name' => $addressData['city_name'],
+                'district_name' => $addressData['district_name'],
+                'address' => $addressData['address'],
+                'is_default' => isset($addressData['is_default']) ? (int)$addressData['is_default'] : 1,
+            ];
+            
+            // 获取地区ID
+            $addressParams = $this->getAreaIdByName($addressParams);
+            
+            // 创建收货地址
+            $address = new UserAddressModel();
+            $address->save($addressParams);
+            
+            // 如果设为默认，更新其他地址
+            if ($addressParams['is_default']) {
+                UserAddressModel::where('id', '<>', $address->id)
+                    ->where('user_id', $user->id)
+                    ->update(['is_default' => 0]);
+            }
+            
+            Db::commit();
+            
+        } catch (\Exception $e) {
+            Db::rollback();
+            $this->error('提交失败：' . $e->getMessage());
+        }
+        $this->success('信息完善成功', [
+            'realname' => $user->realname,
+            'is_realname' => $user->is_realname,
+            'address_id' => $address->id
+        ]);
+        
+    }
+    
+    /**
+     * 根据地区名称获取地区ID
+     * 
+     * @param array $params 地址数据
+     * @return array
+     */
+    private function getAreaIdByName($params)
+    {
+        $province = Area::where([
+            'name' => $params['province_name'],
+            'level' => 'province'
+        ])->find();
+        if (!$province) {
+            $this->error('请选择正确的行政区');
+        }
+        $params['province_id'] = $province->id;
+
+        $city = Area::where([
+            'name' => $params['city_name'],
+            'level' => 'city',
+            'pid' => $province->id
+        ])->find();
+        if (!$city) {
+            $this->error('请选择正确的行政区');
+        }
+        $params['city_id'] = $city->id;
+
+        $district = Area::where([
+            'name' => $params['district_name'],
+            'level' => 'district',
+            'pid' => $city->id
+        ])->find();
+        if (!$district) {
+            $this->error('请选择正确的行政区');
+        }
+        $params['district_id'] = $district->id;
+
+        return $params;
     }
 
     /**
@@ -895,5 +1103,229 @@ class User extends Api
             'is_alipay_bind' => !empty($user->alipay_account),
             'is_wechat_bind' => !empty($user->wechat_account),
         ]);
+    }
+
+    /**
+     * 获取团队内所有已实名认证的用户数量（包括多级）
+     * @param int $userId 用户ID
+     * @return int
+     */
+    private function getTeamRealnameCount($userId)
+    {
+        // 获取1级成员（直接邀请）
+        $level1Users = UserModel::where('parent_user_id', $userId)
+            ->where('status', 'normal')
+            ->column('id');
+        
+        // 获取2级成员（1级成员邀请的）
+        $level2Users = [];
+        if (!empty($level1Users)) {
+            $level2Users = UserModel::where('parent_user_id', 'in', $level1Users)
+                ->where('status', 'normal')
+                ->column('id');
+        }
+        
+        // 获取3级成员（2级成员邀请的）
+        $level3Users = [];
+        if (!empty($level2Users)) {
+            $level3Users = UserModel::where('parent_user_id', 'in', $level2Users)
+                ->where('status', 'normal')
+                ->column('id');
+        }
+        
+        // 合并所有层级的用户ID
+        $allTeamUserIds = array_merge($level1Users, $level2Users, $level3Users);
+        
+        if (empty($allTeamUserIds)) {
+            return 0;
+        }
+        
+        // 统计所有团队内已实名认证的用户数量
+        $count = UserModel::where('id', 'in', $allTeamUserIds)
+            ->where('is_realname', 1)
+            ->where('status', 'normal')
+            ->count();
+        
+        return $count;
+    }
+
+    /**
+     * 根据邀请人数自动升级会员等级
+     * @param UserModel $user 用户对象
+     * @param int $validInviteCount 有效邀请人数（已实名认证）
+     */
+    private function updateMemberLevelByInviteCount($user, $validInviteCount)
+    {
+        // 从会员等级表中读取升级条件（不写死）
+        $memberLevels = MemberLevel::where('status', 'normal')
+            ->order('invite_count', 'desc')  // 按邀请人数降序排序（邀请人数多的在前）
+            ->order('level', 'desc')         // 同邀请人数时，按等级降序
+            ->select();
+
+        // select() 返回数组，使用 empty() 检查
+        if (empty($memberLevels)) {
+            return;
+        }
+
+        // 找到满足邀请人数条件的最高等级
+        // 逻辑：邀请人数 >= 该等级要求的邀请人数，且等级最高
+        $newLevel = 0; // 默认为普通会员
+        $newLevelName = '普通会员';
+        
+        foreach ($memberLevels as $levelConfig) {
+            $requiredInviteCount = intval($levelConfig->invite_count);
+            $levelValue = intval($levelConfig->level);
+            
+            // 如果邀请人数达到该等级的要求，且该等级比当前找到的等级更高
+            if ($validInviteCount >= $requiredInviteCount && $levelValue > $newLevel) {
+                $newLevel = $levelValue;
+                $newLevelName = $levelConfig->name;
+            }
+        }
+
+        // 只在等级提升时更新
+        $currentLevel = intval($user->member_level);
+        if ($newLevel > $currentLevel) {
+            $oldLevel = $currentLevel;
+            $user->member_level = $newLevel;
+            $user->save();
+
+            // 同时更新统计表中的有效邀请人数
+            $userStats = \app\common\model\fuka\UserStatistics::where('user_id', $user->id)->find();
+            if ($userStats) {
+                $userStats->valid_invite_count = $validInviteCount;
+                $userStats->last_update_time = time();
+                $userStats->updatetime = time();
+                $userStats->save();
+            }
+
+            // 记录等级提升日志
+            $this->logMemberLevelUpgrade($user, $oldLevel, $newLevel, $newLevelName, $validInviteCount);
+            
+            // 升级后创建分红记录（如果有分红权益）
+            $this->createDividendRecordAfterUpgrade($user, $newLevel);
+        } else {
+            // 即使等级不变，也更新统计表中的有效邀请人数（保持数据同步）
+            $userStats = \app\common\model\fuka\UserStatistics::where('user_id', $user->id)->find();
+            if ($userStats && $userStats->valid_invite_count != $validInviteCount) {
+                $userStats->valid_invite_count = $validInviteCount;
+                $userStats->last_update_time = time();
+                $userStats->updatetime = time();
+                $userStats->save();
+            }
+        }
+    }
+
+    /**
+     * 记录会员等级提升日志
+     * @param UserModel $user 用户对象
+     * @param int $oldLevel 旧等级
+     * @param int $newLevel 新等级
+     * @param string $newLevelName 新等级名称
+     * @param int $validInviteCount 有效邀请人数
+     */
+    private function logMemberLevelUpgrade($user, $oldLevel, $newLevel, $newLevelName, $validInviteCount)
+    {
+        try {
+            // 写入会员等级日志表
+            $log = new \app\admin\model\fuka\MemberLevelLog();
+            $log->user_id = $user->id;
+            $log->old_level = $oldLevel;
+            $log->new_level = $newLevel;
+            $log->invite_count = $validInviteCount;
+            $log->createtime = time();
+            $log->updatetime = time();
+            $log->status = 'normal';
+            $log->save();
+            
+            // 记录系统日志
+            output_log('info', [
+                'title' => '[会员系统] 会员等级自动提升',
+                'user_id' => $user->id,
+                'mobile' => $user->mobile,
+                'old_level' => $oldLevel,
+                'new_level' => $newLevel,
+                'new_level_name' => $newLevelName,
+                'valid_invite_count' => $validInviteCount
+            ]);
+        } catch (\Exception $e) {
+            // 记录错误但不影响主流程
+            output_log('error', [
+                'title' => '[会员系统] 记录等级提升日志失败',
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * 升级后创建分红记录
+     * @param UserModel $user 用户对象
+     * @param int $newLevel 新等级
+     */
+    private function createDividendRecordAfterUpgrade($user, $newLevel)
+    {
+        try {
+            // 获取等级配置
+            $levelConfig = MemberLevel::where('level', $newLevel)->where('status', 'normal')->find();
+            if (!$levelConfig || floatval($levelConfig->dividend_money) <= 0) {
+                return; // 该等级没有分红权益
+            }
+
+            $dividendMoney = floatval($levelConfig->dividend_money);
+            $currentMonth = date('Y-m');
+
+            // 检查当月是否已有分红记录
+            $exists = \app\common\model\fuka\DividendRecord::where('user_id', $user->id)
+                ->where('dividend_month', $currentMonth)
+                ->where('status', 'normal')
+                ->find();
+
+            if ($exists) {
+                // 如果已存在，更新等级和金额
+                $exists->member_level = $newLevel;
+                $exists->dividend_money = $dividendMoney;
+                $exists->updatetime = time();
+                $exists->save();
+                return;
+            }
+
+            // 创建新的分红记录
+            $dividendRecord = new \app\common\model\fuka\DividendRecord();
+            $dividendRecord->user_id = $user->id;
+            $dividendRecord->member_level = $newLevel;
+            $dividendRecord->dividend_month = $currentMonth;
+            $dividendRecord->dividend_money = $dividendMoney;
+            $dividendRecord->send_status = 0; // 待发放
+            $dividendRecord->send_channel = 'alipay'; // 支付宝
+            $dividendRecord->createtime = time();
+            $dividendRecord->updatetime = time();
+            $dividendRecord->status = 'normal';
+            $dividendRecord->save();
+            
+            // 更新用户统计表
+            $userStats = \app\common\model\fuka\UserStatistics::where('user_id', $user->id)->find();
+            if ($userStats) {
+                $userStats->dividend_money += $dividendMoney;
+                $userStats->updatetime = time();
+                $userStats->save();
+            }
+            
+            // 记录日志
+            output_log('info', [
+                'title' => '[分红系统] 升级后创建分红记录',
+                'user_id' => $user->id,
+                'member_level' => $newLevel,
+                'dividend_money' => $dividendMoney,
+                'dividend_month' => $currentMonth
+            ]);
+        } catch (\Exception $e) {
+            // 记录错误但不影响主流程
+            output_log('error', [
+                'title' => '[分红系统] 创建分红记录失败',
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }

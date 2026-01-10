@@ -30,10 +30,10 @@
             <text>金卡信息</text>
           </view>
           <view class="info-list">
-            <view class="info-row">
+            <!-- <view class="info-row">
               <text class="info-label">卡号</text>
               <text class="info-value">{{ state.cardInfo.card_no || '-' }}</text>
-            </view>
+            </view> -->
             <view class="info-row">
               <text class="info-label">持卡人</text>
               <text class="info-value">{{ state.cardInfo.holder_name || '-' }}</text>
@@ -99,7 +99,7 @@
         <!-- 费用说明 -->
         <view class="fee-card" v-if="state.stepInfo.fee_amount > 0">
           <view class="fee-header">
-            <text class="fee-label">本步骤费用</text>
+            <text class="fee-label">费用</text>
             <text class="fee-amount">¥{{ state.stepInfo.fee_amount }}</text>
           </view>
           <view class="fee-note">

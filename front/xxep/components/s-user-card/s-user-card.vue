@@ -53,7 +53,13 @@
           @tap="showMemberDetail"
           v-if="isLogin"
         >
-          <view class="member-level" :class="memberLevelClass">
+          <view class="member-level-content">
+            <image 
+              v-if="memberLevelImage" 
+              class="member-level-image" 
+              :src="memberLevelImage" 
+              mode="aspectFit"
+            />
             <text class="level-name">{{ displayMemberLevel }}</text>
           </view>
         </view>
@@ -191,6 +197,19 @@
     // 如果是数字ID，转换为名称
     const levelId = parseInt(level) || 0;
     return memberLevelMap[levelId]?.name || '普通会员';
+  });
+
+  // 会员等级图片路径
+  const memberLevelImage = computed(() => {
+    const level = userInfo.value?.member_level || props.memberLevel;
+    
+    // 如果是数字ID，生成图片路径
+    if (level !== undefined && level !== null && !isNaN(level)) {
+      const levelId = parseInt(level);
+      return `/static/level/${levelId}.png`;
+    }
+    
+    return '';
   });
 
   // 会员等级样式类
@@ -366,6 +385,25 @@
       padding-top: 4rpx;
 
       .member-level-wrapper {
+        .member-level-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8rpx;
+          
+          .member-level-image {
+            width: 55rpx;
+            height: 55rpx;
+          }
+          
+          .level-name {
+            font-size: 22rpx;
+            font-weight: 600;
+            color: #333333;
+            white-space: nowrap;
+          }
+        }
+        
         .member-level {
           display: flex;
           align-items: center;

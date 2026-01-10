@@ -156,13 +156,11 @@ class UserInit
             return;
         }
 
-        // 更新推荐人的有效邀请人数（已实名的直接下级）
+        // 更新推荐人的有效邀请人数（团队内所有已实名认证的用户，包括多级）
         $inviterStats = UserStatisticsModel::where('user_id', $inviter->id)->find();
         if ($inviterStats) {
-            $validInviteCount = UserModel::where('parent_user_id', $inviter->id)
-                ->where('is_realname', 1)
-                ->where('status', 'normal')
-                ->count();
+            // 统计团队内所有已实名认证的用户数量（包括多级）
+            $validInviteCount = $this->getTeamRealnameCount($inviter->id);
 
             $oldValidInviteCount = $inviterStats->valid_invite_count;
             $inviterStats->valid_invite_count = $validInviteCount;
@@ -249,32 +247,175 @@ class UserInit
      */
     protected function updateMemberLevel($user, $validInviteCount)
     {
-        // 会员等级规则：
-        // 0=普通
-        // 1=铂金会员（邀请2位实名认证用户）
-        // 2=黄金会员（邀请5位实名认证用户）
-        // 3=钻石会员（邀请10位实名认证用户）
-        // 4=黑金会员（邀请20位实名认证用户）
-        // 5=至尊会员（邀请50位实名认证用户）
+        // 从会员等级表中读取升级条件（不写死）
+        $memberLevels = \app\common\model\fuka\MemberLevel::where('status', 'normal')
+            ->order('invite_count', 'desc')  // 按邀请人数降序排序（邀请人数多的在前）
+            ->order('level', 'desc')         // 同邀请人数时，按等级降序
+            ->select();
 
-        $newLevel = 0;
-        if ($validInviteCount >= 50) {
-            $newLevel = 5; // 至尊会员
-        } elseif ($validInviteCount >= 20) {
-            $newLevel = 4; // 黑金会员
-        } elseif ($validInviteCount >= 10) {
-            $newLevel = 3; // 钻石会员
-        } elseif ($validInviteCount >= 5) {
-            $newLevel = 2; // 黄金会员
-        } elseif ($validInviteCount >= 2) {
-            $newLevel = 1; // 铂金会员
+        // select() 返回数组，使用 empty() 检查
+        if (empty($memberLevels)) {
+            return;
+        }
+
+        // 找到满足邀请人数条件的最高等级
+        // 逻辑：邀请人数 >= 该等级要求的邀请人数，且等级最高
+        $newLevel = 0; // 默认为普通会员
+        $newLevelName = '普通会员';
+        
+        foreach ($memberLevels as $levelConfig) {
+            $requiredInviteCount = intval($levelConfig->invite_count);
+            $levelValue = intval($levelConfig->level);
+            
+            // 如果邀请人数达到该等级的要求，且该等级比当前找到的等级更高
+            if ($validInviteCount >= $requiredInviteCount && $levelValue > $newLevel) {
+                $newLevel = $levelValue;
+                $newLevelName = $levelConfig->name;
+            }
         }
 
         // 只在等级提升时更新
-        if ($newLevel > $user->member_level) {
-            $oldLevel = $user->member_level;
+        $currentLevel = intval($user->member_level);
+        if ($newLevel > $currentLevel) {
+            $oldLevel = $currentLevel;
             $user->member_level = $newLevel;
             $user->save();
+
+            // 记录等级提升日志
+            $this->logMemberLevelUpgrade($user, $oldLevel, $newLevel, $newLevelName, $validInviteCount);
+            
+            // 升级后创建分红记录（如果有分红权益）
+            $this->createDividendRecordAfterUpgrade($user, $newLevel);
+        }
+    }
+
+    /**
+     * 记录会员等级提升日志
+     * @param UserModel $user 用户对象
+     * @param int $oldLevel 旧等级
+     * @param int $newLevel 新等级
+     * @param string $newLevelName 新等级名称
+     * @param int $validInviteCount 有效邀请人数
+     */
+    protected function logMemberLevelUpgrade($user, $oldLevel, $newLevel, $newLevelName, $validInviteCount)
+    {
+        try {
+            // 写入会员等级日志表
+            $log = new \app\admin\model\fuka\MemberLevelLog();
+            $log->user_id = $user->id;
+            $log->old_level = $oldLevel;
+            $log->new_level = $newLevel;
+            $log->invite_count = $validInviteCount;
+            $log->createtime = time();
+            $log->updatetime = time();
+            $log->status = 'normal';
+            $log->save();
+            
+            // 记录系统日志
+            if (function_exists('output_log')) {
+                output_log('info', [
+                    'title' => '[会员系统] 会员等级自动提升',
+                    'user_id' => $user->id,
+                    'mobile' => $user->mobile,
+                    'old_level' => $oldLevel,
+                    'new_level' => $newLevel,
+                    'new_level_name' => $newLevelName,
+                    'valid_invite_count' => $validInviteCount
+                ]);
+            }
+        } catch (\Exception $e) {
+            // 记录错误但不影响主流程
+            if (function_exists('output_log')) {
+                output_log('error', [
+                    'title' => '[会员系统] 记录等级提升日志失败',
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+    }
+
+    /**
+     * 升级后创建分红记录
+     * @param UserModel $user 用户对象
+     * @param int $newLevel 新等级
+     */
+    protected function createDividendRecordAfterUpgrade($user, $newLevel)
+    {
+        try {
+            // 获取新等级的配置
+            $levelConfig = \app\common\model\fuka\MemberLevel::where('level', $newLevel)
+                ->where('status', 'normal')
+                ->find();
+            
+            if (!$levelConfig) {
+                return;
+            }
+            
+            // 检查是否有分红权益
+            $dividendMoney = floatval($levelConfig->dividend_money);
+            if ($dividendMoney <= 0) {
+                return; // 没有分红权益，不需要创建记录
+            }
+            
+            // 获取当前月份（YYYY-MM格式）
+            $currentMonth = date('Y-m');
+            
+            // 检查是否已存在该月份的分红记录
+            $exists = \app\common\model\fuka\DividendRecord::where('user_id', $user->id)
+                ->where('dividend_month', $currentMonth)
+                ->where('status', 'normal')
+                ->find();
+            
+            if ($exists) {
+                // 如果已存在，更新金额和等级（可能用户升级了）
+                $exists->member_level = $newLevel;
+                $exists->dividend_money = $dividendMoney;
+                $exists->updatetime = time();
+                $exists->save();
+                return;
+            }
+            
+            // 创建新的分红记录
+            $dividendRecord = new \app\common\model\fuka\DividendRecord();
+            $dividendRecord->user_id = $user->id;
+            $dividendRecord->member_level = $newLevel;
+            $dividendRecord->dividend_month = $currentMonth;
+            $dividendRecord->dividend_money = $dividendMoney;
+            $dividendRecord->send_status = 0; // 待发放
+            $dividendRecord->send_channel = 'alipay'; // 支付宝
+            $dividendRecord->createtime = time();
+            $dividendRecord->updatetime = time();
+            $dividendRecord->status = 'normal';
+            $dividendRecord->save();
+            
+            // 更新用户统计表中的分红余额
+            $userStats = UserStatisticsModel::where('user_id', $user->id)->find();
+            if ($userStats) {
+                $userStats->dividend_money += $dividendMoney;
+                $userStats->updatetime = time();
+                $userStats->save();
+            }
+            
+            // 记录日志
+            if (function_exists('output_log')) {
+                output_log('info', [
+                    'title' => '[分红系统] 升级后创建分红记录',
+                    'user_id' => $user->id,
+                    'member_level' => $newLevel,
+                    'dividend_money' => $dividendMoney,
+                    'dividend_month' => $currentMonth
+                ]);
+            }
+        } catch (\Exception $e) {
+            // 记录错误但不影响主流程
+            if (function_exists('output_log')) {
+                output_log('error', [
+                    'title' => '[分红系统] 创建分红记录失败',
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
     }
 
@@ -314,6 +455,50 @@ class UserInit
         $share->createtime = time();
         $share->updatetime = time();
         $share->save();
+    }
+
+    /**
+     * 获取团队内所有已实名认证的用户数量（包括多级）
+     * @param int $userId 用户ID
+     * @return int
+     */
+    protected function getTeamRealnameCount($userId)
+    {
+        // 获取1级成员（直接邀请）
+        $level1Users = UserModel::where('parent_user_id', $userId)
+            ->where('status', 'normal')
+            ->column('id');
+        
+        // 获取2级成员（1级成员邀请的）
+        $level2Users = [];
+        if (!empty($level1Users)) {
+            $level2Users = UserModel::where('parent_user_id', 'in', $level1Users)
+                ->where('status', 'normal')
+                ->column('id');
+        }
+        
+        // 获取3级成员（2级成员邀请的）
+        $level3Users = [];
+        if (!empty($level2Users)) {
+            $level3Users = UserModel::where('parent_user_id', 'in', $level2Users)
+                ->where('status', 'normal')
+                ->column('id');
+        }
+        
+        // 合并所有层级的用户ID
+        $allTeamUserIds = array_merge($level1Users, $level2Users, $level3Users);
+        
+        if (empty($allTeamUserIds)) {
+            return 0;
+        }
+        
+        // 统计所有团队内已实名认证的用户数量
+        $count = UserModel::where('id', 'in', $allTeamUserIds)
+            ->where('is_realname', 1)
+            ->where('status', 'normal')
+            ->count();
+        
+        return $count;
     }
 }
 

@@ -165,6 +165,19 @@ export default {
       },
     }),
   
+  // 完善信息（实名认证+收货地址）
+  setupRequired: (data) =>
+    request({
+      url: '/api/user/setupRequired',
+      method: 'POST',
+      data,
+      custom: {
+        showLoading: true,
+        loadingMsg: '提交中',
+        auth: true,
+      },
+    }),
+  
   // 绑定支付宝
   bindAlipay: (data) =>
     request({

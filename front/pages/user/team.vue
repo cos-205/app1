@@ -44,8 +44,14 @@
         </view>
 
         <view class="level-current">
-          <view class="level-badge" :style="{ background: currentLevelInfo.color }">
-            <uni-icons :type="currentLevelInfo.icon" size="32" color="#FFFFFF" />
+          <image 
+            v-if="currentLevelInfo.image" 
+            class="level-image" 
+            :src="currentLevelInfo.image" 
+            mode="aspectFit"
+          />
+          <view v-else class="level-badge" :style="{ background: currentLevelInfo.color }">
+            <uni-icons :type="'person-filled'" size="32" color="#FFFFFF" />
           </view>
           <view class="level-info">
             <view class="level-name">{{ currentLevelInfo.name }}</view>
@@ -180,7 +186,7 @@ const currentLevelInfo = computed(() => {
   return {
     name: config.name,
     desc: desc,
-    icon: getLevelIcon(config.level),
+    image: config.image || '',
     color: getLevelColor(config.level)
   };
 });
@@ -370,6 +376,12 @@ async function handleFilterChange(index) {
   background: linear-gradient(135deg, #F3F4F6, #E5E7EB);
   border-radius: 12rpx;
   margin-bottom: 16rpx;
+  
+  .level-image {
+    width: 100rpx;
+    height: 100rpx;
+    flex-shrink: 0;
+  }
   
   .level-badge {
     width: 64rpx;

@@ -59,6 +59,9 @@
           const result = await xxep.$store('user').logout();
           if (result) {
             xxep.$store('user').updateUserData();
+            uni.reLaunch({
+              url: '/pages/index/login',
+            });
           }
         }
       },

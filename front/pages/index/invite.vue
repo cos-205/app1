@@ -42,8 +42,14 @@
           :class="{ 'is-current': state.userLevel === level.level }"
         >
           <view class="level-header">
-            <view class="level-badge" :style="{ background: level.color }">
-              <uni-icons :type="level.icon" size="24" color="#FFFFFF" />
+            <image 
+              v-if="level.image" 
+              class="level-image" 
+              :src="level.image" 
+              mode="aspectFit"
+            />
+            <view v-else class="level-badge" :style="{ background: level.color }">
+              <uni-icons :type="'medal-filled'" size="24" color="#FFFFFF" />
             </view>
             <view class="level-name">{{ level.name }}</view>
             <view class="level-status" v-if="state.userLevel >= level.level">
@@ -406,6 +412,12 @@ function handleGoTeam() {
       align-items: center;
       gap: 20rpx;
       margin-bottom: 20rpx;
+      
+      .level-image {
+        width: 80rpx;
+        height: 80rpx;
+        flex-shrink: 0;
+      }
       
       .level-badge {
         width: 60rpx;

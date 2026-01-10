@@ -136,7 +136,7 @@ class Withdraw
                 'withdraw_sn' => $withdraw->withdraw_sn,
             ]);
         } catch (\Exception $e) {
-            \think\Log::error('撤销提现失败: ' . ': 行号: ' . $e->getLine() . ': 文件: ' . $e->getFile() . ': 错误信息: ' . $e->getMessage());
+            output_log('error', '撤销提现失败: ' . ': 行号: ' . $e->getLine() . ': 文件: ' . $e->getFile() . ': 错误信息: ' . $e->getMessage());
             $this->handleLog($withdraw, '撤销微信商家转账失败: ' . $e->getMessage());
             throw new CusException($e->getMessage());
         }
