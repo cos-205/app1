@@ -416,26 +416,6 @@ async function submitPassword() {
   }
 }
 
-.step-indicator {
-  background: linear-gradient(90deg, #4285F4 0%, #5A9CFF 100%);
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.step-num {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.step-name {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #FFFFFF;
-}
 
 .password-intro {
   background: #FFFFFF;

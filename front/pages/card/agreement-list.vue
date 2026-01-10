@@ -4,7 +4,6 @@
       <!-- 步骤信息 -->
       <view class="step-header">
         <view class="step-info">
-          <text class="step-label">步骤 {{ state.step }}</text>
           <text class="step-name">协议签署</text>
         </view>
         <view class="step-status" :class="'status-' + state.overallStatus">

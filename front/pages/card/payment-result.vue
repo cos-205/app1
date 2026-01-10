@@ -2,14 +2,13 @@
   <s-layout title="支付结果" :bgStyle="{ color: '#f5f5f5' }">
     <view class="result-page">
       <!-- 成功状态 -->
-      <view v-if="state.status === 'success'" class="result-container success">
+      <view v-if="state.status !== 'success'" class="result-container success">
         <view class="result-icon-wrapper">
           <view class="result-icon success-icon">
             <uni-icons type="checkmarkempty" size="80" color="#52C41A" />
           </view>
         </view>
         <view class="result-title">支付成功</view>
-        <view class="result-desc">您的支付已成功，请等待审核</view>
         
         <view class="result-info-card">
           <view class="card-header">
@@ -18,7 +17,11 @@
           <view class="info-list">
             <view class="info-item">
               <text class="info-label">订单号</text>
-              <text class="info-value">{{ state.orderInfo.order_no || state.orderNo }}</text>
+              <text class="info-value small">{{ state.orderInfo.order_no || state.orderNo || '加载中...' }}</text>
+            </view>
+            <view class="info-item" v-if="state.orderInfo.transaction_id">
+              <text class="info-label">交易单号</text>
+              <text class="info-value small">{{ state.orderInfo.transaction_id }}</text>
             </view>
             <view class="info-item" v-if="state.orderInfo.amount">
               <text class="info-label">支付金额</text>
@@ -32,19 +35,7 @@
               <text class="info-label">支付时间</text>
               <text class="info-value">{{ state.orderInfo.createtime }}</text>
             </view>
-            <view class="info-item">
-              <text class="info-label">当前状态</text>
-              <text class="info-value status-pending">
-                <text class="status-dot"></text>
-                待审核
-              </text>
-            </view>
           </view>
-        </view>
-
-        <view class="tips-box info">
-          <uni-icons type="info" size="16" color="#1890FF" />
-          <text class="tips-text">审核通常需要1-3个工作日，请耐心等待</text>
         </view>
       </view>
 
@@ -65,7 +56,7 @@
           <view class="info-list">
             <view class="info-item">
               <text class="info-label">订单号</text>
-              <text class="info-value small">{{ state.orderInfo.order_no || state.orderNo }}</text>
+              <text class="info-value small">{{ state.orderInfo.order_no || state.orderNo || '加载中...' }}</text>
             </view>
             <view class="info-item" v-if="state.orderInfo.amount">
               <text class="info-label">支付金额</text>
@@ -90,7 +81,7 @@
       </view>
 
       <!-- 失败状态 -->
-      <view v-if="state.status === 'failed'" class="result-container failed">
+      <view v-if="state.status === 'success'" class="result-container failed">
         <view class="result-icon-wrapper">
           <view class="result-icon failed-icon">
             <uni-icons type="closeempty" size="80" color="#F5222D" />
@@ -99,14 +90,14 @@
         <view class="result-title">支付失败</view>
         <view class="result-desc">{{ state.failReason || '支付过程中出现问题，请重试' }}</view>
         
-        <view class="result-info-card" v-if="state.orderNo">
+        <view class="result-info-card" v-if="state.orderNo || state.orderInfo.order_no">
           <view class="card-header">
             <text class="card-title">订单信息</text>
           </view>
           <view class="info-list">
             <view class="info-item">
               <text class="info-label">订单号</text>
-              <text class="info-value small">{{ state.orderNo }}</text>
+              <text class="info-value small">{{ state.orderInfo.order_no || state.orderNo }}</text>
             </view>
           </view>
         </view>
@@ -119,7 +110,7 @@
       <!-- 操作按钮组 -->
       <view class="action-buttons">
         <button class="action-button back-button" @tap="goBack">
-          返回金卡
+          {{ state.step ? '返回查看' : '返回查看' }}
         </button>
       </view>
     </view>
@@ -135,6 +126,7 @@ const state = reactive({
   status: 'success', // success, checking, failed
   step: 0,
   orderNo: '',
+  orderId: 0, // 订单ID
   failReason: '',
   orderInfo: {},
   checking: false,
@@ -155,6 +147,9 @@ onLoad(async (options) => {
     if (state.status === 'checking') {
       startPolling();
     }
+  } else if (state.step && state.status === 'success') {
+    // 如果没有传递 order_no，但有 step，尝试根据 step 获取最新的订单
+    await loadLatestOrderByStep();
   }
   if (options.reason) {
     state.failReason = decodeURIComponent(options.reason);
@@ -172,10 +167,13 @@ async function loadOrderInfo() {
     
     if (code === 1 && data.order) {
       const order = data.order;
+      state.orderId = order.id || 0;
       state.orderInfo = {
         order_no: order.order_no || state.orderNo,
+        transaction_id: order.transaction_id || '',
+        merchant_trade_no: order.merchant_trade_no || '',
         amount: order.amount || 0,
-        createtime: order.createtime ? formatTime(order.createtime) : '',
+        createtime: order.pay_time ? formatTime(order.pay_time) : (order.createtime ? formatTime(order.createtime) : ''),
         step_id: order.step_id || state.step,
         step_name: order.step_name || '',
       };
@@ -186,6 +184,43 @@ async function loadOrderInfo() {
     }
   } catch (error) {
     console.error('加载订单信息失败:', error);
+  }
+}
+
+// 根据步骤获取最新的订单信息（当没有传递 order_no 时使用）
+async function loadLatestOrderByStep() {
+  if (!state.step) return;
+  
+  try {
+    // 通过 flowConfig 获取步骤信息，其中包含订单信息
+    const { code, data } = await xxep.$api.card.flowConfig();
+    
+    if (code === 1 && data.steps) {
+      const stepInfo = data.steps.find(s => s.step === state.step);
+      if (stepInfo && stepInfo.order_id) {
+        // 如果有订单ID，获取订单详情
+        const orderRes = await xxep.$api.card.getOrderInfo({
+          order_id: stepInfo.order_id,
+        });
+        
+        if (orderRes.code === 1 && orderRes.data.order) {
+          const order = orderRes.data.order;
+          state.orderId = order.id || 0;
+          state.orderNo = order.order_no;
+          state.orderInfo = {
+            order_no: order.order_no,
+            transaction_id: order.transaction_id || '',
+            merchant_trade_no: order.merchant_trade_no || '',
+            amount: order.amount || 0,
+            createtime: order.pay_time ? formatTime(order.pay_time) : (order.createtime ? formatTime(order.createtime) : ''),
+            step_id: order.step_id || state.step,
+            step_name: order.step_name || stepInfo.step_name || '',
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.error('加载最新订单信息失败:', error);
   }
 }
 
@@ -237,10 +272,13 @@ function startPolling() {
               // 更新订单信息
               if (data.order) {
                 const order = data.order;
+                state.orderId = order.id || state.orderId || 0;
                 state.orderInfo = {
                   ...state.orderInfo,
+                  transaction_id: order.transaction_id || state.orderInfo.transaction_id,
+                  merchant_trade_no: order.merchant_trade_no || state.orderInfo.merchant_trade_no,
                   amount: order.amount || state.orderInfo.amount,
-                  createtime: order.createtime ? formatTime(order.createtime) : state.orderInfo.createtime,
+                  createtime: order.pay_time ? formatTime(order.pay_time) : (order.createtime ? formatTime(order.createtime) : state.orderInfo.createtime),
                   step_name: order.step_name || state.orderInfo.step_name,
                 };
               }
@@ -291,10 +329,13 @@ async function checkPaymentStatus() {
         // 更新订单信息
         if (data.order) {
           const order = data.order;
+          state.orderId = order.id || state.orderId || 0;
           state.orderInfo = {
             ...state.orderInfo,
+            transaction_id: order.transaction_id || state.orderInfo.transaction_id,
+            merchant_trade_no: order.merchant_trade_no || state.orderInfo.merchant_trade_no,
             amount: order.amount || state.orderInfo.amount,
-            createtime: order.createtime ? formatTime(order.createtime) : state.orderInfo.createtime,
+            createtime: order.pay_time ? formatTime(order.pay_time) : (order.createtime ? formatTime(order.createtime) : state.orderInfo.createtime),
             step_name: order.step_name || state.orderInfo.step_name,
           };
         }
@@ -314,24 +355,129 @@ async function checkPaymentStatus() {
 }
 
 // 重新支付
-function retryPayment() {
+async function retryPayment() {
+  // 如果有订单ID，直接跳转到支付页面
+  if (state.orderId) {
+    uni.redirectTo({
+      url: `/pages/card/payment?order_id=${state.orderId}&step=${state.step || state.orderInfo.step_id || ''}`,
+    });
+    return;
+  }
+  
+  // 如果有订单号，先获取订单信息
+  if (state.orderNo || state.orderInfo.order_no) {
+    try {
+      const { code, data } = await xxep.$api.card.paymentResult({
+        order_no: state.orderNo || state.orderInfo.order_no,
+      });
+      
+      if (code === 1 && data.order && data.order.id) {
+        uni.redirectTo({
+          url: `/pages/card/payment?order_id=${data.order.id}&step=${state.step || data.order.step_id || ''}`,
+        });
+        return;
+      }
+    } catch (error) {
+      console.error('获取订单信息失败:', error);
+      xxep.$helper.toast('获取订单信息失败，请重试');
+      return;
+    }
+  }
+  
+  // 如果都没有，尝试根据步骤创建新订单
+  if (state.step || state.orderInfo.step_id) {
+    try {
+      const step = state.step || state.orderInfo.step_id;
+      const { code, data, msg } = await xxep.$api.card.createOrder({
+        step: step,
+      });
+      
+      if (code === 1 && data.order) {
+        uni.redirectTo({
+          url: `/pages/card/payment?order_id=${data.order.id}&step=${step}`,
+        });
+      } else {
+        xxep.$helper.toast(msg || '创建订单失败');
+      }
+    } catch (error) {
+      console.error('创建订单失败:', error);
+      xxep.$helper.toast('创建订单失败，请重试');
+    }
+    return;
+  }
+  
+  // 如果都没有，返回上一页
   uni.navigateBack();
 }
 
-// 返回金卡页面
-function goBack() {
-  // 记录刚完成的步骤到 localStorage，用于在金卡页面显示完成状态
-  if (state.step && state.status === 'success') {
-    localStorage.setItem('justCompletedStep', state.step.toString());
-    localStorage.setItem('justCompletedTime', Date.now().toString());
+// 获取步骤对应的页面路径（智能路由）
+function getStepPageUrl(step, stepName, stepType) {
+  // 如果后端返回了步骤名称，使用智能匹配
+  if (stepName) {
+    const stepNameLower = stepName.toLowerCase();
+    
+    // 协议签署类（包含"协议"、"签署"、"合同"等关键词）
+    if (stepNameLower.includes('协议') || stepNameLower.includes('签署') || stepNameLower.includes('合同')) {
+      return `/pages/card/agreement?step=${step}`;
+    }
+    
+    // 密码设置类（包含"密码"关键词）
+    if (stepNameLower.includes('密码')) {
+      return `/pages/card/password?step=${step}`;
+    }
+    
+    // 大额支付类（包含"大额"、"收付款"等关键词）
+    if (stepNameLower.includes('大额') || stepNameLower.includes('收付款') || stepNameLower.includes('限额')) {
+      return `/pages/card/payment-function?step=${step}`;
+    }
+    
+    // 信息确认类（包含"绑定"、"邮寄"、"确认"等关键词）
+    if (stepNameLower.includes('绑定') || stepNameLower.includes('邮寄') || stepNameLower.includes('确认')) {
+      return `/pages/card/info-confirm?step=${step}`;
+    }
+    
+    // 开通支付类（包含"开通"、"支付"等关键词，且不是"大额收付款"）
+    if ((stepNameLower.includes('开通') || stepNameLower.includes('支付')) && !stepNameLower.includes('大额')) {
+      return `/pages/card/pay-setup?step=${step}`;
+    }
   }
   
-  // 使用 reLaunch 清空页面栈，确保完全重新加载
-  // 延迟2秒，等待支付回调完成
-  uni.reLaunch({
+  // 保留硬编码映射作为兜底（向后兼容）
+  const stepPageMap = {
+    1: '/pages/card/agreement?step=1',           // 协议签署
+    2: '/pages/card/password?step=2',            // 设置卡片密码
+    3: '/pages/card/payment-function?step=3',    // 大额收付款功能
+    4: '/pages/card/agreement?step=4',            // 支付宝保密合同
+    5: '/pages/card/info-confirm?step=5',         // 绑定金卡
+    6: '/pages/card/info-confirm?step=6',         // 邮寄确认
+    7: '/pages/card/pay-setup?step=7',           // 开通微信支付
+    8: '/pages/card/pay-setup?step=8',           // 开通支付宝支付
+  };
+  
+  return stepPageMap[step] || '/pages/index/card';
+}
+
+// 返回对应的步骤页面
+function goBack() {
+  // 如果有步骤ID，返回到对应的步骤页面
+  if (state.step && state.status === 'success') {
+    // 从订单信息中获取步骤名称和类型
+    const stepName = state.orderInfo.step_name || '';
+    const stepType = ''; // payment-result 中暂时没有 stepType，可以后续从API获取
+    
+    const stepPageUrl = getStepPageUrl(state.step, stepName, stepType);
+    
+    // 使用 redirectTo 跳转到步骤页面，替换当前页面
+    uni.redirectTo({
+      url: stepPageUrl,
+    });
+  } else {
+    // 如果没有步骤ID或支付未成功，返回金卡主页面
+    uni.reLaunch({
       url: '/pages/index/card',
     });
   }
+}
 // 页面卸载时清除定时器
 onUnmounted(() => {
   if (pollingTimer) {

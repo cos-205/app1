@@ -274,6 +274,18 @@ class Card extends Api
                 $dataSubmitted = $log && !empty($log->extra_data);
             }
             
+            // 步骤启用逻辑
+            // 步骤1：需要按流程状态启用（金卡申请流程的一部分）
+            // 步骤2-9：独立功能，只要申请了金卡就可以开通（不依赖前置步骤）
+            $isEnabled = false;
+            if ($config->step == 1) {
+                // 步骤1：需要 flow_status >= 1（已申请金卡）
+                $isEnabled = $card->flow_status >= $config->step;
+            } else {
+                // 步骤2-9：只要申请了金卡（apply_status >= 2）就可以开通
+                $isEnabled = $card->apply_status >= 2;
+            }
+            
             $steps[] = [
                 'step' => $config->step,
                 'step_type' => $config->step_type,
@@ -291,12 +303,13 @@ class Card extends Api
                 // 用户流程状态
                 'flow_status' => $log ? $log->flow_status : 1,  // 1=未支付, 3=已完成
                 'order_id' => $log ? $log->order_id : null,
-                // 是否启用：只有当前 flow_status 等于或大于此步骤时才启用
-                // 这样可以防止步骤自动进入下一步，需要管理员手动更新 flow_status
-                'enabled' => $card->flow_status >= $config->step,
+                // 是否启用
+                'enabled' => $isEnabled,
+                // 是否为独立功能（步骤2-9）
+                'is_standalone' => $config->step > 1,
                 // 前置动作状态
                 'agreement_signed' => $config->step == 1 ? $agreementSigned : null, // 步骤1：是否已签署协议
-                'data_submitted' => in_array($config->step, [2, 3]) ? $dataSubmitted : null, // 步骤3、4：是否已提交数据
+                'data_submitted' => in_array($config->step, [2, 3]) ? $dataSubmitted : null, // 步骤2、3：是否已提交数据
             ];
         }
 
@@ -362,20 +375,13 @@ class Card extends Api
             $this->error('该步骤无需支付');
         }
 
-        // 检查前置步骤是否已完成（步骤必须按顺序完成）
-        if ($step > 1) {
-            $prevStep = $step - 1;
-            $prevLog = CardFlowLog::where('user_id', $user->id)
-                ->where('card_id', $card->id)
-                ->where('flow_step', $prevStep)
-                ->find();
-            
-            if (!$prevLog || $prevLog->flow_status != 3) {
-                $this->error('请先完成上一步骤');
-            }
+        // 检查金卡申请状态（所有步骤都需要先申请金卡）
+        if ($card->apply_status < 2) {
+            $this->error('请先申请财富金卡');
         }
 
-        // 检查当前步骤的前置动作是否已完成
+        // 步骤1：需要检查是否已签署协议
+        // 步骤2-9：独立功能，不检查前置步骤，只需要申请了金卡即可
         if ($step == 1) {
             // 步骤1：检查是否已签署协议
             $agreementFlow = UserAgreementFlow::where('user_id', $user->id)
@@ -640,8 +646,9 @@ class Card extends Api
         }
 
         $step = $this->request->param('step/d', 0);
-        if ($step != 1) {
-            $this->error('此接口仅用于步骤1（协议签署）');
+        // 支持步骤1和步骤4（协议签署类步骤）
+        if (!in_array($step, [1, 4])) {
+            $this->error('此接口仅用于协议签署步骤（步骤1或步骤4）');
         }
 
         // 获取金卡信息
@@ -838,7 +845,7 @@ class Card extends Api
     private function validateStepData($step, $data)
     {
         switch ($step) {
-            case 3: // 设置卡片密码
+            case 2: // 设置卡片密码
                 if (!isset($data['card_password'])) {
                     throw new \Exception('请设置卡片密码');
                 }
@@ -848,7 +855,7 @@ class Card extends Api
                 }
                 break;
             
-            case 4: // 大额收付款功能
+            case 3: // 大额收付款功能
                 if (!isset($data['payment_limit'])) {
                     throw new \Exception('请设置支付限额');
                 }
@@ -858,8 +865,33 @@ class Card extends Api
                 }
                 break;
             
+            case 5: // 绑定金卡
+                if (!isset($data['card_no']) || empty($data['card_no'])) {
+                    throw new \Exception('请提供金卡卡号');
+                }
+                if (!isset($data['holder_name']) || empty($data['holder_name'])) {
+                    throw new \Exception('请提供持卡人姓名');
+                }
+                break;
+            
+            case 6: // 邮寄确认
+                if (!isset($data['address_id']) || empty($data['address_id'])) {
+                    throw new \Exception('请选择收货地址');
+                }
+                if (!isset($data['consignee']) || empty($data['consignee'])) {
+                    throw new \Exception('请提供收货人姓名');
+                }
+                if (!isset($data['mobile']) || empty($data['mobile'])) {
+                    throw new \Exception('请提供联系电话');
+                }
+                if (!isset($data['address']) || empty($data['address'])) {
+                    throw new \Exception('请提供详细地址');
+                }
+                break;
+            
             default:
-                throw new \Exception('该步骤不需要提交数据');
+                // 其他步骤不需要提交数据，允许通过
+                break;
         }
     }
 
@@ -1094,6 +1126,67 @@ class Card extends Api
         ];
 
         $this->success('获取成功', ['detail' => $detail]);
+    }
+
+    /**
+     * 获取协议内容（用于协议签署页面）
+     * 
+     * @ApiMethod (GET)
+     * @ApiRoute  (/api/card/agreementContent)
+     * @ApiParams (name="step", type="integer", required=true, description="步骤ID（1或4）")
+     * @ApiReturn ({'code':'1','msg':'获取成功','data':{'step_name':'','content':''}})
+     */
+    public function agreementContent()
+    {
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录');
+        }
+
+        $step = $this->request->param('step/d', 1);
+        
+        // 只支持协议签署步骤
+        if (!in_array($step, [1, 4])) {
+            $this->error('此接口仅用于协议签署步骤');
+        }
+
+        // 获取流程配置
+        $flowConfig = CardFlowConfig::where('step', $step)
+            ->where('status', 'normal')
+            ->find();
+        
+        if (!$flowConfig) {
+            $this->error('流程配置不存在');
+        }
+
+        // 获取协议流程列表（用于组装协议内容）
+        $agreementFlows = CardAgreementFlow::where('step_id', $step)
+            ->order('flow_step asc')
+            ->select();
+
+        // 组装协议内容
+        $content = '';
+        foreach ($agreementFlows as $flow) {
+            if (!empty($flow->flow_desc)) {
+                $content .= $flow->flow_desc . "\n\n";
+            }
+        }
+
+        // 如果没有协议流程配置，使用步骤描述作为默认内容
+        if (empty($content) && !empty($flowConfig->step_desc)) {
+            $content = $flowConfig->step_desc;
+        }
+
+        // 如果还是没有内容，使用默认协议模板
+        if (empty($content)) {
+            $content = "请在此处配置协议内容。\n\n协议内容可以从后台管理系统配置。";
+        }
+
+        $this->success('获取成功', [
+            'step' => $step,
+            'step_name' => $flowConfig->step_name,
+            'content' => $content,
+        ]);
     }
 
     /**

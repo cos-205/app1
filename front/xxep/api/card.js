@@ -99,8 +99,8 @@ export default {
   }),
 
   /**
-   * 签署协议（步骤1专用）
-   * @param {Object} data { step: 步骤ID（固定为1） }
+   * 签署协议（步骤1和步骤4）
+   * @param {Object} data { step: 步骤ID（1或4） }
    * @returns {Promise}
    */
   signAgreement: (data) => $request({
@@ -110,6 +110,21 @@ export default {
     custom: {
       showLoading: true,
       loadingMsg: '签署中...',
+      auth: true,
+    },
+  }),
+
+  /**
+   * 获取协议内容（用于协议签署页面）
+   * @param {Object} params { step: 步骤ID（1或4） }
+   * @returns {Promise}
+   */
+  agreementContent: (params) => $request({
+    url: '/api/card/agreementContent',
+    method: 'GET',
+    params,
+    custom: {
+      showLoading: false,
       auth: true,
     },
   }),

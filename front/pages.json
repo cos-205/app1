@@ -134,6 +134,19 @@
       }
     },
     {
+      "path": "pages/user/setup-guide",
+      "style": {
+        "navigationBarTitleText": "继续使用系统功能",
+        "enablePullDownRefresh": false
+      },
+      "meta": {
+        "auth": true,
+        "sync": false,
+        "title": "继续使用系统功能",
+        "group": "用户中心"
+      }
+    },
+    {
       "path": "pages/user/bind-alipay",
       "style": {
         "navigationBarTitleText": "绑定支付宝",
@@ -1057,6 +1070,32 @@
             "auth": true,
             "sync": false,
             "title": "协议处理进度",
+            "group": "金卡流程"
+          }
+        },
+        {
+          "path": "pay-setup",
+          "style": {
+            "navigationBarTitleText": "开通支付功能",
+            "enablePullDownRefresh": false
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "开通支付功能",
+            "group": "金卡流程"
+          }
+        },
+        {
+          "path": "info-confirm",
+          "style": {
+            "navigationBarTitleText": "信息确认",
+            "enablePullDownRefresh": false
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "信息确认",
             "group": "金卡流程"
           }
         }

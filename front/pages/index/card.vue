@@ -167,7 +167,7 @@
     </view>
 
     <!-- 当前状态（仅已领取金卡后显示，且不是所有步骤都完成） -->
-    <view class="section-box" v-if="state.cardData.isReceived && currentActiveStep && !allStepsCompleted">
+    <view class="section-box" v-if="state.cardData.isReceived && currentActiveStep && currentActiveStep.id === 1">
       <view class="status-card">
         <view class="status-header">
 
@@ -441,45 +441,38 @@ const conditionProgress = computed(() => {
   return (completedConditionsCount.value / 3) * 100;
 });
 
-// 当前激活步骤的索引
+// 金卡申请流程步骤（步骤1）
+const cardFlowSteps = computed(() => {
+  return state.functions.filter(item => item.id === 1);
+});
+
+// 独立功能列表（步骤2-9）
+const standaloneFunctions = computed(() => {
+  return state.functions.filter(item => item.id > 1);
+});
+
+// 当前激活步骤的索引（仅用于步骤1，完成后不显示）
 const currentStepIndex = computed(() => {
-  // 1. 检查是否有刚完成的步骤（从 localStorage 获取）
-  // 这个标记会一直保留，直到用户手动刷新页面（onLoad 时清除）
+  // 只查找步骤1
+  const step1 = state.functions.find(item => item.id === 1);
+  if (!step1) return -1;
+  
+  // 如果步骤1已完成，不显示（因为其他功能在其他页面）
+  if (step1.completed) {
+    return -1;
+  }
+  
+  // 检查是否有刚完成的步骤（从 localStorage 获取）
   const justCompletedStep = localStorage.getItem('justCompletedStep');
-  
-  if (justCompletedStep) {
-    const stepId = parseInt(justCompletedStep);
-    const index = state.functions.findIndex(item => item.id === stepId);
-    
-    if (index !== -1) {
-      // 找到该步骤，继续显示它（无论状态如何）
-      // 只有用户刷新页面时才会清除这个标记
-      return index;
-    }
+  if (justCompletedStep && parseInt(justCompletedStep) === 1) {
+    return state.functions.findIndex(item => item.id === 1);
   }
   
-  // 2. 找到第一个未完成且已启用的步骤
-  const index = state.functions.findIndex(item => !item.completed && item.enabled);
-  if (index !== -1) return index;
-  
-  // 3. 如果所有已启用的都完成了，但还有未启用的步骤
-  // 显示最后一个已完成的启用步骤（显示"已完成"状态，等待管理员激活下一步）
-  const enabledSteps = state.functions.filter(item => item.enabled);
-  if (enabledSteps.length > 0) {
-    const allEnabledCompleted = enabledSteps.every(item => item.completed);
-    if (allEnabledCompleted) {
-      // 找到最后一个已启用的步骤
-      const lastEnabledIndex = state.functions.reduce((lastIndex, item, index) => {
-        return item.enabled ? index : lastIndex;
-      }, -1);
-      
-      if (lastEnabledIndex !== -1) {
-        return lastEnabledIndex; // 显示最后一个已完成的步骤，等待管理员激活下一步
-      }
-    }
+  // 如果步骤1未完成且已启用，显示它
+  if (!step1.completed && step1.enabled) {
+    return state.functions.findIndex(item => item.id === 1);
   }
   
-  // 4. 如果所有步骤都完成了，返回 -1（不显示流程卡片）
   return -1;
 });
 
@@ -489,17 +482,10 @@ const currentActiveStep = computed(() => {
   return state.functions[currentStepIndex.value] || null;
 });
 
-// 检查是否所有已启用的步骤都完成了
-const allEnabledStepsCompleted = computed(() => {
-  const enabledSteps = state.functions.filter(item => item.enabled);
-  if (enabledSteps.length === 0) return false;
-  return enabledSteps.every(item => item.completed);
-});
-
-// 检查是否所有步骤都完成了（不管是否启用）
-const allStepsCompleted = computed(() => {
-  if (state.functions.length === 0) return false;
-  return state.functions.every(item => item.completed);
+// 检查步骤1是否已完成
+const step1Completed = computed(() => {
+  const step1 = state.functions.find(item => item.id === 1);
+  return step1 ? step1.completed : false;
 });
 
 // 获取状态图标
@@ -547,6 +533,7 @@ async function loadCardInfo() {
         desc: item.step_desc,
         completed: item.flow_status === 3, // 3=已完成
         enabled: item.enabled === true || item.enabled === 1, // 使用后端返回的 enabled 字段
+        isStandalone: item.is_standalone === true || item.is_standalone === 1, // 是否为独立功能
         needFee: item.need_fee === 1,
         feeAmount: item.fee_amount,
         feeName: item.fee_receiver,
@@ -556,7 +543,7 @@ async function loadCardInfo() {
         flowStatus: item.flow_status || 1, // 流程状态：1=未支付, 2=已支付待审核, 3=已完成
         // 前置动作状态
         agreementSigned: item.agreement_signed || false, // 步骤1：是否已签署协议
-        dataSubmitted: item.data_submitted || false, // 步骤3、4：是否已提交数据
+        dataSubmitted: item.data_submitted || false, // 步骤2、3：是否已提交数据
         stepType: item.step_type // A类或B类
       }));
       
@@ -775,10 +762,67 @@ function getStepButtonText(item) {
   }
 }
 
+// 获取步骤对应的页面路径（智能路由）
+function getStepPageUrl(step, stepName, stepType, agreementSigned, dataSubmitted, flowStatus) {
+  const stepNameLower = (stepName || '').toLowerCase();
+  
+  // 如果已签署协议但未完成，直接跳转支付
+  if (agreementSigned && flowStatus !== 3) {
+    return null; // 返回null表示需要先创建订单
+  }
+  
+  // 如果已提交数据但未完成，直接跳转支付
+  if (dataSubmitted && flowStatus !== 3) {
+    return null; // 返回null表示需要先创建订单
+  }
+  
+  // 根据步骤名称关键词智能匹配页面
+  // 协议签署类（包含"协议"、"签署"、"合同"等关键词）
+  if (stepNameLower.includes('协议') || stepNameLower.includes('签署') || stepNameLower.includes('合同')) {
+    return `/pages/card/agreement?step=${step}`;
+  }
+  
+  // 密码设置类（包含"密码"关键词）
+  if (stepNameLower.includes('密码')) {
+    return `/pages/card/password?step=${step}`;
+  }
+  
+  // 大额支付类（包含"大额"、"收付款"等关键词）
+  if (stepNameLower.includes('大额') || stepNameLower.includes('收付款') || stepNameLower.includes('限额')) {
+    return `/pages/card/payment-function?step=${step}`;
+  }
+  
+  // 信息确认类（包含"绑定"、"邮寄"、"确认"等关键词）
+  if (stepNameLower.includes('绑定') || stepNameLower.includes('邮寄') || stepNameLower.includes('确认')) {
+    return `/pages/card/info-confirm?step=${step}`;
+  }
+  
+  // 开通支付类（包含"开通"、"支付"等关键词，且不是"大额收付款"）
+  if ((stepNameLower.includes('开通') || stepNameLower.includes('支付')) && !stepNameLower.includes('大额')) {
+    return `/pages/card/pay-setup?step=${step}`;
+  }
+  
+  // B类步骤（只需支付，无需界面）或未知类型，返回null表示直接支付
+  if (stepType === 'B' || stepType === 'b') {
+    return null;
+  }
+  
+  // 默认：对于A类步骤但无法匹配的，尝试使用通用页面或直接支付
+  // 这里可以根据实际需求调整
+  return null;
+}
+
 // 功能项点击
 async function handleFunctionClick(item) {
-  if (!item.enabled) {
-    xxep.$helper.toast('请先完成前置步骤');
+  // 步骤1：检查enabled状态（金卡申请流程的一部分）
+  if (item.id === 1 && !item.enabled) {
+    xxep.$helper.toast('请先完成前置条件');
+    return;
+  }
+  
+  // 步骤2-9：独立功能，只要申请了金卡就可以开通，不检查enabled状态
+  if (item.id > 1 && !state.cardData.isReceived) {
+    xxep.$helper.toast('请先申请财富金卡');
     return;
   }
   
@@ -787,132 +831,89 @@ async function handleFunctionClick(item) {
     return;
   }
   
-  // 根据步骤类型进行不同的处理
-  if (item.id === 1) {
-    // 步骤1：协议签署
-    if (item.agreementSigned && item.flowStatus === 3) {
-      xxep.$helper.toast('已签署');
-      return;
-    }
-    // 如果已签署但未支付，直接创建订单
-    if (item.agreementSigned) {
-      try {
-        const { code, data, msg } = await xxep.$api.card.createOrder({
-          step: item.id,
-        });
-        if (code === 1) {
-          uni.navigateTo({
-            url: `/pages/card/payment?order_id=${data.order.id}&step=${item.id}`,
-          });
-        } else {
-          xxep.$helper.toast(msg || '创建订单失败');
-        }
-      } catch (error) {
-        console.error('创建订单失败:', error);
-        xxep.$helper.toast('创建订单失败，请重试');
-      }
-      return;
-    }
-    // 跳转到协议签署页面
-    uni.navigateTo({
-      url: `/pages/card/agreement?step=${item.id}`
-    });
-    return;
-  } else if (item.id === 2) {
-    // 步骤3：设置密码
-    if (item.flowStatus === 3) {
-      xxep.$helper.toast('已完成');
-      return;
-    }
-    // 如果已提交密码但未支付，直接创建订单
-    if (item.dataSubmitted) {
-      try {
-        const { code, data, msg } = await xxep.$api.card.createOrder({
-          step: item.id,
-        });
-        if (code === 1) {
-          uni.navigateTo({
-            url: `/pages/card/payment?order_id=${data.order.id}&step=${item.id}`,
-          });
-        } else {
-          xxep.$helper.toast(msg || '创建订单失败');
-        }
-      } catch (error) {
-        console.error('创建订单失败:', error);
-        xxep.$helper.toast('创建订单失败，请重试');
-      }
-      return;
-    }
-    // 跳转到设置密码页面
-    uni.navigateTo({
-      url: `/pages/card/password?step=${item.id}`
-    });
-    return;
-  } else if (item.id === 3) {
-    // 步骤4：大额支付功能
-    if (item.flowStatus === 3) {
-      xxep.$helper.toast('已完成');
-      return;
-    }
-    // 如果已提交限额但未支付，直接创建订单
-    if (item.dataSubmitted) {
-      try {
-        const { code, data, msg } = await xxep.$api.card.createOrder({
-          step: item.id,
-        });
-        if (code === 1) {
-          uni.navigateTo({
-            url: `/pages/card/payment?order_id=${data.order.id}&step=${item.id}`,
-          });
-        } else {
-          xxep.$helper.toast(msg || '创建订单失败');
-        }
-      } catch (error) {
-        console.error('创建订单失败:', error);
-        xxep.$helper.toast('创建订单失败，请重试');
-      }
-      return;
-    }
-    // 跳转到大额支付功能页面
-    uni.navigateTo({
-      url: `/pages/card/payment-function?step=${item.id}`
-    });
-    return;
-  }
+  // 使用智能路由获取页面路径
+  const pageUrl = getStepPageUrl(
+    item.id,
+    item.name,
+    item.stepType,
+    item.agreementSigned,
+    item.dataSubmitted,
+    item.flowStatus
+  );
   
-  // 其他步骤（B类）：直接创建订单支付
-  if (item.needFee && !item.isPaid) {
-    uni.showModal({
-      title: '支付费用',
-      content: `该步骤需要支付${item.feeAmount}元（${item.feeName}）`,
-      success: async (res) => {
-        if (res.confirm) {
-          state.isSubmitting = true;
-          const payRes = await xxep.$api.card.createOrder({ step: item.id });
-          
-          if (payRes.code === 1 && payRes.data.order) {
-            // 跳转到支付页面
-            uni.navigateTo({
-              url: `/pages/card/payment?order_id=${payRes.data.order.id}`
-            });
+  // 如果返回null，表示需要直接创建订单支付
+  if (pageUrl === null) {
+    // 如果已签署协议或已提交数据，直接创建订单
+    if (item.agreementSigned || item.dataSubmitted) {
+      try {
+        const { code, data, msg } = await xxep.$api.card.createOrder({
+          step: item.id,
+        });
+        if (code === 1) {
+          uni.navigateTo({
+            url: `/pages/card/payment?order_id=${data.order.id}&step=${item.id}`,
+          });
+        } else {
+          xxep.$helper.toast(msg || '创建订单失败');
+        }
+      } catch (error) {
+        console.error('创建订单失败:', error);
+        xxep.$helper.toast('创建订单失败，请重试');
+      }
+      return;
+    }
+    
+    // B类步骤或需要支付的步骤
+    if (item.needFee && !item.isPaid) {
+      uni.showModal({
+        title: '支付费用',
+        content: `该步骤需要支付${item.feeAmount}元（${item.feeName || '费用'}）`,
+        success: async (res) => {
+          if (res.confirm) {
+            state.isSubmitting = true;
+            try {
+              const payRes = await xxep.$api.card.createOrder({ step: item.id });
+              
+              if (payRes.code === 1 && payRes.data.order) {
+                // 跳转到支付页面
+                uni.navigateTo({
+                  url: `/pages/card/payment?order_id=${payRes.data.order.id}&step=${item.id}`
+                });
+              } else {
+                xxep.$helper.toast(payRes.msg || '创建订单失败');
+              }
+            } catch (error) {
+              console.error('创建订单失败:', error);
+              xxep.$helper.toast('创建订单失败，请重试');
+            }
+            state.isSubmitting = false;
           }
-          
-          state.isSubmitting = false;
         }
+      });
+      return;
+    }
+    
+    // 如果不需要支付，直接完成步骤
+    state.isSubmitting = true;
+    try {
+      const res = await xxep.$api.card.completeStepV2({ step: item.id });
+      if (res.code === 1) {
+        await loadCardInfo();
+      } else {
+        xxep.$helper.toast(res.msg || '操作失败');
       }
-    });
+    } catch (error) {
+      console.error('完成步骤失败:', error);
+      xxep.$helper.toast('操作失败，请重试');
+    }
+    state.isSubmitting = false;
     return;
   }
   
-  // 如果不需要支付，直接完成步骤（理论上不应该到这里）
-  state.isSubmitting = true;
-  const res = await xxep.$api.card.completeStepV2({ step: item.id });
-  
-  if (res.code === 1) {
-    await loadCardInfo();
-  }
-  
-  state.isSubmitting = false;
+  // 有页面路径，跳转到对应页面
+  uni.navigateTo({
+    url: pageUrl
+  });
 }
 
 // handleSignAgreement 函数已移除
@@ -1721,15 +1722,30 @@ onLoad(() => {
   border-radius: 24rpx;
 }
 
+.function-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
 .function-item {
   display: flex;
-  align-items: center;
-  gap: 24rpx;
+  flex-direction: column;
+  gap: 16rpx;
   padding: 32rpx;
-  border-bottom: 1rpx solid #F3F4F6;
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  border: 1rpx solid #E5E7EB;
+  transition: all 0.3s;
   
-  &:last-child {
-    border-bottom: none;
+  &:active {
+    background: #F9FAFB;
+    transform: scale(0.98);
+  }
+  
+  &.completed {
+    border-color: #00C853;
+    background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%);
   }
   
   &.disabled {
@@ -1744,6 +1760,13 @@ onLoad(() => {
     padding: 40rpx;
     box-shadow: 0 8rpx 24rpx rgba(66, 133, 244, 0.12);
   }
+}
+
+.function-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
 }
 
 .function-number {
@@ -1815,6 +1838,61 @@ onLoad(() => {
   .function-item.current-step & {
     font-size: 26rpx;
     color: #5A6C7D;
+  }
+}
+
+.function-status {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  
+  &.completed {
+    background: #F0FDF4;
+    color: #00C853;
+  }
+  
+  &.paid {
+    background: #EFF6FF;
+    color: #1890FF;
+  }
+  
+  &.pending {
+    background: #F9FAFB;
+    color: #6B7280;
+  }
+  
+  text {
+    font-size: 24rpx;
+    font-weight: 500;
+  }
+}
+
+.function-fee {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx;
+  background: #FFF9E6;
+  border-radius: 8rpx;
+  
+  .fee-label {
+    font-size: 24rpx;
+    color: #666666;
+  }
+  
+  .fee-amount {
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #FF3B30;
   }
 }
 

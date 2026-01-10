@@ -75,7 +75,7 @@ const _go = (
       });
       setTimeout(() => {
         uni.navigateTo({
-          url: '/pages/user/realname',
+          url: '/pages/user/setup-guide',
         });
       }, 1500);
       return;
@@ -89,7 +89,7 @@ const _go = (
       });
       setTimeout(() => {
         uni.navigateTo({
-          url: '/pages/user/address/edit',
+          url: '/pages/user/setup-guide',
         });
       }, 1500);
       return;

@@ -168,7 +168,7 @@ async function checkPaymentStatusOnce() {
       // 支付成功
       state.paying = false;
       uni.redirectTo({
-        url: '/pages/card/payment-result?status=success&step=' + state.stepInfo.step,
+        url: '/pages/card/payment-result?status=success&step=' + state.stepInfo.step + '&order_no=' + state.orderInfo.order_no,
       });
     }
   } catch (error) {
@@ -323,7 +323,7 @@ async function checkPaymentResult() {
         
         // 支付成功，跳转到结果页
         uni.redirectTo({
-          url: '/pages/card/payment-result?status=success&step=' + state.stepInfo.step,
+          url: '/pages/card/payment-result?status=success&step=' + state.stepInfo.step + '&order_no=' + state.orderInfo.order_no,
         });
       }
 

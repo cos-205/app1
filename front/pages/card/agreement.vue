@@ -1,56 +1,19 @@
 <template>
-  <s-layout title="协议签署" :bgStyle="{ color: '#F8F9FA' }">
+  <s-layout :title="state.stepInfo.step_name || '协议签署'" :bgStyle="{ color: '#F8F9FA' }">
     <view class="agreement-page">
 
       <!-- 协议内容 -->
       <view class="agreement-content">
-        <view class="agreement-title">财富金卡使用协议</view>
+        <view class="agreement-title">{{ state.agreementTitle || state.stepInfo.step_name || '协议内容' }}</view>
         
-        <view class="agreement-text">
-          <text class="agreement-section">第一条 协议目的</text>
-          <text class="agreement-paragraph">
-            本协议旨在明确财富金卡持卡人与发卡方之间的权利和义务，保障双方合法权益。
+        <view class="agreement-text" v-if="state.agreementContent">
+          <text class="agreement-paragraph" v-for="(paragraph, index) in state.agreementParagraphs" :key="index">
+            {{ paragraph }}
           </text>
-
-          <text class="agreement-section">第二条 金卡功能</text>
-          <text class="agreement-paragraph">
-            财富金卡为持卡人提供以下服务：
-            \n1. 大额收付款功能
-            \n2. 专属理财通道
-            \n3. VIP客户服务
-            \n4. 积分奖励计划
-          </text>
-
-          <text class="agreement-section">第三条 持卡人义务</text>
-          <text class="agreement-paragraph">
-            持卡人应当：
-            \n1. 提供真实有效的身份信息
-            \n2. 妥善保管卡片及密码
-            \n3. 按规定完成实名认证
-            \n4. 遵守相关法律法规
-          </text>
-
-          <text class="agreement-section">第四条 费用说明</text>
-          <text class="agreement-paragraph">
-            1. 金卡开卡需支付工本费300元
-            \n2. 所有费用在完成全部流程后退还
-            \n3. 如审核未通过，已支付费用原路退回
-          </text>
-
-          <text class="agreement-section">第五条 隐私保护</text>
-          <text class="agreement-paragraph">
-            我们承诺严格保护您的个人信息，不会向第三方泄露或出售。所有信息仅用于金卡申请及后续服务。
-          </text>
-
-          <text class="agreement-section">第六条 协议变更</text>
-          <text class="agreement-paragraph">
-            如协议条款发生变更，我们将通过站内信、短信等方式通知您。继续使用金卡服务即视为同意变更后的协议。
-          </text>
-
-          <text class="agreement-section">第七条 其他条款</text>
-          <text class="agreement-paragraph">
-            本协议未尽事宜，按照国家相关法律法规执行。如有争议，双方应友好协商解决。
-          </text>
+        </view>
+        <view class="agreement-loading" v-else>
+          <uni-icons type="spinner-cycle" size="40" color="#999999" />
+          <text>加载协议内容中...</text>
         </view>
 
         <!-- 阅读时长提示 -->
@@ -97,7 +60,7 @@
               :disabled="!state.canAgree || state.agreementSigned"
               color="#667EEA" 
             />
-            <text>我已阅读并同意《财富金卡使用协议》</text>
+            <text>我已阅读并同意《{{ state.agreementTitle || '协议' }}》</text>
           </label>
         </checkbox-group>
       </view>
@@ -150,20 +113,68 @@ const state = reactive({
   agreementSigned: false, // 是否已签署协议
   flowStatus: 1, // 流程状态：1=未支付, 2=已支付待审核, 3=已完成
   feeAmount: 0, // 费用金额
+  agreementTitle: '', // 协议标题
+  agreementContent: '', // 协议内容
+  agreementParagraphs: [], // 协议段落数组
+  stepInfo: {
+    step: 0,
+    step_name: '',
+    description: '',
+  }, // 步骤信息
 });
 
 let readTimer = null;
 
-onLoad((options) => {
+onLoad(async (options) => {
   if (options.step) {
-    state.step = options.step;
+    state.step = parseInt(options.step);
+    state.stepInfo.step = parseInt(options.step);
   }
-  loadUserInfo();
+  // 先加载用户信息和步骤配置，再加载协议内容
+  await loadUserInfo();
+  await loadAgreementContent();
 });
 
 onMounted(() => {
   startReadTimer();
 });
+
+// 加载协议内容
+async function loadAgreementContent() {
+  try {
+    const { code, data, msg } = await xxep.$api.card.agreementContent({
+      step: state.step,
+    });
+    
+    if (code === 1) {
+      // 更新步骤信息
+      state.stepInfo.step = data.step || state.step;
+      state.stepInfo.step_name = data.step_name || '协议签署';
+      state.agreementTitle = data.step_name || '协议内容';
+      state.agreementContent = data.content || '';
+      
+      // 将协议内容按段落分割
+      if (state.agreementContent) {
+        state.agreementParagraphs = state.agreementContent
+          .split('\n')
+          .filter(p => p.trim().length > 0)
+          .map(p => p.trim());
+      }
+    } else {
+      xxep.$helper.toast(msg || '加载协议内容失败');
+      // 使用默认内容
+      state.stepInfo.step_name = '协议签署';
+      state.agreementTitle = '协议内容';
+      state.agreementContent = '请稍后重试加载协议内容。';
+    }
+  } catch (error) {
+    console.error('加载协议内容失败:', error);
+    // 使用默认内容
+    state.stepInfo.step_name = '协议签署';
+    state.agreementTitle = '协议内容';
+    state.agreementContent = '加载协议内容失败，请稍后重试。';
+  }
+}
 
 // 加载用户信息
 async function loadUserInfo() {
@@ -182,14 +193,19 @@ async function loadUserInfo() {
         state.agreementSigned = data.card_status.agreement_signed || false;
       }
       
-      // 获取步骤1的费用信息和状态
+      // 获取当前步骤的费用信息和状态
       if (data.steps && Array.isArray(data.steps)) {
-        const step1 = data.steps.find(item => item.step === 1);
-        if (step1) {
-          state.feeAmount = step1.fee_amount || 0;
-          state.flowStatus = step1.flow_status || 1;
+        const currentStep = data.steps.find(item => item.step === state.step);
+        if (currentStep) {
+          state.stepInfo = {
+            step: currentStep.step,
+            step_name: currentStep.step_name || '协议签署',
+            description: currentStep.step_desc || '',
+          };
+          state.feeAmount = currentStep.fee_amount || 0;
+          state.flowStatus = currentStep.flow_status || 1;
           // 如果已签署协议，更新状态
-          if (step1.agreement_signed) {
+          if (currentStep.agreement_signed) {
             state.agreementSigned = true;
           }
         }
@@ -328,27 +344,6 @@ onUnmounted(() => {
   padding: 20rpx;
 }
 
-.step-indicator {
-  background: linear-gradient(135deg, #667EEA 0%, #667EEA 100%);
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.step-num {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.step-name {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #FFFFFF;
-}
-
 .agreement-content {
   background: #FFFFFF;
   border-radius: 16rpx;
@@ -384,6 +379,22 @@ onUnmounted(() => {
   color: #666666;
   line-height: 1.8;
   text-align: justify;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.agreement-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 0;
+  gap: 20rpx;
+  
+  text {
+    font-size: 26rpx;
+    color: #999999;
+  }
 }
 
 .read-timer {
