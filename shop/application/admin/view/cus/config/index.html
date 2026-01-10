@@ -229,6 +229,49 @@
                                 </el-row>
                             </div>
                         </el-form-item>
+                        
+                        <!-- 新增：功能开关配置 -->
+                        <div class="sa-title is-line">功能开关</div>
+                        <el-form-item label="隐藏提现功能">
+                            <div>
+                                <div class="sa-flex">
+                                    <el-switch v-model="form.model.hide_withdraw" class="sa-m-r-8" :active-value="1"
+                                        :inactive-value="0"></el-switch>
+                                    <div class="label-tip" :class="form.model.hide_withdraw == 1?'sa-color--primary':''">
+                                        {{form.model.hide_withdraw == 1?'已隐藏':'显示中'}}
+                                    </div>
+                                </div>
+                                <div class="tip">
+                                    开启后，前端将隐藏提现相关功能入口
+                                </div>
+                            </div>
+                        </el-form-item>
+                        <el-form-item label="隐藏入场券功能">
+                            <div>
+                                <div class="sa-flex">
+                                    <el-switch v-model="form.model.hide_entry_ticket" class="sa-m-r-8" :active-value="1"
+                                        :inactive-value="0"></el-switch>
+                                    <div class="label-tip" :class="form.model.hide_entry_ticket == 1?'sa-color--primary':''">
+                                        {{form.model.hide_entry_ticket == 1?'已隐藏':'显示中'}}
+                                    </div>
+                                </div>
+                                <div class="tip">
+                                    开启后，前端将隐藏入场券相关功能入口
+                                </div>
+                            </div>
+                        </el-form-item>
+                        
+                        <!-- 新增：专员信息配置 -->
+                        <div class="sa-title is-line">专员信息</div>
+                        <el-form-item label="专员名称" prop="specialist_name">
+                            <el-input class="sa-w-360" v-model="form.model.specialist_name" placeholder="请输入专员名称"></el-input>
+                        </el-form-item>
+                        <el-form-item label="专员号码" prop="specialist_number">
+                            <el-input class="sa-w-360" v-model="form.model.specialist_number" placeholder="请输入专员号码（土豆号）"></el-input>
+                            <div class="tip">
+                                专员号码将显示在前端相关位置，用于用户联系专员
+                            </div>
+                        </el-form-item>
                     </template>
 
                     <!-- 用户配置 -->
@@ -1016,6 +1059,49 @@
                         <el-form-item label="连接持续性" prop="persistent">
                             <el-switch v-model="form.model.persistent" :active-value="true" :inactive-value="false">
                             </el-switch>
+                        </el-form-item>
+                    </template>
+
+                    <!-- 金卡配置 -->
+                    <template v-if="state.tabActive == 'cus/config/card'">
+                        <div class="sa-title is-line">功能开关</div>
+                        <el-form-item label="隐藏提现功能">
+                            <div>
+                                <div class="sa-flex">
+                                    <el-switch v-model="form.model.hide_withdraw" class="sa-m-r-8" :active-value="1"
+                                        :inactive-value="0"></el-switch>
+                                    <div class="label-tip" :class="form.model.hide_withdraw == 1?'sa-color--primary':''">
+                                        {{form.model.hide_withdraw == 1?'已隐藏':'显示中'}}
+                                    </div>
+                                </div>
+                                <div class="tip">
+                                    开启后，前端将隐藏提现相关功能入口
+                                </div>
+                            </div>
+                        </el-form-item>
+                        <el-form-item label="隐藏入场券功能">
+                            <div>
+                                <div class="sa-flex">
+                                    <el-switch v-model="form.model.hide_entry_ticket" class="sa-m-r-8" :active-value="1"
+                                        :inactive-value="0"></el-switch>
+                                    <div class="label-tip" :class="form.model.hide_entry_ticket == 1?'sa-color--primary':''">
+                                        {{form.model.hide_entry_ticket == 1?'已隐藏':'显示中'}}
+                                    </div>
+                                </div>
+                                <div class="tip">
+                                    开启后，前端将隐藏入场券相关功能入口
+                                </div>
+                            </div>
+                        </el-form-item>
+                        <div class="sa-title is-line">专员信息配置</div>
+                        <el-form-item label="专员名称" prop="specialist_name">
+                            <el-input class="sa-w-360" v-model="form.model.specialist_name" placeholder="请输入专员名称"></el-input>
+                        </el-form-item>
+                        <el-form-item label="专员号码" prop="specialist_number">
+                            <el-input class="sa-w-360" v-model="form.model.specialist_number" placeholder="请输入专员号码（土豆号）"></el-input>
+                            <div class="tip">
+                                专员号码将显示在前端相关位置，用于用户联系专员
+                            </div>
                         </el-form-item>
                     </template>
                 </el-form>

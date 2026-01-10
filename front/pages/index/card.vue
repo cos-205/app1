@@ -305,7 +305,7 @@
             <view class="guide-number">3</view>
             <view class="guide-info">
               <text class="guide-title">添加专员</text>
-              <text class="guide-detail">务必添加陈亮专员土豆号<text class="specialist-id">【chen520】</text>加速审核制卡加速汇款到账使用</text>
+              <text class="guide-detail">务必添加{{ appInfo.specialist_name || '陈亮' }}专员土豆号<text class="specialist-id">【{{ appInfo.specialist_number || 'chen520' }}】</text>加速审核制卡加速汇款到账使用</text>
             </view>
           </view>
         </view>
@@ -315,10 +315,10 @@
           <button class="action-btn secondary" @tap="closeSuccessModal">
             <text>我知道了</text>
           </button>
-          <button class="action-btn primary" @tap="handleScreenshot">
+          <!-- <button class="action-btn primary" @tap="handleScreenshot">
             <uni-icons type="image" size="18" color="#FFFFFF" />
             <text>立即截图</text>
-          </button>
+          </button> -->
         </view>
       </view>
     </view>
@@ -329,6 +329,9 @@
 import { reactive, computed } from 'vue';
 import { onShow, onPullDownRefresh, onLoad } from '@dcloudio/uni-app';
 import xxep from '@/xxep';
+
+// 获取应用配置（功能开关和专员信息）
+const appInfo = computed(() => xxep.$store('app').info);
 
 // 页面状态
 const state = reactive({
@@ -567,6 +570,10 @@ async function loadCardInfo() {
         state.cardData.agreementSigned = res.data.card_status.agreement_signed;
       }
     }
+    
+    // 注意：步骤过滤已在后端 API 完成，前端无需再次过滤
+    // 后端会根据配置在返回 steps 之前就过滤掉对应的步骤
+    // 配置信息已从 app store 中获取（通过 init 接口）
     
     // 使用接口返回的申领条件
     if (res.data.apply_conditions && Array.isArray(res.data.apply_conditions)) {
@@ -921,14 +928,16 @@ async function handleFunctionClick(item) {
 
 // 联系专员
 function contactSpecialist() {
+  const specialistName = appInfo.value.specialist_name || '陈亮';
+  const specialistNumber = appInfo.value.specialist_number || 'chen520';
   uni.showModal({
     title: '联系专员',
-    content: '请添加专员土豆号：chen520',
+    content: `请添加${specialistName}专员土豆号：${specialistNumber}`,
     confirmText: '复制',
     success: (res) => {
       if (res.confirm) {
         uni.setClipboardData({
-          data: 'chen520',
+          data: specialistNumber,
           success: () => {
             xxep.$helper.toast('已复制');
           }

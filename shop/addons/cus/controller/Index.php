@@ -41,7 +41,17 @@ class Index extends Common
             $template = collection($template)->column('page', 'type');
         }
 
-        $shopConfig = sheep_config('shop.basic');
+        // 获取基础配置（不使用缓存，确保获取最新配置）
+        $shopConfig = sheep_config('shop.basic', false);
+        if (!$shopConfig) {
+            $shopConfig = [];
+        }
+
+        // 获取功能开关配置
+        $hideWithdraw = intval($shopConfig['hide_withdraw'] ?? 0);
+        $hideEntryTicket = intval($shopConfig['hide_entry_ticket'] ?? 0);
+        $specialistName = $shopConfig['specialist_name'] ?? '';
+        $specialistNumber = $shopConfig['specialist_number'] ?? '';
 
         // 客服配置
         $chatSystem = sheep_config('chat.system');
@@ -63,6 +73,12 @@ class Index extends Common
                 'about_us' => $shopConfig['about_us'],
                 'copyright' => $shopConfig['copyright'],
                 'copytime' => $shopConfig['copytime'],
+                // 功能开关配置
+                'hide_withdraw' => $hideWithdraw, // 隐藏提现功能：0=显示，1=隐藏
+                'hide_entry_ticket' => $hideEntryTicket, // 隐藏入场券功能：0=显示，1=隐藏
+                // 专员信息配置
+                'specialist_name' => $specialistName,
+                'specialist_number' => $specialistNumber,
             ],
             'platform' => [
                 'auto_login' => $platformConfig['auto_login'] ?? 0,

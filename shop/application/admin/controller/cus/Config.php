@@ -317,4 +317,27 @@ class Config extends Common
             'appid' => $wechatMpAppid
         ]);
     }
+
+    /**
+     * 金卡配置
+     */
+    public function card()
+    {
+        if ('GET' === $this->request->method()) {
+            $configs = CusConfig::getConfigs('shop.card', false);
+            // 如果配置不存在，返回默认值
+            if (!$configs) {
+                $configs = [
+                    'hide_withdraw' => 0,
+                    'hide_entry_ticket' => 0,
+                    'specialist_name' => '陈亮',
+                    'specialist_number' => 'chen520',
+                ];
+            }
+        } elseif ('POST' === $this->request->method()) {
+            $params = $this->request->param();
+            $configs = CusConfig::setConfigs('shop.card', $params);
+        }
+        $this->success('操作成功', null, $configs);
+    }
 }

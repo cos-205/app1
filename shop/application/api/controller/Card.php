@@ -313,6 +313,48 @@ class Card extends Api
             ];
         }
 
+        // 获取基础配置（从 shop.basic 读取，不使用缓存确保获取最新配置）
+        $basicConfig = \app\admin\model\cus\Config::getConfigs('shop.basic', false);
+        if (!$basicConfig) {
+            $basicConfig = [];
+        }
+        
+        // 根据配置过滤步骤（在返回给前端之前就过滤，确保数据准确性）
+        // 判断逻辑：同时判断步骤ID和步骤名称，确保准确对应
+        $hideWithdraw = intval($basicConfig['hide_withdraw'] ?? 0);
+        $hideEntryTicket = intval($basicConfig['hide_entry_ticket'] ?? 0);
+        
+        if ($hideWithdraw === 1) {
+            // 隐藏提现功能（步骤5：财富金卡APP提现至卡片）
+            $steps = array_filter($steps, function($step) {
+                // 判断步骤ID是否为5，且步骤名称包含"提现"
+                if ($step['step'] == 5) {
+                    $stepName = $step['step_name'] ?? '';
+                    // 如果步骤名称包含"提现"，则隐藏（返回false表示过滤掉）
+                    return mb_strpos($stepName, '提现', 0, 'UTF-8') === false;
+                }
+                return true;
+            });
+            // 重新索引数组
+            $steps = array_values($steps);
+        }
+        
+        if ($hideEntryTicket === 1) {
+            // 隐藏入场券功能（步骤6：邮寄支付宝会员入场证）
+            $steps = array_filter($steps, function($step) {
+                // 判断步骤ID是否为6，且步骤名称包含"入场券"或"入场证"
+                if ($step['step'] == 6) {
+                    $stepName = $step['step_name'] ?? '';
+                    // 如果步骤名称包含"入场券"或"入场证"，则隐藏（返回false表示过滤掉）
+                    return mb_strpos($stepName, '入场券', 0, 'UTF-8') === false 
+                        && mb_strpos($stepName, '入场证', 0, 'UTF-8') === false;
+                }
+                return true;
+            });
+            // 重新索引数组
+            $steps = array_values($steps);
+        }
+
         $this->success('获取成功', [
             'card_id' => $card->id,
             'card_status' => [

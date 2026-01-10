@@ -136,13 +136,13 @@
     {
       "path": "pages/user/setup-guide",
       "style": {
-        "navigationBarTitleText": "继续使用系统功能",
+        "navigationBarTitleText": "温馨提示",
         "enablePullDownRefresh": false
       },
       "meta": {
         "auth": true,
         "sync": false,
-        "title": "继续使用系统功能",
+        "title": "温馨提示",
         "group": "用户中心"
       }
     },

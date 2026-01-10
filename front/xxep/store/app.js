@@ -21,6 +21,12 @@ const app = defineStore({
       about_us: {}, // 关于我们
       copyright: '', // 版权信息 I
       copytime: '', // 版权信息 II
+      // 功能开关配置
+      hide_withdraw: 0, // 隐藏提现功能：0=显示，1=隐藏
+      hide_entry_ticket: 0, // 隐藏入场券功能：0=显示，1=隐藏
+      // 专员信息配置
+      specialist_name: '', // 专员名称
+      specialist_number: '', // 专员号码
     },
     platform: {
       payment: [], // 支持的支付方式
@@ -67,7 +73,8 @@ const app = defineStore({
 
       const res = await appApi.init(templateId);
       if (res.code === 1) {
-        this.info = res.data.app;
+        // 使用 Object.assign 确保响应式更新，特别是对于持久化存储
+        Object.assign(this.info, res.data.app || {});
         this.platform = res.data.platform;
         this.template = res.data.template;
         this.has_wechat_trade_managed = res.data.has_wechat_trade_managed;

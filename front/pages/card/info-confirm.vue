@@ -1,11 +1,11 @@
 <template>
-  <s-layout :title="state.stepInfo.step_name" :bgStyle="{ color: '#f5f5f5' }">
+  <s-layout :bgStyle="{ color: '#f5f5f5' }">
     <view class="confirm-page">
       <!-- 已完成状态 -->
       <view v-if="state.stepInfo.flow_status === 3" class="completed-container">
-        <view class="completed-icon">
+        <!-- <view class="completed-icon">
           <uni-icons type="checkmark-circle-filled" size="80" color="#00C853" />
-        </view>
+        </view> -->
         <view class="completed-title">{{ state.stepInfo.step_name }}已完成</view>
         <view class="completed-desc">您已成功完成本步骤并支付费用</view>
       </view>
@@ -14,9 +14,9 @@
       <view v-else>
         <!-- 步骤说明 -->
         <view class="step-description">
-          <view class="desc-icon">
+          <!-- <view class="desc-icon">
             <uni-icons :type="state.step === 5 ? 'wallet' : 'shop'" size="60" color="#4285F4" />
-          </view>
+          </view> -->
           <view class="desc-content">
             <view class="desc-title">{{ state.stepInfo.step_name }}</view>
             <view class="desc-text">{{ state.stepInfo.description }}</view>

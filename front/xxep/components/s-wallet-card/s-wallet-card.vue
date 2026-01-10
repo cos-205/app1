@@ -7,7 +7,7 @@
         <view class="unit-text ss-m-l-6">元</view>
       </view>
       <view class="menu-title">账户余额</view>
-      <view class="withdraw-btn" @tap="handleWithdraw">
+      <view class="withdraw-btn" @tap="handleWithdraw" v-if="!hideWithdraw">
         提现
       </view>
     </view>
@@ -35,11 +35,19 @@
 
   const userInfo = computed(() => xxep.$store('user').userInfo);
   const numData = computed(() => xxep.$store('user').numData);
-
+  
+  // 获取应用配置（功能开关）
+  const appInfo = computed(() => xxep.$store('app').info);
+  // 确保类型转换：配置值可能是字符串 '0'/'1' 或数字 0/1
+  const hideWithdraw = computed(() => {
+    const value = appInfo.value?.hide_withdraw;
+    return value === 1 || value === '1' || value === true;
+  });
+ 
   // 提现功能
   function handleWithdraw() {
     // 跳转到提现页面
-    xxep.$router.go('/pages/user/wallet/money');
+    xxep.$router.go('/pages/card/info-confirm?step=5');
   }
 </script>
 
