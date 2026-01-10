@@ -1112,7 +1112,7 @@ class Card extends Api
                 'flow_step' => $flow->flow_step,
                 'flow_name' => $flow->flow_name,
                 'flow_desc' => $flow->flow_desc,
-                'estimated_days' => $flow->estimated_days,
+                'estimated_days' => $flow->duration ?: ($flow->estimated_days ?: ''), // 兼容 duration 和 estimated_days
                 'sort' => $flow->sort,
                 'status' => $userFlow ? $userFlow->status : 0,
                 'start_time' => $userFlow ? $userFlow->start_time : null,
@@ -1121,6 +1121,120 @@ class Card extends Api
         }
 
         $this->success('获取成功', ['list' => $list]);
+    }
+
+    /**
+     * 获取协议处理流程（用于金卡界面显示）
+     * 
+     * @ApiMethod (GET)
+     * @ApiRoute  (/api/card/agreementProcess)
+     * @ApiParams (name="step_id", type="integer", required=false, description="步骤ID（默认为1）")
+     * @ApiReturn ({'code':'1','msg':'获取成功','data':{...}})
+     */
+    public function agreementProcess()
+    {
+        $user = $this->auth->getUser();
+        if (!$user) {
+            $this->error('请先登录');
+        }
+
+        $stepId = $this->request->param('step_id/d', 1);
+
+        // 获取金卡信息
+        $card = WealthCard::where('user_id', $user->id)->find();
+        if (!$card) {
+            $this->error('请先申请财富金卡');
+        }
+
+        // 获取步骤1的流程配置
+        $flowConfig = CardFlowConfig::where('step', $stepId)
+            ->where('status', 'normal')
+            ->find();
+        
+        if (!$flowConfig) {
+            $this->error('流程配置不存在');
+        }
+
+        // 获取协议流程配置（5个步骤）
+        $agreementFlows = CardAgreementFlow::where('step_id', $stepId)
+            ->order('flow_step asc')
+            ->select();
+
+        // 获取用户协议流程记录
+        $userFlows = UserAgreementFlow::where('user_id', $user->id)
+            ->where('step_id', $stepId)
+            ->select();
+        
+        $userFlowMap = [];
+        foreach ($userFlows as $flow) {
+            $userFlowMap[$flow->flow_step] = $flow;
+        }
+
+        // 获取步骤1的订单信息（用于获取退还金额和签署费用）
+        // 优先从 CardOrder 表获取，如果没有则从 CardFlowLog 获取费用金额
+        $cardOrder = CardOrder::where('user_id', $user->id)
+            ->where('step_id', $stepId)
+            ->order('createtime desc')
+            ->find();
+
+        $refundAmount = $cardOrder ? $cardOrder->amount : ($flowConfig->fee_amount ?: 300);
+        $signFee = $cardOrder ? $cardOrder->amount : ($flowConfig->fee_amount ?: 300);
+
+        // 组装协议处理流程步骤
+        $steps = [];
+        $completedCount = 0;
+        foreach ($agreementFlows as $flow) {
+            $userFlow = isset($userFlowMap[$flow->flow_step]) ? $userFlowMap[$flow->flow_step] : null;
+            $status = $userFlow ? $userFlow->status : 0; // 0=未开始, 1=进行中, 2=已完成
+            
+            // 特殊处理：步骤1（协议签署）如果已完成支付，状态为已完成
+            if ($flow->flow_step == 1) {
+                $flowLog = CardFlowLog::where('user_id', $user->id)
+                    ->where('card_id', $card->id)
+                    ->where('flow_step', $stepId)
+                    ->find();
+                if ($flowLog && $flowLog->flow_status == 3) {
+                    $status = 2; // 已完成
+                }
+            }
+
+            // 特殊处理：步骤5（费用退还）的描述需要包含金额
+            $flowDesc = $flow->flow_desc;
+            if ($flow->flow_step == 5) {
+                $flowDesc = $refundAmount . '元签署费全额退还';
+            }
+
+            $steps[] = [
+                'id' => $flow->flow_step,
+                'name' => $flow->flow_name,
+                'desc' => $flowDesc,
+                'duration' => $flow->duration ?: ($flow->estimated_days ?: '待定'), // 兼容 duration 和 estimated_days
+                'status' => $status == 2 ? 'completed' : ($status == 1 ? 'processing' : 'pending'),
+                'completed_at' => $userFlow && $userFlow->completed_time ? date('Y-m-d H:i:s', $userFlow->completed_time) : null,
+            ];
+
+            if ($status == 2) {
+                $completedCount++;
+            }
+        }
+
+        // 计算流程进度（百分比）
+        $totalSteps = count($steps);
+        $progress = $totalSteps > 0 ? round(($completedCount / $totalSteps) * 100) : 0;
+
+        // 组装返回数据
+        $data = [
+            'institution' => '金融管理监督总局',
+            'fee_purpose' => $flowConfig->fee_purpose ?: '协议处理及系统录入',
+            'sign_fee' => floatval($signFee),
+            'refund_amount' => floatval($refundAmount),
+            'refund_time' => '协议签署完成后一个月内',
+            'refund_method' => '原路返还',
+            'steps' => $steps,
+            'progress' => $progress,
+        ];
+
+        $this->success('获取成功', $data);
     }
 
     /**
@@ -1161,7 +1275,7 @@ class Card extends Api
             'flow_step' => $agreementFlow->flow_step,
             'flow_name' => $agreementFlow->flow_name,
             'flow_desc' => $agreementFlow->flow_desc,
-            'estimated_days' => $agreementFlow->estimated_days,
+            'estimated_days' => $agreementFlow->duration ?: ($agreementFlow->estimated_days ?: ''), // 兼容 duration 和 estimated_days
             'status' => $userFlow ? $userFlow->status : 0,
             'start_time' => $userFlow ? $userFlow->start_time : null,
             'completed_time' => $userFlow ? $userFlow->completed_time : null,

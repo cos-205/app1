@@ -221,8 +221,13 @@ class ExchangeRecord extends Model
      */
     public function getUserInfoAttr($value, $data)
     {
-        if (isset($data['user']) && $data['user']) {
-            $user = $data['user'];
+        // 支持驼峰和下划线命名
+        $user = $data['user'] ?? $data['User'] ?? null;
+        if ($user) {
+            // 如果是模型对象，转换为数组
+            if (is_object($user)) {
+                $user = $user->toArray();
+            }
             $nickname = $user['nickname'] ?? '';
             $mobile = $user['mobile'] ?? '';
             return $nickname ? ($nickname . ($mobile ? ' (' . $mobile . ')' : '')) : ($mobile ?: '');
@@ -238,8 +243,13 @@ class ExchangeRecord extends Model
      */
     public function getPrizeInfoAttr($value, $data)
     {
-        if (isset($data['prize']) && $data['prize']) {
-            $prize = $data['prize'];
+        // 支持驼峰和下划线命名
+        $prize = $data['prize'] ?? $data['Prize'] ?? null;
+        if ($prize) {
+            // 如果是模型对象，转换为数组
+            if (is_object($prize)) {
+                $prize = $prize->toArray();
+            }
             $name = $prize['name'] ?? '';
             $image = $prize['image'] ?? '';
             return $name . ($image ? ' [有图]' : '');
@@ -256,8 +266,16 @@ class ExchangeRecord extends Model
      */
     public function getUsedCardsCountAttr($value, $data)
     {
-        if (isset($data['wufu_cards']) && is_array($data['wufu_cards'])) {
-            return count($data['wufu_cards']);
+        // 支持驼峰和下划线命名
+        $wufuCards = $data['wufu_cards'] ?? $data['wufuCards'] ?? $data['WufuCards'] ?? null;
+        if ($wufuCards) {
+            // 如果是模型集合，转换为数组
+            if (is_object($wufuCards)) {
+                $wufuCards = $wufuCards->toArray();
+            }
+            if (is_array($wufuCards)) {
+                return count($wufuCards);
+            }
         }
         return 0;
     }

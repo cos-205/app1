@@ -177,6 +177,21 @@ export default {
   }),
 
   /**
+   * 获取协议处理流程（用于金卡界面显示）
+   * @param {Object} params { step_id: 步骤ID（默认为1） }
+   * @returns {Promise}
+   */
+  agreementProcess: (params) => $request({
+    url: '/api/card/agreementProcess',
+    method: 'GET',
+    params,
+    custom: {
+      showLoading: false,
+      auth: true,
+    },
+  }),
+
+  /**
    * 获取协议流程详情
    * @param {Object} params { user_id: 用户ID, step_id: 步骤ID, flow_step: 流程步骤 }
    * @returns {Promise}

@@ -6,6 +6,7 @@ use app\common\model\fuka\CardOrder;
 use app\common\model\fuka\CardFlowLog;
 use app\common\model\fuka\WealthCard;
 use app\common\model\fuka\UserAgreementFlow;
+use app\common\model\fuka\CardAgreementFlow;
 use app\common\model\fuka\ExchangeRecord;
 use app\common\model\fuka\Prize;
 use think\Db;
@@ -383,35 +384,77 @@ class PaymentService
 
         // 8. 确认前置动作已完成，并更新相关状态
         if ($order->step_id == 1) {
-            // 步骤1：检查是否已签署协议，如果已签署则更新为已完成
-            $agreementFlow = UserAgreementFlow::where('user_id', $order->user_id)
+            // 步骤1：支付成功后，初始化协议流程状态
+            // 1. 确保所有协议流程记录已创建
+            $agreementFlows = CardAgreementFlow::where('step_id', 1)
+                ->order('flow_step asc')
+                ->select();
+            
+            foreach ($agreementFlows as $flow) {
+                $userFlow = UserAgreementFlow::where('user_id', $order->user_id)
+                    ->where('step_id', 1)
+                    ->where('flow_step', $flow->flow_step)
+                    ->find();
+                
+                if (!$userFlow) {
+                    $userFlow = new UserAgreementFlow();
+                    $userFlow->user_id = $order->user_id;
+                    $userFlow->step_id = 1;
+                    $userFlow->flow_step = $flow->flow_step;
+                    $userFlow->status = 0; // 未开始
+                    $userFlow->save();
+                }
+            }
+            
+            // 2. 只将 flow_step=1（协议签署）标记为已完成
+            UserAgreementFlow::where('user_id', $order->user_id)
                 ->where('step_id', 1)
-                ->where('status', '>=', 1) // 已签署（进行中）
+                ->where('flow_step', 1)
+                ->update([
+                    'status' => 2, // 已完成
+                    'completed_time' => time(),
+                    'updatetime' => time()
+                ]);
+            
+            // 3. 将 flow_step=2（协议审核）标记为进行中
+            $flow2 = UserAgreementFlow::where('user_id', $order->user_id)
+                ->where('step_id', 1)
+                ->where('flow_step', 2)
                 ->find();
             
-            if ($agreementFlow) {
-                // 更新协议签署状态为已完成
-                UserAgreementFlow::where('user_id', $order->user_id)
-                    ->where('step_id', 1)
-                    ->where('status', '<', 2)
-                    ->update([
-                        'status' => 2, // 已完成
-                        'completed_time' => time(),
-                        'updatetime' => time()
-                    ]);
-                
-                output_log('info', [
-                    'title' => '协议签署状态已更新为已完成',
-                    'user_id' => $order->user_id,
-                    'step_id' => 1
-                ]);
+            if ($flow2) {
+                $flow2->status = 1; // 进行中
+                $flow2->start_time = time();
+                $flow2->updatetime = time();
+                $flow2->save();
             } else {
-                output_log('warning', [
-                    'title' => '支付成功但未找到协议签署记录',
-                    'user_id' => $order->user_id,
-                    'step_id' => 1
-                ]);
+                // 如果不存在，创建记录并设置为进行中
+                $flow2 = new UserAgreementFlow();
+                $flow2->user_id = $order->user_id;
+                $flow2->step_id = 1;
+                $flow2->flow_step = 2;
+                $flow2->status = 1; // 进行中
+                $flow2->start_time = time();
+                $flow2->save();
             }
+            
+            // 4. 明确将其他步骤（flow_step 3-5）重置为未开始（status=0）
+            // 因为签署协议时可能已经将它们设置为进行中，需要重置
+            UserAgreementFlow::where('user_id', $order->user_id)
+                ->where('step_id', 1)
+                ->where('flow_step', '>', 2) // flow_step > 2，即 3, 4, 5
+                ->update([
+                    'status' => 0, // 未开始
+                    'start_time' => null,
+                    'completed_time' => null,
+                    'updatetime' => time()
+                ]);
+            
+            output_log('info', [
+                'title' => '协议流程状态已初始化：步骤1已完成，步骤2进行中',
+                'user_id' => $order->user_id,
+                'step_id' => 1
+            ]);
         } elseif (in_array($order->step_id, [2, 3])) {
             // 步骤3、4：检查是否已提交数据
             if (empty($flowLog->extra_data)) {

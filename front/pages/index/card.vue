@@ -165,8 +165,7 @@
         </view>
       </template>
     </view>
-
-    <!-- 当前状态（仅已领取金卡后显示，且不是所有步骤都完成） -->
+    <!-- 当前状态（仅已领取金卡后显示，且步骤1未完成） -->
     <view class="section-box" v-if="state.cardData.isReceived && currentActiveStep && currentActiveStep.id === 1">
       <view class="status-card">
         <view class="status-header">
@@ -178,7 +177,7 @@
           <!-- 已完成状态 -->
           <view v-if="currentActiveStep.completed" class="status-completed">
             <uni-icons type="checkmark-circle-filled" size="24" color="#00C853" />
-            <text>{{ currentActiveStep.id === 1 ? '已签署' : '已完成' }}</text>
+            <text>已签署</text>
           </view>
         </view>
 
@@ -222,6 +221,89 @@
         </view>
       </view>
     </view>
+    <!-- 步骤1完成后：显示协议处理流程 -->
+    <view class="section-box" v-if="state.cardData.isReceived && showAgreementProcess">
+      
+
+      <!-- 退还金额卡片 -->
+      <view class="refund-card">
+        <view class="refund-header">
+          <text class="refund-title">退还金额</text>
+          <text class="refund-amount">¥{{ state.agreementProcess.refundAmount }}</text>
+        </view>
+        <view class="refund-info">
+          <text class="refund-item">退还时间:{{ state.agreementProcess.refundTime }}</text>
+          <text class="refund-item">退还方式:{{ state.agreementProcess.refundMethod }}</text>
+        </view>
+      </view>
+
+      <!-- 协议处理流程卡片 -->
+      <view class="process-card">
+        <view class="card-title">
+          <view class="title-icon-wrapper">
+            <view class="title-icon-wave"></view>
+          </view>
+          <text>协议处理流程</text>
+        </view>
+        
+        <!-- 流程步骤时间线 -->
+        <view class="process-timeline">
+          <view 
+            v-for="(step, index) in state.agreementProcess.steps" 
+            :key="step.id"
+            class="timeline-item"
+            :class="{ 'is-last': index === state.agreementProcess.steps.length - 1 }"
+          >
+            <!-- 步骤图标 -->
+            <view class="step-icon" :class="step.status">
+              <image 
+                v-if="step.status === 'completed'" 
+                class="hourglass-image"
+                src="@/static/images/hourglass.png" 
+                mode="aspectFit"
+              />
+              <view v-else class="pending-icon-inner"></view>
+            </view>
+            
+            <!-- 步骤连接线 -->
+            <view 
+              v-if="index < state.agreementProcess.steps.length - 1" 
+              class="timeline-line"
+              :class="{ 
+                'completed-line': step.status === 'completed',
+                'pending-line': step.status === 'pending' || step.status === 'processing'
+              }"
+            ></view>
+            
+            <!-- 步骤内容 -->
+            <view class="step-content">
+              <view class="step-name">{{ step.name }}</view>
+              <view class="step-desc">{{ step.desc }}</view>
+              <view class="step-duration">{{ step.duration }}</view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 流程进度条 -->
+        <view class="progress-section">
+          <view class="progress-label-wrapper">
+            <view class="progress-label">流程进度</view>
+            <view class="progress-text">{{ state.agreementProcess.progress }}%</view>
+          </view>
+          
+          <view class="progress-bar-wrapper">
+            <view class="progress-bar">
+              <view 
+                class="progress-fill" 
+                :style="{ width: state.agreementProcess.progress + '%' }"
+              ></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    
 
     <!-- 功能介绍 -->
     <view class="section-box">
@@ -353,6 +435,17 @@ const state = reactive({
     feePurpose: '',
     refundRule: ''
   },
+  // 协议处理流程数据（新增）
+  agreementProcess: {
+    institution: '金融管理监督总局',
+    feePurpose: '协议处理及系统录入',
+    signFee: 0,
+    refundAmount: 0,
+    refundTime: '协议签署完成后一个月内',
+    refundMethod: '原路返还',
+    steps: [],
+    progress: 0
+  },
   conditions: {
     memberLevel: false,
     realName: false,
@@ -372,55 +465,6 @@ const state = reactive({
       desc: '签署金卡使用协议',
       completed: false,
       enabled: true
-    },
-    {
-      id: 2,
-      name: '设置卡片密码',
-      desc: '设置金卡支付密码和取款密码',
-      completed: false,
-      enabled: false
-    },
-    {
-      id: 3,
-      name: '卡片大额收付款功能',
-      desc: '开通大额收付款功能',
-      completed: false,
-      enabled: false
-    },
-    {
-      id: 4,
-      name: '签署支付宝保密合同',
-      desc: '签署支付宝保密协议',
-      completed: false,
-      enabled: false
-    },
-    {
-      id: 5,
-      name: '财富金卡APP提现至卡片',
-      desc: '在APP中绑定金卡',
-      completed: false,
-      enabled: false
-    },
-    {
-      id: 6,
-      name: '邮寄支付宝会员入场证',
-      desc: '系统自动邮寄入场证',
-      completed: false,
-      enabled: false
-    },
-    {
-      id: 7,
-      name: '开通微信支付功能',
-      desc: '在金卡上开通微信支付',
-      completed: false,
-      enabled: false
-    },
-    {
-      id: 8,
-      name: '开通支付宝支付功能',
-      desc: '在金卡上开通支付宝支付',
-      completed: false,
-      enabled: false
     }
   ]
 });
@@ -444,15 +488,7 @@ const conditionProgress = computed(() => {
   return (completedConditionsCount.value / 3) * 100;
 });
 
-// 金卡申请流程步骤（步骤1）
-const cardFlowSteps = computed(() => {
-  return state.functions.filter(item => item.id === 1);
-});
 
-// 独立功能列表（步骤2-9）
-const standaloneFunctions = computed(() => {
-  return state.functions.filter(item => item.id > 1);
-});
 
 // 当前激活步骤的索引（仅用于步骤1，完成后不显示）
 const currentStepIndex = computed(() => {
@@ -465,8 +501,8 @@ const currentStepIndex = computed(() => {
     return -1;
   }
   
-  // 检查是否有刚完成的步骤（从 localStorage 获取）
-  const justCompletedStep = localStorage.getItem('justCompletedStep');
+  // 检查是否有刚完成的步骤（从 uni.getStorageSync 获取）
+  const justCompletedStep = uni.getStorageSync('justCompletedStep');
   if (justCompletedStep && parseInt(justCompletedStep) === 1) {
     return state.functions.findIndex(item => item.id === 1);
   }
@@ -490,6 +526,48 @@ const step1Completed = computed(() => {
   const step1 = state.functions.find(item => item.id === 1);
   return step1 ? step1.completed : false;
 });
+
+// 是否显示协议处理流程（步骤1状态为1时显示，即签署协议阶段）
+const showAgreementProcess = computed(() => {
+  const step1 = state.functions.find(item => item.id === 1);
+  if (!step1) return false;
+  // 当状态为1（签署协议阶段）或已完成时显示
+  return step1.flowStatus === 1 || step1.completed;
+});
+
+// 加载协议处理流程数据
+async function loadAgreementProcess() {
+  try {
+    const { code, data, msg } = await xxep.$api.card.agreementProcess({
+      step_id: 1
+    });
+
+    if (code === 1) {
+      // 更新协议处理流程数据
+      state.agreementProcess = {
+        institution: data.institution || '金融管理监督总局',
+        feePurpose: data.fee_purpose || '协议处理及系统录入',
+        signFee: data.sign_fee || 0,
+        refundAmount: data.refund_amount || 0,
+        refundTime: data.refund_time || '协议签署完成后一个月内',
+        refundMethod: data.refund_method || '原路返还',
+        steps: (data.steps || []).map(step => ({
+          id: step.id,
+          name: step.name,
+          desc: step.desc,
+          duration: step.duration,
+          status: step.status, // completed, processing, pending
+          completedAt: step.completed_at
+        })),
+        progress: data.progress || 0
+      };
+    } else {
+      console.error('加载协议处理流程失败:', msg);
+    }
+  } catch (error) {
+    console.error('加载协议处理流程失败:', error);
+  }
+}
 
 // 获取状态图标
 function getStatusIcon() {
@@ -528,30 +606,33 @@ async function loadCardInfo() {
       });
     }
     
-    // 流程配置列表（映射为 functions）
+    // 流程配置列表（映射为 functions，只保留步骤1）
     if (res.data.steps && Array.isArray(res.data.steps)) {
-      state.functions = res.data.steps.map((item, index) => ({
-        id: item.step,
-        name: item.step_name,
-        desc: item.step_desc,
-        completed: item.flow_status === 3, // 3=已完成
-        enabled: item.enabled === true || item.enabled === 1, // 使用后端返回的 enabled 字段
-        isStandalone: item.is_standalone === true || item.is_standalone === 1, // 是否为独立功能
-        needFee: item.need_fee === 1,
-        feeAmount: item.fee_amount,
-        feeName: item.fee_receiver,
-        feePurpose: item.fee_purpose,
-        refundRule: item.refund_rule,
-        isPaid: item.flow_status >= 2, // 2=已支付待审核, 3=已完成
-        flowStatus: item.flow_status || 1, // 流程状态：1=未支付, 2=已支付待审核, 3=已完成
-        // 前置动作状态
-        agreementSigned: item.agreement_signed || false, // 步骤1：是否已签署协议
-        dataSubmitted: item.data_submitted || false, // 步骤2、3：是否已提交数据
-        stepType: item.step_type // A类或B类
-      }));
+      // 过滤出步骤1
+      const step1Data = res.data.steps.find(item => item.step === 1);
+      if (!step1Data) {
+        state.functions = [];
+      } else {
+        state.functions = [{
+          id: step1Data.step,
+          name: step1Data.step_name,
+          desc: step1Data.step_desc,
+          completed: step1Data.flow_status === 3, // 3=已完成
+          enabled: step1Data.enabled === true || step1Data.enabled === 1, // 使用后端返回的 enabled 字段
+          needFee: step1Data.need_fee === 1,
+          feeAmount: step1Data.fee_amount,
+          feeName: step1Data.fee_receiver,
+          feePurpose: step1Data.fee_purpose,
+          refundRule: step1Data.refund_rule,
+          isPaid: step1Data.flow_status >= 2, // 2=已支付待审核, 3=已完成
+          flowStatus: step1Data.flow_status || 1, // 流程状态：1=未支付, 2=已支付待审核, 3=已完成
+          // 前置动作状态
+          agreementSigned: step1Data.agreement_signed || false, // 步骤1：是否已签署协议
+          stepType: step1Data.step_type // A类或B类
+        }];
       
       // 检查步骤1（协议签署）状态
-      const step1 = state.functions.find(item => item.id === 1);
+      const step1 = state.functions[0];
       if (step1) {
         // 如果已签署协议（不管是否完成支付），都标记为已签署
         state.cardData.agreementSigned = step1.agreementSigned || false;
@@ -560,9 +641,14 @@ async function loadCardInfo() {
         state.step1Info = {
           feeAmount: step1.feeAmount || 0,
           feeReceiver: step1.feeName || '',
-          feePurpose: res.data.steps[0]?.fee_purpose || '终端处理及系统收录',
-          refundRule: res.data.steps[0]?.refund_rule || '协议签署完成1个月后退还'
+          feePurpose: step1Data.fee_purpose || '终端处理及系统收录',
+          refundRule: step1Data.refund_rule || '协议签署完成1个月后退还'
         };
+        
+        // 如果步骤1状态为1（签署协议阶段）或已完成，加载协议处理流程数据
+        if (step1.flowStatus === 1 || step1.completed) {
+          loadAgreementProcess();
+        }
       }
       
       // 使用接口返回的协议签署状态（如果存在，优先使用接口返回的状态）
@@ -602,6 +688,7 @@ async function loadCardInfo() {
         target: res.data.invite_progress.target || 2,
         completed: res.data.invite_progress.completed || false
       };
+    }
     }
   }
 }
@@ -691,150 +778,56 @@ function closeSuccessModal() {
   state.showSuccessModal = false;
 }
 
-// 处理截图
-function handleScreenshot() {
-  // state.showSuccessModal = false;
-  xxep.$helper.toast('请使用手机截图功能截取当前页面');
-}
-
-// 获取状态标题
-function getStatusTitle(item) {
-  if (item.completed) {
-    // 步骤1（协议签署）显示"已签署"，其他步骤显示"已完成"
-    return item.id === 1 ? '已签署' : '已完成';
-  } else if (item.enabled) {
-    return '进行中';
-  } else {
-    return '未开始';
-  }
-}
-
-// isShowingJustCompletedStep 和 goToNextStep 函数已移除
-// 不再需要"继续下一步"按钮，用户刷新页面即可看到下一步
-
-// 获取步骤按钮文案
+// 获取步骤按钮文案（仅步骤1）
 function getStepButtonText(item) {
   // 如果已完成，不显示按钮（由上面的已完成状态显示）
   if (item.completed) {
-    // 步骤1（协议签署）返回"已签署"，其他步骤返回"已完成"
-    return item.id === 1 ? '已签署' : '已完成';
+    return '已签署';
   }
   
   // 步骤1：协议签署
-  if (item.id === 1) {
-    if (item.agreementSigned && item.flowStatus === 3) {
-      return '已签署';
-    } else if (item.agreementSigned) {
-      // 已签署但未支付
-      return item.feeAmount > 0 ? `去支付 ¥${item.feeAmount}` : '去支付';
-    } else {
-      // 未签署
-      return item.feeAmount > 0 ? `签署协议并支付 ¥${item.feeAmount}` : '签署协议并支付';
-    }
-  }
-  
-  // 步骤3：设置密码
-  if (item.id === 2) {
-    if (item.dataSubmitted && item.flowStatus === 3) {
-      return '已完成';
-    } else if (item.dataSubmitted) {
-      // 已提交密码但未支付
-      return item.feeAmount > 0 ? `去支付 ¥${item.feeAmount}` : '去支付';
-    } else {
-      // 未提交密码
-      return item.feeAmount > 0 ? `设置密码并支付 ¥${item.feeAmount}` : '设置密码并支付';
-    }
-  }
-  
-  // 步骤4：大额支付功能
-  if (item.id === 3) {
-    if (item.dataSubmitted && item.flowStatus === 3) {
-      return '已完成';
-    } else if (item.dataSubmitted) {
-      // 已提交限额但未支付
-      return item.feeAmount > 0 ? `去支付 ¥${item.feeAmount}` : '去支付';
-    } else {
-      // 未提交限额
-      return item.feeAmount > 0 ? `提交并支付 ¥${item.feeAmount}` : '提交并支付';
-    }
-  }
-  
-  // 其他步骤（B类）：直接支付
-  if (item.flowStatus === 3) {
-    return '已完成';
-  } else if (item.isPaid) {
-    return '已支付';
+  if (item.agreementSigned && item.flowStatus === 3) {
+    return '已签署';
+  } else if (item.agreementSigned) {
+    // 已签署但未支付
+    return item.feeAmount > 0 ? `去支付 ¥${item.feeAmount}` : '去支付';
   } else {
-    return item.feeAmount > 0 ? `立即支付 ¥${item.feeAmount}` : '立即完成';
+    // 未签署
+    return item.feeAmount > 0 ? `签署协议` : '签署协议';
   }
 }
 
-// 获取步骤对应的页面路径（智能路由）
-function getStepPageUrl(step, stepName, stepType, agreementSigned, dataSubmitted, flowStatus) {
-  const stepNameLower = (stepName || '').toLowerCase();
-  
-  // 如果已签署协议但未完成，直接跳转支付
-  if (agreementSigned && flowStatus !== 3) {
-    return null; // 返回null表示需要先创建订单
-  }
-  
-  // 如果已提交数据但未完成，直接跳转支付
-  if (dataSubmitted && flowStatus !== 3) {
-    return null; // 返回null表示需要先创建订单
-  }
-  
-  // 根据步骤名称关键词智能匹配页面
-  // 协议签署类（包含"协议"、"签署"、"合同"等关键词）
-  if (stepNameLower.includes('协议') || stepNameLower.includes('签署') || stepNameLower.includes('合同')) {
+// 获取步骤对应的页面路径（仅步骤1）
+function getStepPageUrl(step, stepName, stepType, agreementSigned, flowStatus) {
+  // 步骤1：协议签署
+  if (step === 1) {
+    // 如果已签署协议但未完成，直接跳转支付
+    if (agreementSigned && flowStatus !== 3) {
+      return null; // 返回null表示需要先创建订单
+    }
+    // 协议签署页面
     return `/pages/card/agreement?step=${step}`;
   }
   
-  // 密码设置类（包含"密码"关键词）
-  if (stepNameLower.includes('密码')) {
-    return `/pages/card/password?step=${step}`;
-  }
-  
-  // 大额支付类（包含"大额"、"收付款"等关键词）
-  if (stepNameLower.includes('大额') || stepNameLower.includes('收付款') || stepNameLower.includes('限额')) {
-    return `/pages/card/payment-function?step=${step}`;
-  }
-  
-  // 信息确认类（包含"绑定"、"邮寄"、"确认"等关键词）
-  if (stepNameLower.includes('绑定') || stepNameLower.includes('邮寄') || stepNameLower.includes('确认')) {
-    return `/pages/card/info-confirm?step=${step}`;
-  }
-  
-  // 开通支付类（包含"开通"、"支付"等关键词，且不是"大额收付款"）
-  if ((stepNameLower.includes('开通') || stepNameLower.includes('支付')) && !stepNameLower.includes('大额')) {
-    return `/pages/card/pay-setup?step=${step}`;
-  }
-  
-  // B类步骤（只需支付，无需界面）或未知类型，返回null表示直接支付
-  if (stepType === 'B' || stepType === 'b') {
-    return null;
-  }
-  
-  // 默认：对于A类步骤但无法匹配的，尝试使用通用页面或直接支付
-  // 这里可以根据实际需求调整
+  // 其他步骤不应该出现在这里
   return null;
 }
 
-// 功能项点击
+// 功能项点击（仅步骤1）
 async function handleFunctionClick(item) {
-  // 步骤1：检查enabled状态（金卡申请流程的一部分）
-  if (item.id === 1 && !item.enabled) {
+  // 只处理步骤1
+  if (item.id !== 1) {
+    return;
+  }
+  
+  // 检查enabled状态
+  if (!item.enabled) {
     xxep.$helper.toast('请先完成前置条件');
     return;
   }
   
-  // 步骤2-9：独立功能，只要申请了金卡就可以开通，不检查enabled状态
-  if (item.id > 1 && !state.cardData.isReceived) {
-    xxep.$helper.toast('请先申请财富金卡');
-    return;
-  }
-  
   if (item.completed) {
-    xxep.$helper.toast('已完成');
+    xxep.$helper.toast('已签署');
     return;
   }
   
@@ -844,21 +837,20 @@ async function handleFunctionClick(item) {
     item.name,
     item.stepType,
     item.agreementSigned,
-    item.dataSubmitted,
     item.flowStatus
   );
   
   // 如果返回null，表示需要直接创建订单支付
   if (pageUrl === null) {
-    // 如果已签署协议或已提交数据，直接创建订单
-    if (item.agreementSigned || item.dataSubmitted) {
+    // 如果已签署协议，直接创建订单
+    if (item.agreementSigned) {
       try {
         const { code, data, msg } = await xxep.$api.card.createOrder({
-          step: item.id,
+          step: item.id
         });
         if (code === 1) {
           uni.navigateTo({
-            url: `/pages/card/payment?order_id=${data.order.id}&step=${item.id}`,
+            url: `/pages/card/payment?order_id=${data.order.id}&step=${item.id}`
           });
         } else {
           xxep.$helper.toast(msg || '创建订单失败');
@@ -869,83 +861,19 @@ async function handleFunctionClick(item) {
       }
       return;
     }
-    
-    // B类步骤或需要支付的步骤
-    if (item.needFee && !item.isPaid) {
-      uni.showModal({
-        title: '支付费用',
-        content: `该步骤需要支付${item.feeAmount}元（${item.feeName || '费用'}）`,
-        success: async (res) => {
-          if (res.confirm) {
-            state.isSubmitting = true;
-            try {
-              const payRes = await xxep.$api.card.createOrder({ step: item.id });
-              
-              if (payRes.code === 1 && payRes.data.order) {
-                // 跳转到支付页面
-                uni.navigateTo({
-                  url: `/pages/card/payment?order_id=${payRes.data.order.id}&step=${item.id}`
-                });
-              } else {
-                xxep.$helper.toast(payRes.msg || '创建订单失败');
-              }
-            } catch (error) {
-              console.error('创建订单失败:', error);
-              xxep.$helper.toast('创建订单失败，请重试');
-            }
-            state.isSubmitting = false;
-          }
-        }
-      });
-      return;
-    }
-    
-    // 如果不需要支付，直接完成步骤
-    state.isSubmitting = true;
-    try {
-      const res = await xxep.$api.card.completeStepV2({ step: item.id });
-      if (res.code === 1) {
-        await loadCardInfo();
-      } else {
-        xxep.$helper.toast(res.msg || '操作失败');
-      }
-    } catch (error) {
-      console.error('完成步骤失败:', error);
-      xxep.$helper.toast('操作失败，请重试');
-    }
-    state.isSubmitting = false;
-    return;
   }
   
   // 有页面路径，跳转到对应页面
-  uni.navigateTo({
-    url: pageUrl
-  });
+  if (pageUrl) {
+    uni.navigateTo({
+      url: pageUrl
+    });
+  }
 }
 
 // handleSignAgreement 函数已移除
 // 协议签署现在通过步骤1的流程处理（handleFunctionClick）
 
-// 联系专员
-function contactSpecialist() {
-  const specialistName = appInfo.value.specialist_name || '陈亮';
-  const specialistNumber = appInfo.value.specialist_number || 'chen520';
-  uni.showModal({
-    title: '联系专员',
-    content: `请添加${specialistName}专员土豆号：${specialistNumber}`,
-    confirmText: '复制',
-    success: (res) => {
-      if (res.confirm) {
-        uni.setClipboardData({
-          data: specialistNumber,
-          success: () => {
-            xxep.$helper.toast('已复制');
-          }
-        });
-      }
-    }
-  });
-}
 
 // 下拉刷新
 onPullDownRefresh(() => {
@@ -961,8 +889,8 @@ onShow(() => {
 onLoad(() => {
   // 页面首次加载时，清除"刚完成步骤"的标记
   // 这样用户刷新页面后，会显示下一个待办步骤
-  localStorage.removeItem('justCompletedStep');
-  localStorage.removeItem('justCompletedTime');
+  uni.removeStorageSync('justCompletedStep');
+  uni.removeStorageSync('justCompletedTime');
   
   loadData();
 });
@@ -1063,78 +991,6 @@ onLoad(() => {
   margin-bottom: 16rpx;
 }
 
-.card-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  
-  .label {
-    font-size: 24rpx;
-    color: rgba(255, 255, 255, 0.8);
-  }
-  
-  .value {
-    font-size: 28rpx;
-    color: #FFFFFF;
-    font-weight: 500;
-  }
-  
-  &.balance {
-    margin-top: auto;
-    padding-top: 16rpx;
-    border-top: 1rpx solid rgba(255, 255, 255, 0.2);
-    
-    .value.amount {
-      font-size: 40rpx;
-      font-weight: 600;
-    }
-  }
-}
-
-.card-placeholder {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.placeholder-text {
-  font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.card-status {
-  margin-top: 24rpx;
-  display: flex;
-  justify-content: center;
-}
-
-.status-tag {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 12rpx 24rpx;
-  border-radius: 1000rpx;
-  background: #4285F4;
-  
-  text {
-    font-size: 24rpx;
-    color: #FFFFFF;
-    font-weight: 500;
-  }
-  
-  &.reviewing { background: #FF9800; }
-  &.customizing { background: #9C27B0; }
-  &.shipping { background: #00C853; }
-  &.received { background: #4CAF50; }
-}
 
 /* 通用section */
 .section-box {
@@ -1297,7 +1153,7 @@ onLoad(() => {
   display: flex;
   flex-direction: column;
   gap: 8rpx;
-  align-items: center;
+
   width: 100%;
 }
 
@@ -1358,6 +1214,7 @@ onLoad(() => {
   margin-top: 8rpx;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6rpx;
   padding: 6rpx 16rpx;
   background: #E8F5E9;
@@ -1457,8 +1314,7 @@ onLoad(() => {
   margin-top: 24rpx;
 }
 
-.apply-button,
-.sign-button {
+.apply-button {
   width: 100%;
   height: 88rpx;
   border-radius: 1000rpx;
@@ -1466,28 +1322,19 @@ onLoad(() => {
   font-weight: 600;
   border: none;
   transition: all 0.3s ease;
+  background: linear-gradient(90deg, #FFC107 0%, #FFD54F 100%);
+  color: #1F2937;
+  box-shadow: 0 8rpx 16rpx rgba(255, 193, 7, 0.3);
   
   &::after {
     border: none;
   }
-}
-
-.apply-button {
-  background: linear-gradient(90deg, #FFC107 0%, #FFD54F 100%);
-  color: #1F2937;
-  box-shadow: 0 8rpx 16rpx rgba(255, 193, 7, 0.3);
   
   &.disabled {
     background: #E5E7EB;
     box-shadow: none;
     color: #9CA3AF;
   }
-}
-
-.sign-button {
-  background: linear-gradient(90deg, #4285F4 0%, #5A9CFF 100%);
-  color: #FFFFFF;
-  box-shadow: 0 8rpx 16rpx rgba(66, 133, 244, 0.3);
 }
 
 .apply-tips {
@@ -1566,29 +1413,11 @@ onLoad(() => {
   padding: 40rpx 32rpx 32rpx;
 }
 
-.status-icon-wrap {
-  flex-shrink: 0;
-  width: 80rpx;
-  height: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #FFFFFF;
-  border-radius: 50%;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-}
-
 .status-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 8rpx;
-}
-
-.status-title {
-  font-size: 24rpx;
-  color: #6B7280;
-  font-weight: 500;
 }
 
 .status-name {
@@ -1605,40 +1434,49 @@ onLoad(() => {
 .status-details {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
-  padding: 0 32rpx 24rpx;
+  gap: 10rpx;
+  padding: 16rpx 32rpx 20rpx;
   border-top: 1rpx solid #E5E7EB;
-  padding-top: 24rpx;
-  margin-top: 8rpx;
+  background: #FAFBFC;
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16rpx 20rpx;
-  background: #FFFFFF;
-  border-radius: 12rpx;
-  border: 1rpx solid #E5E7EB;
+  padding: 5rpx 10rpx;
+  // background: #FFFFFF;
+  border-radius: 10rpx;
+  // border: 1rpx solid #E5E7EB;
+  transition: all 0.2s ease;
+  
+  &:active {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+  }
 }
 
 .detail-label {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #6B7280;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .detail-value {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #1F2937;
   font-weight: 600;
   text-align: right;
   flex: 1;
   margin-left: 20rpx;
+  word-break: break-all;
+  line-height: 1.4;
   
   &.amount {
-    color: #FF6B6B;
-    font-size: 30rpx;
+    color: #EF4444;
+    font-size: 28rpx;
+    font-weight: 700;
   }
 }
 
@@ -1665,364 +1503,6 @@ onLoad(() => {
   }
 }
 
-/* 等待提示 */
-.waiting-tip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12rpx;
-  padding: 24rpx 32rpx;
-  background: #FFF8E1;
-  border-radius: 44rpx;
-  
-  text {
-    font-size: 28rpx;
-    color: #FF9800;
-    font-weight: 500;
-  }
-}
-
-/* 等待审核卡片 */
-.waiting-card {
-  background: linear-gradient(135deg, #FFF9E6 0%, #FFFFFF 100%);
-  border: 2rpx solid #FF9800;
-  border-radius: 24rpx;
-  padding: 40rpx 32rpx;
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-  box-shadow: 0 8rpx 24rpx rgba(255, 152, 0, 0.12);
-}
-
-.waiting-icon {
-  flex-shrink: 0;
-  width: 80rpx;
-  height: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #FFFFFF;
-  border-radius: 50%;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-}
-
-.waiting-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-}
-
-.waiting-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #FF9800;
-}
-
-.waiting-desc {
-  font-size: 26rpx;
-  color: #6B7280;
-  line-height: 1.6;
-}
-
-/* 功能清单 */
-.function-list {
-  background: transparent;
-  border-radius: 24rpx;
-}
-
-.function-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.function-item {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  padding: 32rpx;
-  background: #FFFFFF;
-  border-radius: 16rpx;
-  border: 1rpx solid #E5E7EB;
-  transition: all 0.3s;
-  
-  &:active {
-    background: #F9FAFB;
-    transform: scale(0.98);
-  }
-  
-  &.completed {
-    border-color: #00C853;
-    background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%);
-  }
-  
-  &.disabled {
-    opacity: 0.5;
-  }
-  
-  &.current-step {
-    border-bottom: none;
-    background: linear-gradient(135deg, #F8F9FF 0%, #FFFFFF 100%);
-    border: 2rpx solid #4285F4;
-    border-radius: 24rpx;
-    padding: 40rpx;
-    box-shadow: 0 8rpx 24rpx rgba(66, 133, 244, 0.12);
-  }
-}
-
-.function-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16rpx;
-}
-
-.function-number {
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #4285F4 0%, #5A9CFF 100%);
-  color: #FFFFFF;
-  font-size: 28rpx;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 4rpx 12rpx rgba(66, 133, 244, 0.3);
-  
-  .function-item.completed & {
-    background: linear-gradient(135deg, #00C853 0%, #00E676 100%);
-    box-shadow: 0 4rpx 12rpx rgba(0, 200, 83, 0.3);
-  }
-  
-  .function-item.disabled & {
-    opacity: 0.6;
-  }
-}
-
-.status-completed {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12rpx;
-  padding: 20rpx;
-  background: #F0F9FF;
-  border-radius: 12rpx;
-  margin-top: 20rpx;
-
-  text {
-    font-size: 28rpx;
-    font-weight: 600;
-    color: #00C853;
-  }
-}
-
-// .next-step-button 样式已移除（不再需要"继续下一步"按钮）
-
-.function-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-}
-
-.function-name {
-  font-size: 28rpx;
-  color: #1F2937;
-  font-weight: 500;
-  
-  .function-item.current-step & {
-    font-size: 32rpx;
-    font-weight: 600;
-    color: #4285F4;
-  }
-}
-
-.function-desc {
-  font-size: 24rpx;
-  color: #6B7280;
-  
-  .function-item.current-step & {
-    font-size: 26rpx;
-    color: #5A6C7D;
-  }
-}
-
-.function-status {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-}
-
-.status-badge {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-  padding: 8rpx 16rpx;
-  border-radius: 20rpx;
-  font-size: 24rpx;
-  
-  &.completed {
-    background: #F0FDF4;
-    color: #00C853;
-  }
-  
-  &.paid {
-    background: #EFF6FF;
-    color: #1890FF;
-  }
-  
-  &.pending {
-    background: #F9FAFB;
-    color: #6B7280;
-  }
-  
-  text {
-    font-size: 24rpx;
-    font-weight: 500;
-  }
-}
-
-.function-fee {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 16rpx;
-  background: #FFF9E6;
-  border-radius: 8rpx;
-  
-  .fee-label {
-    font-size: 24rpx;
-    color: #666666;
-  }
-  
-  .fee-amount {
-    font-size: 28rpx;
-    font-weight: 600;
-    color: #FF3B30;
-  }
-}
-
-.function-status {
-  flex-shrink: 0;
-}
-
-/* 费用说明 */
-.fee-card {
-  background: #FFFFFF;
-  border-radius: 24rpx;
-  padding: 32rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
-}
-
-.fee-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #F3F4F6;
-  
-  &:last-child {
-    border-bottom: none;
-  }
-  
-  &.highlight {
-    background: #FFF9E6;
-    margin: 16rpx -32rpx -32rpx;
-    padding: 24rpx 32rpx;
-  }
-}
-
-.fee-label {
-  font-size: 28rpx;
-  color: #6B7280;
-}
-
-.fee-value {
-  font-size: 28rpx;
-  color: #1F2937;
-  font-weight: 500;
-  
-  &.refund {
-    color: #FF9800;
-    font-weight: 600;
-  }
-}
-
-/* 操作指引 */
-.guide-list {
-  background: #FFFFFF;
-  border-radius: 24rpx;
-  padding: 32rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
-  display: flex;
-  flex-direction: column;
-  gap: 32rpx;
-}
-
-.guide-item {
-  display: flex;
-  gap: 24rpx;
-}
-
-.guide-icon {
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #FFC107 0%, #FFD54F 100%);
-  color: #1F2937;
-  font-size: 24rpx;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.guide-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-}
-
-.guide-text {
-  font-size: 28rpx;
-  color: #1F2937;
-  font-weight: 500;
-}
-
-.guide-desc {
-  font-size: 24rpx;
-  color: #6B7280;
-  line-height: 1.6;
-}
-
-.contact-button {
-  margin-top: 16rpx;
-  width: 200rpx;
-  height: 60rpx;
-  background: linear-gradient(90deg, #00C853 0%, #34D058 100%);
-  border-radius: 30rpx;
-  font-size: 24rpx;
-  color: #FFFFFF;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 200, 83, 0.3);
-  
-  &::after {
-    border: none;
-  }
-  
-  text {
-    font-size: 24rpx;
-  }
-}
 
 /* ========================================
    申领成功弹窗样式
@@ -2076,47 +1556,6 @@ onLoad(() => {
   border-radius: 32rpx 32rpx 0 0;
 }
 
-/* 成功图标 */
-.success-icon-wrap {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 32rpx;
-}
-
-.success-icon {
-  position: relative;
-  width: 120rpx;
-  height: 120rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.icon-circle {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(76, 175, 80, 0.4);
-  animation: iconBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.icon-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 160rpx;
-  height: 160rpx;
-  background: radial-gradient(circle, rgba(76, 175, 80, 0.3) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: glowPulse 2s ease-in-out infinite;
-}
 
 /* 标题 */
 .modal-title {
@@ -2304,28 +1743,307 @@ onLoad(() => {
   }
 }
 
-@keyframes iconBounce {
-  0% {
-    transform: scale(0);
-    opacity: 0;
+
+/* 协议处理流程相关样式 */
+
+
+// 退还金额卡片
+.refund-card {
+  background: #E8F5E9;//linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%);
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(76, 175, 80, 0.15);
+  border: 2rpx solid rgba(76, 175, 80, 0.2);
+  position: relative;
+  overflow: hidden;
+  
+  // 添加装饰性背景图案
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200rpx;
+    height: 200rpx;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    border-radius: 50%;
   }
-  50% {
-    transform: scale(1.1);
+  
+  .refund-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16rpx;
+    position: relative;
+    z-index: 1;
+    
+    .refund-title {
+      font-size: 26rpx;
+      color: #2E7D32;
+      font-weight: 600;
+    }
+    
+    .refund-amount {
+      font-size: 40rpx;
+      font-weight: 700;
+      color: #00C853;
+      text-shadow: 0 2rpx 6rpx rgba(0, 200, 83, 0.3);
+      letter-spacing: 1rpx;
+    }
   }
-  100% {
-    transform: scale(1);
-    opacity: 1;
+  
+  .refund-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8rpx;
+    position: relative;
+    z-index: 1;
+    
+    .refund-item {
+      font-size: 24rpx;
+      color: #2E7D32;
+      line-height: 1.6;
+      font-weight: 500;
+      padding: 4rpx 0;
+    }
   }
 }
 
-@keyframes glowPulse {
-  0%, 100% {
-    opacity: 0.3;
-    transform: translate(-50%, -50%) scale(1);
+// 协议处理流程卡片
+.process-card {
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  padding: 24rpx 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    font-size: 36rpx;
+    font-weight: 700;
+    color: #333333;
+    margin-bottom: 28rpx;
+    
+    .title-icon-wrapper {
+      width: 36rpx;
+      height: 36rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      .title-icon-wave {
+        width: 32rpx;
+        height: 24rpx;
+        background: #2170f3;
+        border-radius: 4rpx;
+        position: relative;
+        overflow: hidden;
+        
+        // 创建波浪/上升趋势图表效果
+        &::before {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 60%;
+          background: 
+            linear-gradient(90deg, 
+              transparent 0%, 
+              transparent 15%, 
+              #FFFFFF 15%, 
+              #FFFFFF 25%, 
+              transparent 25%,
+              transparent 40%,
+              #FFFFFF 40%,
+              #FFFFFF 50%,
+              transparent 50%,
+              transparent 65%,
+              #FFFFFF 65%,
+              #FFFFFF 75%,
+              transparent 75%
+            );
+        }
+        
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: 
+            linear-gradient(0deg, 
+              transparent 0%, 
+              transparent 20%, 
+              #FFFFFF 20%, 
+              #FFFFFF 40%, 
+              transparent 40%,
+              transparent 60%,
+              #FFFFFF 60%,
+              #FFFFFF 80%,
+              transparent 80%
+            );
+        }
+      }
+    }
   }
-  50% {
-    opacity: 0.6;
-    transform: translate(-50%, -50%) scale(1.1);
+  
+  // 流程时间线
+  .process-timeline {
+    position: relative;
+    padding-left: 50rpx;
+    
+    .timeline-item {
+      position: relative;
+      padding-bottom: 32rpx;
+      
+      &.is-last {
+        padding-bottom: 0;
+      }
+      
+      .step-icon {
+        position: absolute;
+        left: -55rpx;
+        top: 0;
+        width: 48rpx;
+        height: 48rpx;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        
+        &.completed {
+          background: #2170f3;
+          
+          .hourglass-image {
+            width: 28rpx;
+            height: 28rpx;
+          }
+        }
+        
+        &.processing,
+        &.pending {
+          background: #E0E0E0;
+          
+          .pending-icon-inner {
+            width: 28rpx;
+            height: 28rpx;
+            border: 2rpx solid #999999;
+            border-radius: 50%;
+            background: transparent;
+          }
+        }
+      }
+      
+      .timeline-line {
+        position: absolute;
+        left: -30rpx;
+        top: 48rpx;
+        width: 2rpx;
+        height: calc(100% - 48rpx);
+        z-index: 1;
+        
+        &.completed-line {
+          background: #2170f3;
+        }
+        
+        &.pending-line {
+          background: #E0E0E0;
+        }
+      }
+      
+      .step-content {
+        background: transparent;
+        padding: 0;
+        border: none;
+        box-shadow: none;
+        text-align: left;
+        margin-left: 20rpx;
+        .step-name {
+          font-size: 30rpx;
+          font-weight: 700;
+          color: #333333;
+          margin-bottom: 6rpx;
+          line-height: 1.3;
+          text-align: left;
+        }
+        
+        .step-desc {
+          font-size: 26rpx;
+          color: #666666;
+          margin-bottom: 6rpx;
+          line-height: 1.5;
+          font-weight: 400;
+          text-align: left;
+        }
+        
+        .step-duration {
+          display: inline-block;
+          font-size: 24rpx;
+          color: #2170f3;
+          font-weight: 400;
+          background: transparent;
+          padding: 0;
+          border: none;
+          box-shadow: none;
+          text-align: left;
+        }
+      }
+    }
+  }
+  
+  // 流程进度条
+  .progress-section {
+    margin-top: 28rpx;
+    padding-top: 24rpx;
+    border-top: 1rpx solid #F0F0F0;
+    .progress-label-wrapper{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20rpx;
+    }
+    .progress-label {
+      font-size: 28rpx;
+      color: #333333;
+      font-weight: 400;
+      flex-shrink: 0;
+    }
+    
+    .progress-bar-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 16rpx;
+      flex: 1;
+      
+      .progress-bar {
+        flex: 1;
+        height: 16rpx;
+        background: #E0E0E0;
+        border-radius: 100rpx;
+        overflow: hidden;
+        
+        .progress-fill {
+          height: 100%;
+          background: #2170f3;
+          border-radius: 100rpx;
+          transition: width 0.3s ease;
+        }
+      }
+      
+      .progress-text {
+        font-size: 28rpx;
+        color: #2170f3;
+        font-weight: 400;
+        min-width: 60rpx;
+        text-align: right;
+        flex-shrink: 0;
+      }
+    }
   }
 }
 

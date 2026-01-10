@@ -83,7 +83,63 @@ class MemberLevelLog extends Model
         return $list[$value] ?? '';
     }
 
+    /**
+     * 关联用户表
+     * @return \think\model\relation\BelongsTo
+     */
+    public function user()
+    {
+        return $this->belongsTo('app\admin\model\cus\user\User', 'user_id', 'id')->field('id,username,nickname,mobile,avatar');
+    }
 
+    /**
+     * 关联旧会员等级
+     * @return \think\model\relation\BelongsTo
+     */
+    public function oldMemberLevel()
+    {
+        return $this->belongsTo('app\admin\model\fuka\MemberLevel', 'old_level', 'level')->field('id,level,name');
+    }
 
+    /**
+     * 关联新会员等级
+     * @return \think\model\relation\BelongsTo
+     */
+    public function newMemberLevel()
+    {
+        return $this->belongsTo('app\admin\model\fuka\MemberLevel', 'new_level', 'level')->field('id,level,name');
+    }
+
+    /**
+     * 获取用户信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getUserInfoAttr($value, $data)
+    {
+        if (isset($data['user']) && $data['user']) {
+            $user = $data['user'];
+            $nickname = $user['nickname'] ?? '';
+            $mobile = $user['mobile'] ?? '';
+            return $nickname ? ($nickname . ($mobile ? ' (' . $mobile . ')' : '')) : ($mobile ?: '');
+        }
+        return '';
+    }
+
+    /**
+     * 获取等级变化信息（格式化显示）
+     * @param $value
+     * @param $data
+     * @return string
+     */
+    public function getLevelChangeAttr($value, $data)
+    {
+        $oldLevel = $data['old_level'] ?? 0;
+        $newLevel = $data['new_level'] ?? 0;
+        $oldLevelName = $this->getOldLevelList()[$oldLevel] ?? "等级{$oldLevel}";
+        $newLevelName = $this->getNewLevelList()[$newLevel] ?? "等级{$newLevel}";
+        return "{$oldLevelName} → {$newLevelName}";
+    }
 
 }

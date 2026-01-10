@@ -52,7 +52,13 @@ class MemberLevelLog extends Backend
             ->order($sort, $order)
             ->paginate($limit);
         
-        $result = ['total' => $list->total(), 'rows' => $list->items()];
+        // 将模型集合转换为数组，确保关联数据和访问器属性正确序列化
+        $rows = [];
+        foreach ($list->items() as $item) {
+            $rows[] = $item->toArray();
+        }
+        
+        $result = ['total' => $list->total(), 'rows' => $rows];
         return json($result);
     }
 
