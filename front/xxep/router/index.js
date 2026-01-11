@@ -75,7 +75,7 @@ const _go = (
       });
       setTimeout(() => {
         uni.navigateTo({
-          url: '/pages/user/setup-guide',
+          url: '/pages/user/setup-required',
         });
       }, 1500);
       return;
@@ -89,7 +89,7 @@ const _go = (
       });
       setTimeout(() => {
         uni.navigateTo({
-          url: '/pages/user/setup-guide',
+          url: '/pages/user/setup-required',
         });
       }, 1500);
       return;

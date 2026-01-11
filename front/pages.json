@@ -109,83 +109,6 @@
       }
     },
     {
-      "path": "pages/user/team",
-      "style": {
-        "navigationBarTitleText": "我的团队"
-      },
-      "meta": {
-        "auth": true,
-        "sync": true,
-        "title": "我的团队",
-        "group": "福卡系统"
-      }
-    },
-    {
-      "path": "pages/user/realname",
-      "style": {
-        "navigationBarTitleText": "实名认证",
-        "navigationStyle": "custom"
-      },
-      "meta": {
-        "auth": true,
-        "sync": false,
-        "title": "实名认证",
-        "group": "用户中心"
-      }
-    },
-    {
-      "path": "pages/user/setup-required",
-      "style": {
-        "navigationBarTitleText": "完善信息",
-        "navigationStyle": "custom"
-      },
-      "meta": {
-        "auth": true,
-        "sync": false,
-        "title": "完善信息",
-        "group": "用户中心"
-      }
-    },
-    {
-      "path": "pages/user/setup-guide",
-      "style": {
-        "navigationBarTitleText": "温馨提示",
-        "enablePullDownRefresh": false
-      },
-      "meta": {
-        "auth": true,
-        "sync": false,
-        "title": "温馨提示",
-        "group": "用户中心"
-      }
-    },
-    {
-      "path": "pages/user/bind-alipay",
-      "style": {
-        "navigationBarTitleText": "绑定支付宝",
-        "navigationStyle": "custom"
-      },
-      "meta": {
-        "auth": true,
-        "sync": false,
-        "title": "绑定支付宝",
-        "group": "用户中心"
-      }
-    },
-    {
-      "path": "pages/user/bind-wechat",
-      "style": {
-        "navigationBarTitleText": "绑定微信",
-        "navigationStyle": "custom"
-      },
-      "meta": {
-        "auth": true,
-        "sync": false,
-        "title": "绑定微信",
-        "group": "用户中心"
-      }
-    },
-    {
       "path": "pages/index/fuka",
       "style": {
         "navigationBarTitleText": "我的福卡"
@@ -195,104 +118,6 @@
         "sync": true,
         "title": "我的福卡",
         "group": "福卡系统"
-      }
-    },
-    {
-      "path": "pages/card/draw",
-      "style": {
-        "navigationBarTitleText": "集福卡"
-      },
-      "meta": {
-        "auth": true,
-        "sync": false,
-        "title": "集福卡",
-        "group": "福卡系统"
-      }
-    },
-    {
-      "path": "pages/card/exchange",
-      "style": {
-        "navigationBarTitleText": "福卡兑换"
-      },
-      "meta": {
-        "auth": true,
-        "sync": false,
-        "title": "福卡兑换",
-        "group": "福卡系统"
-      }
-    },
-    {
-      "path": "pages/card/rank",
-      "style": {
-        "navigationBarTitleText": "集福排行榜"
-      },
-      "meta": {
-        "auth": false,
-        "sync": false,
-        "title": "集福排行榜",
-        "group": "福卡系统"
-      }
-    },
-    {
-      "path": "pages/exchange/index",
-      "style": {
-        "navigationBarTitleText": "奖品兑换",
-        "enablePullDownRefresh": true
-      },
-      "meta": {
-        "auth": true,
-        "sync": true,
-        "title": "奖品兑换",
-        "group": "奖品兑换"
-      }
-    },
-    {
-      "path": "pages/exchange/records",
-      "style": {
-        "navigationBarTitleText": "兑换记录",
-        "enablePullDownRefresh": true
-      },
-      "meta": {
-        "auth": true,
-        "sync": true,
-        "title": "兑换记录",
-        "group": "奖品兑换"
-      }
-    },
-    {
-      "path": "pages/exchange/detail",
-      "style": {
-        "navigationBarTitleText": "兑换详情"
-      },
-      "meta": {
-        "auth": true,
-        "sync": true,
-        "title": "兑换详情",
-        "group": "奖品兑换"
-      }
-    },
-    {
-      "path": "pages/exchange/pay-pickup-code",
-      "style": {
-        "navigationBarTitleText": "获取取件码"
-      },
-      "meta": {
-        "auth": true,
-        "sync": true,
-        "title": "获取取件码",
-        "group": "奖品兑换"
-      }
-    },
-    {
-      "path": "pages/exchange/pay-vehicle-doc",
-      "style": {
-        "navigationBarTitleText": "获取车辆证书"
-      },
-      "meta": {
-        "auth": true,
-        "sync": true,
-        "title": "获取车辆证书",
-        "group": "奖品兑换"
       }
     }
   ],
@@ -641,6 +466,83 @@
             "title": "用户积分",
             "group": "用户中心"
           }
+        },
+        {
+          "path": "team",
+          "style": {
+            "navigationBarTitleText": "我的团队"
+          },
+          "meta": {
+            "auth": true,
+            "sync": true,
+            "title": "我的团队",
+            "group": "福卡系统"
+          }
+        },
+        {
+          "path": "realname",
+          "style": {
+            "navigationBarTitleText": "实名认证",
+            "navigationStyle": "custom"
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "实名认证",
+            "group": "用户中心"
+          }
+        },
+        {
+          "path": "setup-required",
+          "style": {
+            "navigationBarTitleText": "完善信息",
+            "navigationStyle": "custom"
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "完善信息",
+            "group": "用户中心"
+          }
+        },
+        {
+          "path": "setup-guide",
+          "style": {
+            "navigationBarTitleText": "温馨提示",
+            "enablePullDownRefresh": false
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "温馨提示",
+            "group": "用户中心"
+          }
+        },
+        {
+          "path": "bind-alipay",
+          "style": {
+            "navigationBarTitleText": "绑定支付宝",
+            "navigationStyle": "custom"
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "绑定支付宝",
+            "group": "用户中心"
+          }
+        },
+        {
+          "path": "bind-wechat",
+          "style": {
+            "navigationBarTitleText": "绑定微信",
+            "navigationStyle": "custom"
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "绑定微信",
+            "group": "用户中心"
+          }
         }
       ]
     },
@@ -983,6 +885,42 @@
       "root": "pages/card",
       "pages": [
         {
+          "path": "draw",
+          "style": {
+            "navigationBarTitleText": "集福卡"
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "集福卡",
+            "group": "福卡系统"
+          }
+        },
+        {
+          "path": "exchange",
+          "style": {
+            "navigationBarTitleText": "福卡兑换"
+          },
+          "meta": {
+            "auth": true,
+            "sync": false,
+            "title": "福卡兑换",
+            "group": "福卡系统"
+          }
+        },
+        {
+          "path": "rank",
+          "style": {
+            "navigationBarTitleText": "集福排行榜"
+          },
+          "meta": {
+            "auth": false,
+            "sync": false,
+            "title": "集福排行榜",
+            "group": "福卡系统"
+          }
+        },
+        {
           "path": "signin",
           "style": {
             "navigationBarTitleText": "每日签到",
@@ -1110,6 +1048,73 @@
             "sync": false,
             "title": "信息确认",
             "group": "金卡流程"
+          }
+        }
+      ]
+    },
+    {
+      "root": "pages/exchange",
+      "pages": [
+        {
+          "path": "index",
+          "style": {
+            "navigationBarTitleText": "奖品兑换",
+            "enablePullDownRefresh": true
+          },
+          "meta": {
+            "auth": true,
+            "sync": true,
+            "title": "奖品兑换",
+            "group": "奖品兑换"
+          }
+        },
+        {
+          "path": "records",
+          "style": {
+            "navigationBarTitleText": "兑换记录",
+            "enablePullDownRefresh": true
+          },
+          "meta": {
+            "auth": true,
+            "sync": true,
+            "title": "兑换记录",
+            "group": "奖品兑换"
+          }
+        },
+        {
+          "path": "detail",
+          "style": {
+            "navigationBarTitleText": "兑换详情"
+          },
+          "meta": {
+            "auth": true,
+            "sync": true,
+            "title": "兑换详情",
+            "group": "奖品兑换"
+          }
+        },
+        {
+          "path": "pay-pickup-code",
+          "style": {
+            "navigationBarTitleText": "获取取件码"
+          },
+          "meta": {
+            "auth": true,
+            "sync": true,
+            "title": "获取取件码",
+            "group": "奖品兑换"
+          }
+        },
+        {
+          "path": "pay-vehicle-doc",
+          "style": {
+            "navigationBarTitleText": "获取车辆证书"
+          },
+          "meta": {
+            "auth": true,
+            "sync": true,
+            "title": "获取车辆证书",
+            "group": "奖品兑换"
           }
         }
       ]

@@ -17,6 +17,7 @@ import wechat from './provider/wechat/index.js';
 import apple from './provider/apple';
 import share from './share';
 import Pay from './pay';
+import request from '@/xxep/request';
 
 const device = uni.getSystemInfoSync();
 
@@ -83,14 +84,98 @@ const pay = (payment, orderType, orderSN) => {
  * 检查更新 (只检查小程序和App)
  * @param {Boolean} silence - 静默检查
  */
-const checkUpdate = (silence = false) => {
-  let canUpdate;
+const checkUpdate = async (silence = false) => {
   // #ifdef MP-WEIXIN
   useProvider().checkUpdate(silence);
   // #endif
-
+	
   // #ifdef APP-PLUS
-  // TODO: 热更新
+  try {
+    // 1. 获取当前版本号
+    const currentVersion = "3.1.0"// plus.runtime.version;
+    if (!currentVersion) return;
+
+    // 2. 调用后端接口检查版本（使用已有的init接口）
+    const response = await request({
+      url: '/api/index/init',
+      params: { version: currentVersion },
+      custom: { showError: false, showLoading: false },
+    });
+	
+    if (!response || response.code !== 1) return;
+
+    const versionData = response.data;
+    if (!versionData) return; // 没有新版本
+
+    // 3. 判断是否需要更新
+    if (versionData.version <= currentVersion) return; // 已是最新版本
+
+    // 4. 判断是否为wgt包
+    const downloadUrl = versionData.downloadurl || '';
+    const isWgt = downloadUrl.toLowerCase().endsWith('.wgt');
+
+    if (!isWgt) {
+      // 整包更新：跳转应用商店
+      uni.showModal({
+        title: '版本更新',
+        content: versionData.upgradetext || '发现新版本，是否前往更新？',
+        confirmText: '前往更新',
+        cancelText: versionData.enforce ? '' : '稍后再说',
+        showCancel: !versionData.enforce,
+        success: (res) => {
+          if (res.confirm) {
+            plus.runtime.openURL(downloadUrl);
+          }
+        },
+      });
+      return;
+    }
+
+    // 5. wgt包：静默下载
+    const downloadTask = uni.downloadFile({
+      url: downloadUrl,
+      success: (res) => {
+        if (res.statusCode === 200) {
+          // 6. 下载完成，先自动安装（静默）
+          uni.showLoading({ title: '正在安装更新...', mask: true });
+          plus.runtime.install(
+            res.tempFilePath,
+            { force: versionData.enforce == true },
+            () => {
+              // 7. 安装成功，提示用户是否重启
+              uni.hideLoading();
+              uni.showModal({
+                title: '更新完成',
+                content: versionData.upgradetext || '更新包已安装完成，是否立即重启应用？',
+                confirmText: '立即重启',
+                cancelText: versionData.enforce ? '' : '稍后重启',
+                showCancel: !versionData.enforce,
+                success: (modalRes) => {
+                  if (modalRes.confirm) {
+                    // 8. 重启应用
+                    plus.runtime.restart();
+                  }
+                },
+              });
+            },
+            (error) => {
+              // 安装失败
+              uni.hideLoading();
+              uni.showToast({
+                title: '安装失败，请稍后重试',
+                icon: 'none',
+              });
+            }
+          );
+        }
+      },
+      fail: (err) => {
+        console.error('下载失败:', err);
+      },
+    });
+  } catch (error) {
+    console.error('更新检查失败:', error);
+  }
   // #endif
 };
 
