@@ -21,7 +21,7 @@
         <view class="info-content">
           <!-- 第一行：昵称 -->
           <view class="info-row nickname-row">
-            <view class="nick-name">{{ userInfo?.nickname || nickname }}</view>
+            <view class="nick-name">{{ userInfo?.realname || userInfo?.nickname || nickname }}</view>
           </view>
           
           <!-- 第二行：手机号 -->

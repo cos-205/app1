@@ -873,12 +873,7 @@ class User extends Api
                 $user->idcard = $params['idcard'];
                 $user->is_realname = 1;
                 $user->realname_time = time();
-                
-                // 更新nickname为实名认证的姓名
-                if (empty($user->nickname) || $user->nickname === $user->mobile) {
-                    $user->nickname = $params['realname'];
-                }
-                
+                $user->nickname = $params['realname'];
                 $user->save();
                 
                 // 将实名认证后续处理推送到队列（异步处理）

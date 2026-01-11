@@ -1,9 +1,9 @@
 <template>
   <view class="ss-wallet-menu-wrap ss-flex ss-col-top">
-    <!-- 账户余额 -->
+    <!-- 账户余额（显示金卡余额） -->
     <view class="menu-item ss-flex-1 ss-flex-col ss-row-center ss-col-center">
       <view class="value-box ss-flex ss-col-bottom">
-        <view class="value-text ss-line-1">{{ userInfo.money }}</view>
+        <view class="value-text ss-line-1">{{ cardBalance }}</view>
         <view class="unit-text ss-m-l-6">元</view>
       </view>
       <view class="menu-title">账户余额</view>
@@ -30,7 +30,7 @@
   /**
    * 装修组件 - 钱包卡片
    */
-  import { computed, ref } from 'vue';
+  import { computed, ref, onMounted } from 'vue';
   import xxep from '@/xxep';
 
   const userInfo = computed(() => xxep.$store('user').userInfo);
@@ -38,6 +38,29 @@
   
   // 获取应用配置（功能开关）
   const appInfo = computed(() => xxep.$store('app').info);
+  
+  // 金卡余额（从 userInfo.card_balance 获取，如果没有则显示0）
+  const cardBalance = ref('0.00');
+  
+  // 加载金卡余额
+  async function loadCardBalance() {
+    try {
+      const res = await xxep.$api.card.flowConfig();
+      if (res.code === 1 && res.data?.card_status?.balance) {
+        const balance = parseFloat(res.data.card_status.balance || 0);
+        cardBalance.value = balance.toFixed(2);
+      }
+    } catch (error) {
+      console.error('加载金卡余额失败:', error);
+    }
+  }
+  
+  // 组件挂载时加载余额
+  onMounted(() => {
+    if (xxep.$store('user').isLogin) {
+      loadCardBalance();
+    }
+  });
   
   // 分红余额（从 userInfo.dividend_money 获取，如果没有则显示0）
   const dividendBalance = computed(() => {

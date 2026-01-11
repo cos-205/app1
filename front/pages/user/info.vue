@@ -36,7 +36,7 @@
       </view>
 
       <view class="bg-white ss-p-x-30">
-        <uni-forms-item name="username" label="用户名" @tap="onChangeUsername" class="label-box">
+        <uni-forms-item v-if="false" name="username" label="用户名" @tap="onChangeUsername" class="label-box">
           <uni-easyinput
             v-model="userInfo.username"
             disabled
@@ -83,7 +83,7 @@
           </view>
         </uni-forms-item>
 
-        <uni-forms-item name="mobile" label="手机号" @tap="onChangeMobile">
+        <uni-forms-item name="mobile" label="手机号" >
           <uni-easyinput
             v-model="userInfo.mobile"
             placeholder="请绑定手机号"
@@ -103,32 +103,6 @@
             </template>
           </uni-easyinput>
         </uni-forms-item>
-
-        <uni-forms-item name="password" label="登录密码" @tap="onSetPassword">
-          <uni-easyinput
-            v-model="userInfo.password"
-            :placeholder="userInfo.verification?.password ? '修改登录密码' : '点击设置登录密码'"
-            :inputBorder="false"
-            :styles="{ disableColor: '#fff' }"
-            disabled
-            placeholderStyle="color:#BBBBBB;font-size:28rpx;line-height:normal"
-            :clearable="false"
-          >
-            <template v-slot:right>
-              <view class="ss-flex ss-col-center">
-                <su-radio
-                  class="ss-flex"
-                  v-if="userInfo.verification?.password"
-                  :modelValue="true"
-                />
-
-                <button v-else class="ss-reset-button ss-flex ss-col-center ss-row-center">
-                  <text class="_icon-forward" style="color: #bbbbbb; font-size: 26rpx"></text>
-                </button>
-              </view>
-            </template>
-          </uni-easyinput>
-        </uni-forms-item>
       </view>
 
       <view class="bg-white ss-m-t-14">
@@ -137,14 +111,6 @@
             clickable
             @tap="xxep.$router.go('/pages/user/address/list')"
             title="地址管理"
-            showArrow
-            :border="false"
-            class="list-border"
-          ></uni-list-item>
-          <uni-list-item
-            clickable
-            @tap="xxep.$router.go('/pages/user/invoice/list')"
-            title="发票管理"
             showArrow
             :border="false"
             class="list-border"

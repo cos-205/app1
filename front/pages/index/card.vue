@@ -400,12 +400,13 @@
 
         <!-- 操作指引卡片 -->
         <view class="guide-cards">
-          <view class="guide-card">
-            <view class="guide-number">1</view>
+          <view class="guide-card screenshot-card">
+            <view class="guide-number screenshot-number">1</view>
             <view class="guide-info">
-              <text class="guide-title">截图报备</text>
-              <text class="guide-detail">截图此页面报备官方群加速审核验证</text>
+              <text class="guide-title screenshot-title">📸 截图报备</text>
+              <text class="guide-detail screenshot-detail">截图此页面报备官方群加速审核验证</text>
             </view>
+            <view class="screenshot-badge">重要</view>
           </view>
 
           <view class="guide-card">
@@ -1792,11 +1793,12 @@ onLoad(() => {
   position: relative;
   width: 100%;
   max-width: 600rpx;
-  background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
+  background: linear-gradient(135deg, #FF1744 0%, #FF5252 50%, #FF6B6B 100%);
   border-radius: 32rpx;
   padding: 60rpx 40rpx 40rpx;
-  box-shadow: 0 24rpx 80rpx rgba(0, 0, 0, 0.2), 
-              0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 24rpx 80rpx rgba(211, 23, 68, 0.4), 
+              0 8rpx 24rpx rgba(211, 23, 68, 0.3),
+              0 0 0 4rpx rgba(255, 255, 255, 0.1);
   animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
 }
@@ -1807,10 +1809,19 @@ onLoad(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 200rpx;
-  background: linear-gradient(135deg, #4285F4 0%, #5A9CFF 100%);
-  opacity: 0.05;
-  border-radius: 32rpx 32rpx 0 0;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 20rpx,
+      rgba(255, 255, 255, 0.03) 20rpx,
+      rgba(255, 255, 255, 0.03) 40rpx
+    );
+  border-radius: 32rpx;
+  pointer-events: none;
 }
 
 
@@ -1831,19 +1842,18 @@ onLoad(() => {
 .title-text {
   font-size: 40rpx;
   font-weight: 700;
-  background: linear-gradient(135deg, #2C3E50 0%, #34495E 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #FFFFFF;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
 }
 
 /* 主要信息 */
 .modal-message {
   text-align: center;
   line-height: 44rpx;
-  color: #5A6C7D;
+  color: #FFFFFF;
   margin-bottom: 32rpx;
   padding: 0 20rpx;
+  text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.2);
 }
 
 .modal-message text {
@@ -1853,10 +1863,11 @@ onLoad(() => {
 }
 
 .modal-message .highlight {
-  color: #4CAF50;
-  font-weight: 600;
+  color: #FFEB3B;
+  font-weight: 700;
   font-size: 30rpx;
   margin-top: 12rpx;
+  text-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.3);
 }
 
 /* 操作指引卡片 */
@@ -1872,36 +1883,59 @@ onLoad(() => {
   align-items: flex-start;
   gap: 20rpx;
   padding: 24rpx;
-  background: #FFFFFF;
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 20rpx;
-  border: 2rpx solid #E8EAED;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
+.guide-card.screenshot-card {
+  background: linear-gradient(135deg, #FFEB3B 0%, #FFC107 100%);
+  border: 3rpx solid #FFD700;
+  box-shadow: 0 8rpx 24rpx rgba(255, 235, 59, 0.5),
+              0 0 0 2rpx rgba(255, 255, 255, 0.3),
+              inset 0 2rpx 8rpx rgba(255, 255, 255, 0.3);
+  transform: scale(1.02);
+  position: relative;
+  animation: screenshotPulse 2s ease-in-out infinite;
+}
+
 .guide-card.highlight {
-  background: linear-gradient(135deg, #FFF9E6 0%, #FFF3CC 100%);
-  border-color: #FFD54F;
-  box-shadow: 0 4rpx 16rpx rgba(255, 193, 7, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 248, 220, 0.95) 100%);
+  border-color: rgba(255, 215, 0, 0.5);
+  box-shadow: 0 4rpx 16rpx rgba(255, 193, 7, 0.3);
 }
 
 .guide-number {
   flex-shrink: 0;
   width: 48rpx;
   height: 48rpx;
-  background: linear-gradient(135deg, #4285F4 0%, #5A9CFF 100%);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+  color: #FF1744;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28rpx;
   font-weight: 700;
-  box-shadow: 0 4rpx 12rpx rgba(66, 133, 244, 0.3);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
+}
+
+.guide-card.screenshot-card .guide-number.screenshot-number {
+  background: linear-gradient(135deg, #FF1744 0%, #D32F2F 100%);
+  color: #FFFFFF;
+  box-shadow: 0 6rpx 16rpx rgba(211, 23, 68, 0.5),
+              inset 0 2rpx 4rpx rgba(255, 255, 255, 0.3);
+  width: 56rpx;
+  height: 56rpx;
+  font-size: 32rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.5);
 }
 
 .guide-card.highlight .guide-number {
   background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+  color: #FFFFFF;
   box-shadow: 0 4rpx 12rpx rgba(255, 152, 0, 0.3);
 }
 
@@ -1919,11 +1953,39 @@ onLoad(() => {
   display: block;
 }
 
+.guide-card.screenshot-card .guide-title.screenshot-title {
+  color: #D32F2F;
+  font-weight: 700;
+  font-size: 32rpx;
+  text-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.1);
+}
+
 .guide-detail {
   font-size: 26rpx;
   color: #5A6C7D;
   line-height: 38rpx;
   display: block;
+}
+
+.guide-card.screenshot-card .guide-detail.screenshot-detail {
+  color: #B71C1C;
+  font-weight: 600;
+  font-size: 28rpx;
+}
+
+.screenshot-badge {
+  position: absolute;
+  top: 16rpx;
+  right: 16rpx;
+  padding: 4rpx 16rpx;
+  background: linear-gradient(135deg, #FF1744 0%, #D32F2F 100%);
+  color: #FFFFFF;
+  font-size: 20rpx;
+  font-weight: 700;
+  border-radius: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(211, 23, 68, 0.4);
+  border: 2rpx solid rgba(255, 255, 255, 0.5);
+  animation: badgeShake 1.5s ease-in-out infinite;
 }
 
 .specialist-id {
@@ -1959,8 +2021,10 @@ onLoad(() => {
 }
 
 .action-btn.secondary {
-  background: #F5F7FA;
-  color: #5A6C7D;
+  background: rgba(255, 255, 255, 0.95);
+  color: #FF1744;
+  font-weight: 700;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
 }
 
 .action-btn.secondary:active {
@@ -1997,6 +2061,33 @@ onLoad(() => {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes screenshotPulse {
+  0%, 100% {
+    transform: scale(1.02);
+    box-shadow: 0 8rpx 24rpx rgba(255, 235, 59, 0.5),
+                0 0 0 2rpx rgba(255, 255, 255, 0.3),
+                inset 0 2rpx 8rpx rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 12rpx 32rpx rgba(255, 235, 59, 0.7),
+                0 0 0 4rpx rgba(255, 255, 255, 0.4),
+                inset 0 2rpx 8rpx rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes badgeShake {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
   }
 }
 
