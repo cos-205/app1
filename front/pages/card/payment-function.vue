@@ -22,7 +22,7 @@
           <view class="permission-item">
             <view class="permission-content">
               <text class="permission-name">大额转账</text>
-              <text class="permission-desc">单笔最高50万元</text>
+              <text class="permission-desc">单笔最高800万元</text>
             </view>
           </view>
           <view class="permission-item">
@@ -64,7 +64,7 @@
       </view>
 
       <!-- 额度设置 -->
-      <view v-else class="limit-setting">
+      <view v-if="false"class="limit-setting">
         <view class="setting-title">设置单笔交易限额</view>
         <view class="limit-options">
           <view 
@@ -158,12 +158,12 @@ import xxep from '@/xxep';
 
 const state = reactive({
   step: 4,
-  selectedLimit: 100000,
+  selectedLimit: 8000000,
   limitOptions: [
     { value: 50000, label: '5万元', desc: '日常小额交易' },
     { value: 100000, label: '10万元', desc: '中等金额交易' },
     { value: 300000, label: '30万元', desc: '大宗商品交易' },
-    { value: 500000, label: '50万元', desc: '房产车辆交易' },
+    { value: 800000, label: '80万元', desc: '房产车辆交易' },
   ],
   submitting: false,
   flowStatus: 1, // 流程状态：1=未支付, 2=已支付待审核, 3=已完成

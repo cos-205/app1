@@ -455,7 +455,10 @@ class User extends Api
         $desc = "邀请{$level->invite_count}位实名认证，可领取财富金卡";
         if ($level->dividend_money > 0) {
             $desc .= "\n每月可领取支付宝分红{$level->dividend_money}万";
+        }else{
+            $desc = "需要成为铂金会员才可以领取支付宝财富金卡";
         }
+        
         return $desc;
     }
 

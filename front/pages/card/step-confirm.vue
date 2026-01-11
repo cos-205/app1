@@ -35,7 +35,7 @@
         </view>
         <view class="fee-note">
           <uni-icons type="star" size="14" color="#FF9800" />
-          <text>完成全部流程后，所有费用将全额退还</text>
+          <text>费用将在一个月后原路退回</text>
         </view>
       </view>
 

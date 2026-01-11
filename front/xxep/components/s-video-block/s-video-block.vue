@@ -1,12 +1,14 @@
 <!-- 订单详情 -->
 <template>
-  <su-video
-    class="xxs"
-    :uid="guid()"
-    :src="xxep.$url.cdn(data.videoUrl)"
-    :poster="xxep.$url.cdn(data.src)"
-    :height="styles.height * 2"
-  ></su-video>
+  <view class="video-block-wrapper">
+    <su-video
+      class="xxs"
+      :uid="guid()"
+      :src="xxep.$url.cdn(data.videoUrl)"
+      :poster="xxep.$url.cdn(data.src)"
+      :height="styles.height * 2"
+    ></su-video>
+  </view>
 </template>
 
 <script setup>
@@ -25,7 +27,22 @@
 </script>
 
 <style lang="scss" scoped>
+  .video-block-wrapper {
+    // background: linear-gradient(135deg, #FF1744 0%, #FF5252 50%, #FF6B6B 100%);
+    border-radius: 16rpx;
+    box-shadow: 0 8rpx 24rpx rgba(211, 23, 68, 0.3);
+    overflow: hidden;
+  }
+  
   .xxs {
     z-index: -100;
+    border-radius: 12rpx;
+    overflow: hidden;
+    
+    // 设置视频容器的背景为红色
+    :deep(.uni-video-container) {
+      background: url('/static/images/fuka_bg.jpeg') no-repeat center center;
+      background-size: 100% 100%;
+    }
   }
 </style>

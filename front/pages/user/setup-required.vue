@@ -142,7 +142,7 @@
             <text class="label-text">省市区</text>
             <text class="label-required">*</text>
           </view>
-          <view class="item-input region-picker" @tap="state.showRegion = true">
+          <view class="item-input region-picker" @tap="handleOpenRegionPicker">
             <text v-if="state.addressData.region" class="region-text">{{ state.addressData.region }}</text>
             <text v-else class="input-placeholder">请选择省市区</text>
             <uni-icons type="right" size="16" color="#9CA3AF" class="region-arrow"></uni-icons>
@@ -273,11 +273,12 @@ watch(() => state.realnameData.realname, (newVal) => {
   }
 });
 
-// 监听省市区变化，更新region字符串
+// 监听省市区变化，更新region字符串（作为备用，主要更新在 onRegionConfirm 中）
 watch(
   () => [state.addressData.province_name, state.addressData.city_name, state.addressData.district_name],
   ([province, city, district]) => {
-    if (province && city && district) {
+    if (province && city && district && !state.addressData.region) {
+      // 只有当 region 为空时才更新，避免覆盖 onRegionConfirm 中的更新
       state.addressData.region = `${province}-${city}-${district}`;
       // 清除错误
       state.addressErrors.region = '';
@@ -411,12 +412,44 @@ const canSubmit = computed(() => {
   return realnameValid && addressValid && !state.submitting;
 });
 
+// 打开省市区选择器（确保数据已加载）
+const handleOpenRegionPicker = async () => {
+  // 检查地区数据是否已加载
+  const areaData = uni.getStorageSync('areaData');
+  if (_.isEmpty(areaData)) {
+    // 如果数据未加载，先加载数据
+    uni.showLoading({ title: '加载中...' });
+    try {
+      await getAreaData();
+      uni.hideLoading();
+    } catch (error) {
+      uni.hideLoading();
+      xxep.$helper.toast('地区数据加载失败，请重试');
+      return;
+    }
+  }
+  // 确保数据已加载后再打开选择器
+  state.showRegion = true;
+};
+
 // 省市区选择确认
 const onRegionConfirm = (e) => {
-  state.addressData = {
-    ...state.addressData,
-    ...e
-  };
+  if (!e || !e.province_name || !e.city_name || !e.district_name) {
+    console.error('地区选择数据不完整:', e);
+    return;
+  }
+  
+  // 逐个更新属性，保持响应式
+  state.addressData.province_name = e.province_name;
+  state.addressData.city_name = e.city_name;
+  state.addressData.district_name = e.district_name;
+  
+  // 立即更新 region 字符串（不依赖 watch）
+  state.addressData.region = `${e.province_name}-${e.city_name}-${e.district_name}`;
+  
+  // 清除错误
+  state.addressErrors.region = '';
+  
   state.showRegion = false;
 };
 
@@ -467,17 +500,9 @@ const handleSubmit = async () => {
       // 显示成功提示
       xxep.$helper.toast('信息完善成功！', 'success');
       
-      // 返回上一页或跳转到指定页面
-      const pages = getCurrentPages();
-      if (pages.length > 1) {
-        uni.navigateBack();
-      } else {
-        uni.redirectTo({
-          url: '/pages/index/index'
-        });
-      }
-    } else {
-      xxep.$helper.toast(res.msg || '提交失败，请重试');
+      uni.switchTab({
+        url: '/pages/index/index',
+      });
     }
     
   } catch (error) {
@@ -496,19 +521,27 @@ const handleBack = () => {
 };
 
 // 初始化地区数据
-const getAreaData = () => {
-  if (_.isEmpty(uni.getStorageSync('areaData'))) {
-    xxep.$api.data.area().then((res) => {
-      if (res.code === 1) {
+const getAreaData = async () => {
+  const areaData = uni.getStorageSync('areaData');
+  if (_.isEmpty(areaData)) {
+    try {
+      const res = await xxep.$api.data.area();
+      if (res.code === 1 && res.data) {
         uni.setStorageSync('areaData', res.data);
+        return res.data;
       }
-    });
+    } catch (error) {
+      console.error('加载地区数据失败:', error);
+    }
   }
+  return areaData;
 };
 
-onLoad(() => {
+onLoad(async () => {
   console.log('完善信息页面加载');
-  getAreaData();
+  
+  // 确保地区数据已加载（异步等待）
+  await getAreaData();
   
   // 检查用户是否已完善信息
   const userInfo = xxep.$store('user').userInfo;

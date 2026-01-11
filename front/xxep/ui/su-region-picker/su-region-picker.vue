@@ -85,7 +85,11 @@
       default: '确认',
     },
   });
-  const areaData = uni.getStorageSync('areaData');
+  // 使用 computed 动态获取地区数据，确保数据更新时组件也能更新
+  const areaData = computed(() => {
+    const data = uni.getStorageSync('areaData');
+    return Array.isArray(data) ? data : [];
+  });
 
   const getSizeByNameLength = (name) => {
     let length = name.length;
@@ -102,13 +106,20 @@
   });
   const emits = defineEmits(['confirm', 'cancel', 'change']);
 
-  const provinceList = areaData;
+  const provinceList = computed(() => areaData.value);
 
   const cityList = computed(() => {
-    return areaData[state.currentIndex[0]].children;
+    if (!areaData.value || !areaData.value[state.currentIndex[0]]) {
+      return [];
+    }
+    return areaData.value[state.currentIndex[0]].children || [];
   });
+  
   const districtList = computed(() => {
-    return cityList.value[state.currentIndex[1]]?.children;
+    if (!cityList.value || !cityList.value[state.currentIndex[1]]) {
+      return [];
+    }
+    return cityList.value[state.currentIndex[1]]?.children || [];
   });
   // 标识滑动开始，只有微信小程序才有这样的事件
   const pickstart = () => {
@@ -154,10 +165,30 @@
     // #ifdef MP-WEIXIN
     if (state.moving) return;
     // #endif
+    
+    // 检查数据是否已加载
+    if (!areaData.value || areaData.value.length === 0) {
+      uni.showToast({
+        title: '地区数据未加载，请稍候',
+        icon: 'none'
+      });
+      return;
+    }
+    
     let index = state.currentIndex;
-    let province = provinceList[index[0]];
+    let province = provinceList.value[index[0]];
     let city = cityList.value[index[1]];
     let district = districtList.value[index[2]];
+    
+    // 检查数据完整性
+    if (!province || !city || !district) {
+      uni.showToast({
+        title: '请选择完整的省市区',
+        icon: 'none'
+      });
+      return;
+    }
+    
     let result = {
       province_name: province.name,
       province_id: province.id,

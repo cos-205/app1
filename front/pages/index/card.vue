@@ -55,6 +55,50 @@
         </view>
       </template>
       
+      <!-- 制作中：显示制作中状态 -->
+      <template v-else-if="state.cardData.isMaking">
+        <view class="making-status-card">
+          <view class="making-header">
+            <view class="making-content">
+              <view class="making-title">制作中</view>
+              <view class="making-desc">您的金卡正在制作中，请耐心等待</view>
+            </view>
+          </view>
+          <view class="making-info">
+            <!-- <view class="making-item">
+              <view class="making-label-wrap">
+                <uni-icons type="calendar" size="16" color="#4CAF50" />
+                <text class="making-label">审核通过时间</text>
+              </view>
+              <text class="making-value">{{ state.cardData.auditTimeText || '--' }}</text>
+            </view> -->
+            <view class="making-item" v-if="state.cardData.makeTimeText">
+              <view class="making-label-wrap">
+                <uni-icons type="calendar" size="16" color="#4CAF50" />
+                <text class="making-label">开始制作时间</text>
+              </view>
+              <text class="making-value">{{ state.cardData.makeTimeText || '--' }}</text>
+            </view>
+            <view class="making-tips">
+              <view class="making-tips-header">
+                <uni-icons type="info-filled" size="20" color="#1976D2" />
+                <text class="making-tips-title">温馨提示</text>
+              </view>
+              <view class="making-tips-content">
+                <view class="making-tips-item">
+                  <text class="making-tips-dot">•</text>
+                  <text class="making-tips-text">制卡通常需要3-5个工作日</text>
+                </view>
+                <view class="making-tips-item">
+                  <text class="making-tips-dot">•</text>
+                  <text class="making-tips-text">制作完成后将统一邮寄，请保持手机畅通</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </template>
+      
       <!-- 未领取：显示领取条件 -->
       <template v-else-if="!state.cardData.isReceived">
         <view class="condition-card ss-m-b-20">
@@ -456,13 +500,16 @@ const state = reactive({
   cardData: {
     isReceived: false,
     isAuditing: false, // 是否在审核中
+    isMaking: false, // 是否在制作中
     status: 'not-received',
     statusText: '',
     holderName: '',
     idCard: '',
     balance: '0',
     agreementSigned: false,
-    applyTimeText: '' // 申请时间文本
+    applyTimeText: '', // 申请时间文本
+    auditTimeText: '', // 审核通过时间文本
+    makeTimeText: '' // 制作时间文本
   },
   // 步骤1的详细信息（用于协议签署卡片）
   step1Info: {
@@ -633,7 +680,8 @@ async function loadCardInfo() {
     if (res.data.card_status) {
       const applyStatus = res.data.card_status.apply_status || 0;
       const isAuditing = applyStatus === 1; // 审核中
-      const isReceived = applyStatus >= 2; // 审核通过或更高状态
+      const isMaking = applyStatus === 2 || applyStatus === 4; // 制作中（审核通过或定制中）
+      const isReceived = applyStatus >= 5; // 审核通过或更高状态
       
       // 格式化申请时间
       let applyTimeText = '';
@@ -642,16 +690,33 @@ async function loadCardInfo() {
         applyTimeText = `${applyTime.getFullYear()}-${String(applyTime.getMonth() + 1).padStart(2, '0')}-${String(applyTime.getDate()).padStart(2, '0')} ${String(applyTime.getHours()).padStart(2, '0')}:${String(applyTime.getMinutes()).padStart(2, '0')}`;
       }
       
+      // 格式化审核通过时间
+      let auditTimeText = '';
+      if (res.data.card_status.audit_time) {
+        const auditTime = new Date(res.data.card_status.audit_time * 1000);
+        auditTimeText = `${auditTime.getFullYear()}-${String(auditTime.getMonth() + 1).padStart(2, '0')}-${String(auditTime.getDate()).padStart(2, '0')} ${String(auditTime.getHours()).padStart(2, '0')}:${String(auditTime.getMinutes()).padStart(2, '0')}`;
+      }
+      
+      // 格式化制作时间
+      let makeTimeText = '';
+      if (res.data.card_status.make_time) {
+        const makeTime = new Date(res.data.card_status.make_time * 1000);
+        makeTimeText = `${makeTime.getFullYear()}-${String(makeTime.getMonth() + 1).padStart(2, '0')}-${String(makeTime.getDate()).padStart(2, '0')} ${String(makeTime.getHours()).padStart(2, '0')}:${String(makeTime.getMinutes()).padStart(2, '0')}`;
+      }
+      
       Object.assign(state.cardData, {
         isReceived: isReceived,
         isAuditing: isAuditing,
+        isMaking: isMaking,
         status: getCardStatus(res.data.card_status),
         statusText: getCardStatusText(res.data.card_status),
         holderName: res.data.card_status.holder_name || '',
         idCard: res.data.card_status.holder_idcard || '',
         balance: res.data.card_status.balance || '0.00',
         agreementSigned: false, // 将在下面根据步骤1的状态更新
-        applyTimeText: applyTimeText
+        applyTimeText: applyTimeText,
+        auditTimeText: auditTimeText,
+        makeTimeText: makeTimeText
       });
     }
     
@@ -1598,6 +1663,158 @@ onLoad(() => {
 }
 
 .audit-tips-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: #1565C0;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+/* 制作中状态卡片 */
+.making-status-card {
+  background: linear-gradient(135deg, #E8F5E9 0%, #FFFFFF 100%);
+  border-radius: 24rpx;
+  padding: 40rpx 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(76, 175, 80, 0.12);
+  border: 2rpx solid #A5D6A7;
+  position: relative;
+  overflow: hidden;
+}
+
+.making-status-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6rpx;
+  background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 50%, #4CAF50 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.making-header {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  border-bottom: 2rpx solid #C8E6C9;
+  padding-bottom: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.making-content {
+  flex: 1;
+}
+
+.making-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12rpx;
+  letter-spacing: 1rpx;
+}
+
+.making-desc {
+  font-size: 28rpx;
+  color: #6B7280;
+  line-height: 1.6;
+}
+
+.making-info {
+  padding-top: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.making-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16rpx;
+  border: 1rpx solid #A5D6A7;
+  transition: all 0.3s ease;
+  box-shadow: 0 2rpx 8rpx rgba(76, 175, 80, 0.08);
+}
+
+.making-item:active {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-2rpx);
+  box-shadow: 0 4rpx 12rpx rgba(76, 175, 80, 0.15);
+}
+
+.making-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.making-label {
+  font-size: 28rpx;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.making-value {
+  font-size: 28rpx;
+  color: #1F2937;
+  font-weight: 600;
+}
+
+.making-tips {
+  padding: 24rpx;
+  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+  border-radius: 16rpx;
+  border: 1rpx solid #90CAF9;
+  box-shadow: 0 2rpx 8rpx rgba(25, 118, 210, 0.1);
+}
+
+.making-tips-header {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 16rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid rgba(25, 118, 210, 0.2);
+}
+
+.making-tips-title {
+  font-size: 28rpx;
+  color: #1565C0;
+  font-weight: 600;
+}
+
+.making-tips-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.making-tips-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.making-tips-dot {
+  flex-shrink: 0;
+  width: 8rpx;
+  height: 8rpx;
+  margin-top: 10rpx;
+  background: #1976D2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+}
+
+.making-tips-text {
   flex: 1;
   font-size: 26rpx;
   color: #1565C0;

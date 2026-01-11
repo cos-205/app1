@@ -365,6 +365,8 @@ class Card extends Api
                 'card_no' => $card->card_no ?: '',
                 'agreement_signed' => $agreementSigned, // 是否已签署协议
                 'apply_time' => $card->apply_time ?: null, // 申请时间
+                'audit_time' => $card->audit_time ?: null, // 审核通过时间
+                'make_time' => $card->make_time ?: null, // 制作时间
             ],
             'steps' => $steps,
             'total_amount' => array_sum(array_column($steps, 'fee_amount')),
