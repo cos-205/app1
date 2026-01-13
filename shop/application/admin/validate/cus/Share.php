@@ -1,10 +1,10 @@
 <?php
 
-namespace app\admin\validate\fuka;
+namespace app\admin\validate\cus;
 
 use think\Validate;
 
-class CardFlowLog extends Validate
+class Share extends Validate
 {
     /**
      * 验证规则

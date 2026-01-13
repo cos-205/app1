@@ -36,10 +36,7 @@ class MemberLevelLog extends Model
     protected static function init()
     {
         self::afterInsert(function ($row) {
-            if (!$row['weigh']) {
-                $pk = $row->getPk();
-                $row->getQuery()->where($pk, $row[$pk])->update(['weigh' => $row[$pk]]);
-            }
+            
         });
     }
 

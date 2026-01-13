@@ -1,0 +1,63 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Spm')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-spm" class="form-control" name="row[spm]" type="text" value="{$row.spm|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('User_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-user_id" data-rule="required" data-source="user/user/index" data-field="nickname" class="form-control selectpage" name="row[user_id]" type="text" value="{$row.user_id|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Share_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-share_id" data-rule="required" data-source="share/index" class="form-control selectpage" name="row[share_id]" type="text" value="{$row.share_id|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Parent_ids')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-parent_ids" data-rule="required" data-source="parent/index" data-multiple="true" class="form-control selectpage" name="row[parent_ids]" type="text" value="{$row.parent_ids|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Page')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-page" class="form-control" name="row[page]" type="text" value="{$row.page|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Query')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-query" class="form-control" name="row[query]" type="text" value="{$row.query|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Platform')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-platform" class="form-control" name="row[platform]" type="text" value="{$row.platform|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('From')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-from" class="form-control" name="row[from]" type="text" value="{$row.from|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Ext')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea id="c-ext" class="form-control " rows="5" name="row[ext]" cols="50">{$row.ext|htmlentities}</textarea>
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+        </div>
+    </div>
+</form>
