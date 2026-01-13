@@ -154,6 +154,22 @@ fieldset legend {
             </div>
         </div>
         <div class="form-group">
+            <label for="c-parent_user_id" class="control-label col-xs-12 col-sm-2">推荐人ID:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-parent_user_id" data-rule="integer" class="form-control selectpage" name="row[parent_user_id]" type="text" value="{$row.parent_user_id|default=''}" data-source="user/user/index" data-field="mobile" placeholder="请选择推荐人用户">
+                <span class="help-block">点击输入框选择推荐人用户，0或留空表示清除推荐关系。也可以手动输入用户ID。</span>
+                {if condition="$row.parent_user_id"}
+                <div class="help-block text-info" id="parent-user-info">
+                    <i class="fa fa-info-circle"></i> 当前推荐人ID: {$row.parent_user_id}
+                </div>
+                {/if}
+            </div>
+            <label for="c-total_consume" class="control-label col-xs-12 col-sm-2">累计消费:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-total_consume" data-rule="" class="form-control" name="row[total_consume]" type="number" step="0.01" value="{$row.total_consume|default='0.00'|htmlentities}" placeholder="累计消费金额">
+            </div>
+        </div>
+        <div class="form-group">
             <label for="c-signin_days" class="control-label col-xs-12 col-sm-2">{:__('Signin_days')}:</label>
             <div class="col-xs-12 col-sm-4">
                 <input id="c-signin_days" data-rule="" class="form-control" name="row[signin_days]" type="number" value="{$row.signin_days|htmlentities}" placeholder="连续签到天数">

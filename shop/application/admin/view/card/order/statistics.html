@@ -11,18 +11,19 @@
                 <h3 class="panel-title">筛选条件</h3>
             </div>
             <div class="panel-body">
-                <form id="filter-form" class="form-horizontal" method="get" action="">
+                <form id="filter-form" class="form-horizontal" role="form">
+                    <input type="hidden" name="addtabs" value="1">
                     <div class="row">
                         <div class="col-xs-12 col-sm-3">
                             <div class="form-group">
                                 <label class="control-label">开始时间：</label>
-                                <input name="start_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD" type="text" value="{$start_time}" placeholder="选择开始日期">
+                                <input name="start_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" type="text" value="{$start_time|default=''}" placeholder="选择开始日期">
                             </div>
                         </div>
                         <div class="col-xs-12 col-sm-3">
                             <div class="form-group">
                                 <label class="control-label">结束时间：</label>
-                                <input name="end_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD" type="text" value="{$end_time}" placeholder="选择结束日期">
+                                <input name="end_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm:ss" data-use-current="true" type="text" value="{$end_time|default=''}" placeholder="选择结束日期">
                             </div>
                         </div>
                         <div class="col-xs-12 col-sm-2">
@@ -30,9 +31,9 @@
                                 <label class="control-label">支付状态：</label>
                                 <select name="pay_status" class="form-control">
                                     <option value="">全部</option>
-                                    <option value="0" {$pay_status==='0'?'selected':''}>未支付</option>
-                                    <option value="1" {$pay_status==='1'?'selected':''}>已支付</option>
-                                    <option value="2" {$pay_status==='2'?'selected':''}>已退款</option>
+                                    <option value="0" {if condition="$pay_status === '0' || $pay_status === 0"}selected{/if}>未支付</option>
+                                    <option value="1" {if condition="$pay_status === '1' || $pay_status === 1"}selected{/if}>已支付</option>
+                                    <option value="2" {if condition="$pay_status === '2' || $pay_status === 2"}selected{/if}>已退款</option>
                                 </select>
                             </div>
                         </div>
@@ -41,9 +42,9 @@
                                 <label class="control-label">支付方式：</label>
                                 <select name="pay_type" class="form-control">
                                     <option value="">全部</option>
-                                    <option value="wechat" {$pay_type=='wechat'?'selected':''}>微信支付</option>
-                                    <option value="alipay" {$pay_type=='alipay'?'selected':''}>支付宝</option>
-                                    <option value="unionpay" {$pay_type=='unionpay'?'selected':''}>银联支付</option>
+                                    <option value="wechat" {if condition="$pay_type == 'wechat'"}selected{/if}>微信支付</option>
+                                    <option value="alipay" {if condition="$pay_type == 'alipay'"}selected{/if}>支付宝</option>
+                                    <option value="unionpay" {if condition="$pay_type == 'unionpay'"}selected{/if}>银联支付</option>
                                 </select>
                             </div>
                         </div>
@@ -70,7 +71,7 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">总金额</h3>
                     </div>
-                    <div class="panel-body">
+                    <div class="panel-body" id="stat-total">
                         <h2 class="text-primary">¥{$total_amount|number_format=2}</h2>
                         <p class="text-muted">总订单数：{$total_count} 笔</p>
                     </div>
@@ -83,7 +84,7 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">今日金额</h3>
                     </div>
-                    <div class="panel-body">
+                    <div class="panel-body" id="stat-today">
                         <h2 class="text-success">¥{$today_amount|number_format=2}</h2>
                         <p class="text-muted">今日订单数：{$today_count} 笔</p>
                     </div>
@@ -96,7 +97,7 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">支付成功</h3>
                     </div>
-                    <div class="panel-body">
+                    <div class="panel-body" id="stat-success">
                         <h2 class="text-info">¥{$success_amount|number_format=2}</h2>
                         <p class="text-muted">成功订单数：{$success_count} 笔</p>
                     </div>
@@ -109,7 +110,7 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">未支付/失败</h3>
                     </div>
-                    <div class="panel-body">
+                    <div class="panel-body" id="stat-fail">
                         <h2 class="text-warning">¥{$fail_amount|number_format=2}</h2>
                         <p class="text-muted">失败订单数：{$fail_count} 笔</p>
                     </div>
@@ -124,7 +125,7 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">已退款</h3>
                     </div>
-                    <div class="panel-body">
+                    <div class="panel-body" id="stat-refund">
                         <h2 class="text-danger">¥{$refund_amount|number_format=2}</h2>
                         <p class="text-muted">退款订单数：{$refund_count} 笔</p>
                     </div>
@@ -147,7 +148,8 @@
                             <th>占比</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="channel-stats-table">
+                        {if condition="!empty($channel_stats) && count($channel_stats) > 0"}
                         {volist name="channel_stats" id="item"}
                         <tr>
                             <td>
@@ -158,16 +160,16 @@
                                 {default /}未知
                                 {/switch}
                             </td>
-                            <td>{$item.count} 笔</td>
-                            <td>¥{$item.total_amount|number_format=2}</td>
-                            <td>{$total_amount>0?round($item.total_amount/$total_amount*100,2):0}%</td>
+                            <td>{$item.count|default=0} 笔</td>
+                            <td>¥{$item.total_amount|default=0|number_format=2}</td>
+                            <td>{if condition="$total_amount > 0"}{$item.total_amount/$total_amount*100|round=2}%{else /}0%{/if}</td>
                         </tr>
                         {/volist}
-                        {empty name="channel_stats"}
+                        {else /}
                         <tr>
                             <td colspan="4" class="text-center text-muted">暂无数据</td>
                         </tr>
-                        {/empty}
+                        {/if}
                     </tbody>
                 </table>
             </div>
@@ -192,20 +194,21 @@
                                 <th width="20%">占比</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="amount-group-table">
+                            {if condition="!empty($amount_group) && count($amount_group) > 0"}
                             {volist name="amount_group" id="item"}
                             <tr>
-                                <td><strong>¥{$item.amount|number_format=2}</strong></td>
-                                <td><span class="badge badge-primary">{$item.count} 笔</span></td>
-                                <td>¥{$item.total_amount|number_format=2}</td>
-                                <td>{$total_amount>0?round($item.total_amount/$total_amount*100,2):0}%</td>
+                                <td><strong>¥{$item.amount|default=0|number_format=2}</strong></td>
+                                <td><span class="badge badge-primary">{$item.count|default=0} 笔</span></td>
+                                <td>¥{$item.total_amount|default=0|number_format=2}</td>
+                                <td>{if condition="$total_amount > 0"}{$item.total_amount/$total_amount*100|round=2}%{else /}0%{/if}</td>
                             </tr>
                             {/volist}
-                            {empty name="amount_group"}
+                            {else /}
                             <tr>
                                 <td colspan="4" class="text-center text-muted">暂无数据</td>
                             </tr>
-                            {/empty}
+                            {/if}
                         </tbody>
                     </table>
                 </div>

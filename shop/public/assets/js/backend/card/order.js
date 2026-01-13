@@ -189,7 +189,130 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             Controller.api.bindevent();
         },
         statistics: function () {
+            // 绑定表单事件（包括datetimepicker初始化）
             Controller.api.bindevent();
+            
+            // 确保时间选择器初始化（如果表单没有role="form"属性，手动初始化）
+            if ($('.datetimepicker').length > 0) {
+                require(['bootstrap-datetimepicker'], function () {
+                    var options = {
+                        format: 'YYYY-MM-DD HH:mm:ss',
+                        icons: {
+                            time: 'fa fa-clock-o',
+                            date: 'fa fa-calendar',
+                            up: 'fa fa-chevron-up',
+                            down: 'fa fa-chevron-down',
+                            previous: 'fa fa-chevron-left',
+                            next: 'fa fa-chevron-right',
+                            today: 'fa fa-history',
+                            clear: 'fa fa-trash',
+                            close: 'fa fa-remove'
+                        },
+                        showTodayButton: true,
+                        showClose: true
+                    };
+                    $('.datetimepicker').parent().css('position', 'relative');
+                    $('.datetimepicker').datetimepicker(options).on('dp.change', function (e) {
+                        $(this, document).trigger("changed");
+                    });
+                });
+            }
+            
+            // 处理表单AJAX提交
+            $('#filter-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                var formData = $(this).serialize();
+                
+                // 显示加载提示
+                Layer.load();
+                
+                $.ajax({
+                    url: '',
+                    type: 'GET',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        Layer.closeAll();
+                        
+                        if (response.code === 1 && response.data) {
+                            var data = response.data;
+                            
+                            // 更新统计卡片
+                            $('#stat-total h2').text('¥' + parseFloat(data.total_amount).toFixed(2));
+                            $('#stat-total p').text('总订单数：' + data.total_count + ' 笔');
+                            
+                            $('#stat-today h2').text('¥' + parseFloat(data.today_amount).toFixed(2));
+                            $('#stat-today p').text('今日订单数：' + data.today_count + ' 笔');
+                            
+                            $('#stat-success h2').text('¥' + parseFloat(data.success_amount).toFixed(2));
+                            $('#stat-success p').text('成功订单数：' + data.success_count + ' 笔');
+                            
+                            $('#stat-fail h2').text('¥' + parseFloat(data.fail_amount).toFixed(2));
+                            $('#stat-fail p').text('失败订单数：' + data.fail_count + ' 笔');
+                            
+                            $('#stat-refund h2').text('¥' + parseFloat(data.refund_amount).toFixed(2));
+                            $('#stat-refund p').text('退款订单数：' + data.refund_count + ' 笔');
+                            
+                            // 更新渠道统计表格
+                            var channelTableBody = $('#channel-stats-table');
+                            channelTableBody.empty();
+                            
+                            if (data.channel_stats && data.channel_stats.length > 0) {
+                                var totalAmount = data.total_amount || 0;
+                                var payTypeMap = {
+                                    'wechat': '微信支付',
+                                    'alipay': '支付宝',
+                                    'unionpay': '银联支付'
+                                };
+                                $.each(data.channel_stats, function(index, item) {
+                                    var percentage = totalAmount > 0 ? (item.total_amount / totalAmount * 100).toFixed(2) : 0;
+                                    var payTypeName = payTypeMap[item.pay_type] || item.pay_type || '未知';
+                                    var row = '<tr>' +
+                                        '<td>' + payTypeName + '</td>' +
+                                        '<td>' + item.count + ' 笔</td>' +
+                                        '<td>¥' + parseFloat(item.total_amount).toFixed(2) + '</td>' +
+                                        '<td>' + percentage + '%</td>' +
+                                        '</tr>';
+                                    channelTableBody.append(row);
+                                });
+                            } else {
+                                channelTableBody.html('<tr><td colspan="4" class="text-center text-muted">暂无数据</td></tr>');
+                            }
+                            
+                            // 更新金额分组统计表格
+                            var amountTableBody = $('#amount-group-table');
+                            amountTableBody.empty();
+                            
+                            if (data.amount_group && data.amount_group.length > 0) {
+                                var totalAmount = data.total_amount || 0;
+                                $.each(data.amount_group, function(index, item) {
+                                    var percentage = totalAmount > 0 ? (item.total_amount / totalAmount * 100).toFixed(2) : 0;
+                                    var row = '<tr>' +
+                                        '<td>¥' + parseFloat(item.amount).toFixed(2) + '</td>' +
+                                        '<td>' + item.count + ' 笔</td>' +
+                                        '<td>¥' + parseFloat(item.total_amount).toFixed(2) + '</td>' +
+                                        '<td>' + percentage + '%</td>' +
+                                        '</tr>';
+                                    amountTableBody.append(row);
+                                });
+                            } else {
+                                amountTableBody.html('<tr><td colspan="4" class="text-center text-muted">暂无数据</td></tr>');
+                            }
+                            
+                            Toastr.success('查询成功');
+                        } else {
+                            Toastr.error(response.msg || '查询失败');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        Layer.closeAll();
+                        Toastr.error('查询失败，请重试');
+                    }
+                });
+                
+                return false;
+            });
         },
         api: {
             bindevent: function () {
