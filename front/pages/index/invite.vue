@@ -84,17 +84,12 @@
             @fail="handleQRCodeFail"
           />
           <view class="qrcode-label">{{ state.inviteCode }}</view>
-          <view class="qrcode-desc">长按保存二维码分享给好友</view>
         </view>
 
         <view class="btn-group">
           <button class="btn-secondary" @tap="handleSaveQRCode">
             <uni-icons type="image" size="18" color="#1F2937" />
             <text>保存到相册</text>
-          </button>
-          <button class="btn-primary" @tap="handleShareQRCode">
-            <uni-icons type="redo" size="18" color="#FFFFFF" />
-            <text>分享好友</text>
           </button>
         </view>
       </view>
@@ -116,7 +111,7 @@ const state = reactive({
   loading: false,
   showQRCode: false,
   inviteCode: '',
-  inviteUrl: '11111',
+  inviteUrl: '',
   userLevel: 0,
   memberLevels: [],
   stats: {

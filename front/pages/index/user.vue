@@ -12,7 +12,7 @@
     </s-block>
     
     <!-- 退出登录按钮 -->
-    <view class="ss-p-x-20 ss-p-b-40">
+    <view class="ss-p-x-20 ss-p-b-40" v-if="isLogin">
         <button
           class="logout-btn ss-reset-button ui-BG-Main ui-Shadow-Main"
           @tap="onLogout"
@@ -59,9 +59,6 @@
           const result = await xxep.$store('user').logout();
           if (result) {
             xxep.$store('user').updateUserData();
-            uni.reLaunch({
-              url: '/pages/index/login',
-            });
           }
         }
       },

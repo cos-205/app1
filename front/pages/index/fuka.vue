@@ -296,12 +296,12 @@ import xxep from '@/xxep'
 
 // 福卡固定顺序配置（2行3列）
 const CARD_ORDER = [
-  { type_code: 'aiguo', type_name: '爱国福', image: '/static/fuka/爱国.png', is_universal: false },
-  { type_code: 'youshan', type_name: '友善福', image: '/static/fuka/友善.png', is_universal: false },
-  { type_code: 'jingye', type_name: '敬业福', image: '/static/fuka/敬业.png', is_universal: false },
-  { type_code: 'hexie', type_name: '和谐福', image: '/static/fuka/和谐.png', is_universal: false },
-  { type_code: 'fuqiang', type_name: '富强福', image: '/static/fuka/富强.png', is_universal: false },
-  { type_code: 'wanneng', type_name: '万能福', image: '/static/fuka/万能.png', is_universal: true }
+  { type_code: 'aiguo', type_name: '爱国福', image: '/static/fuka/ag.png', is_universal: false },
+  { type_code: 'youshan', type_name: '友善福', image: '/static/fuka/ys.png', is_universal: false },
+  { type_code: 'jingye', type_name: '敬业福', image: '/static/fuka/jy.png', is_universal: false },
+  { type_code: 'hexie', type_name: '和谐福', image: '/static/fuka/hx.png', is_universal: false },
+  { type_code: 'fuqiang', type_name: '富强福', image: '/static/fuka/fq.png', is_universal: false },
+  { type_code: 'wanneng', type_name: '万能福', image: '/static/fuka/wn.png', is_universal: true }
 ]
 
 // 响应式数据
@@ -526,12 +526,12 @@ const loadCardTypes = async () => {
 // 获取默认图片
 const getDefaultImage = (typeCode) => {
   const defaultImages = {
-    'aiguo': '/static/fuka/爱国.png',
-    'youshan': '/static/fuka/友善.png',
-    'jingye': '/static/fuka/敬业.png',
-    'hexie': '/static/fuka/和谐.png',
-    'fuqiang': '/static/fuka/富强.png',
-    'wanneng': '/static/fuka/万能.png'
+    'aiguo': '/static/fuka/ag.png',
+    'youshan': '/static/fuka/ys.png',
+    'jingye': '/static/fuka/jy.png',
+    'hexie': '/static/fuka/hx.png',
+    'fuqiang': '/static/fuka/fq.png',
+    'wanneng': '/static/fuka/wn.png'
   }
   return defaultImages[typeCode] || '/static/fuka/default.png'
 }
@@ -882,6 +882,7 @@ const closeDrawResult = () => {
 .card-wrapper {
   position: relative;
   width: 100%;
+  height: 260rpx;
   aspect-ratio: 0.75;
   margin-bottom: 12rpx;
   border-radius: 20rpx;

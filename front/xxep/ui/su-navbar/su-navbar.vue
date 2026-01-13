@@ -29,13 +29,6 @@
                   <text class="sicon-back" v-if="hasHistory" />
                   <text class="sicon-home" v-else />
                 </view>
-                <view class="line"></view>
-                <view
-                  class="icon-button icon-button-right ss-flex ss-row-center"
-                  @tap="showMenuTools"
-                >
-                  <text class="sicon-more" />
-                </view>
               </view>
             </view>
             <view
@@ -285,7 +278,7 @@
     background: #ffffff;
     box-shadow: 0px 0px 4rpx rgba(51, 51, 51, 0.08), 0px 4rpx 6rpx 2rpx rgba(102, 102, 102, 0.12);
     border-radius: 30rpx;
-    width: 134rpx;
+    // width: 134rpx;
     height: 56rpx;
     margin-left: 8rpx;
     .line {

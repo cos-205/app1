@@ -96,12 +96,22 @@
             </view>
             <view class="agreement-text">
               我已阅读并同意
-              <text class="link-text" @tap.stop="viewProtocol('user')">
-                《用户协议》
+              <text class="link-text" @tap="
+              xxep.$router.go('/pages/public/richtext', {
+                id: appInfo.user_protocol.id,
+                title: appInfo.user_protocol.title,
+              })
+            ">
+                《{{ appInfo.user_protocol.title }}》
               </text>
               和
-              <text class="link-text" @tap.stop="viewProtocol('privacy')">
-                《隐私政策》
+              <text class="link-text" @tap="
+              xxep.$router.go('/pages/public/richtext', {
+                id: appInfo.privacy_protocol.id,
+                title: appInfo.privacy_protocol.title,
+              })
+            ">
+                《{{ appInfo.privacy_protocol.title }}》
               </text>
             </view>
           </view>
@@ -133,7 +143,7 @@
 import { reactive, computed } from 'vue';
 import { onLoad, onUnload } from '@dcloudio/uni-app';
 import xxep from '@/xxep';
-
+const appInfo = computed(() => xxep.$store('app').info);
 const state = reactive({
   mobile: '',
   code: '',
@@ -179,6 +189,9 @@ const canSubmit = computed(() => {
 });
 
 onLoad((options) => {
+	if(options.invite_code != ''){
+		state.inviteCode = options.invite_code
+	}
   // 初始化逻辑
 });
 
@@ -209,7 +222,7 @@ const toggleAgreement = () => {
 const viewProtocol = (type) => {
   // 跳转到协议页面
   xxep.$router.go('/pages/public/richtext', {
-    type,
+    id:1,
   });
 };
 

@@ -309,7 +309,7 @@ function handlePaySuccess() {
 // 查询支付结果
 async function checkPaymentResult() {
   let retryCount = 0;
-  const maxRetry = 10;
+  const maxRetry = 2;
   
   const timer = setInterval(async () => {
     try {

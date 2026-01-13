@@ -1,13 +1,6 @@
 <template>
+	 <s-layout title="支付宝绑定" >
   <view class="bind-page">
-    <!-- 顶部导航 -->
-    <view class="page-header">
-      <view class="header-left" @tap="handleBack">
-        <uni-icons type="arrowleft" size="24" color="#1F2937"></uni-icons>
-      </view>
-      <view class="header-title">绑定支付宝</view>
-      <view class="header-right"></view>
-    </view>
 
     <!-- 主要内容 -->
     <view class="page-content">
@@ -118,6 +111,7 @@
 
     </view>
   </view>
+  </s-layout>
 </template>
 
 <script setup>
