@@ -24,7 +24,7 @@
         <view class="action-buttons">
           <button class="btn-action qrcode-btn" @tap="handleShowQRCode">
             <uni-icons type="scan" size="20" color="#4285F4" />
-            <text>邀请二维码</text>
+            <text>邀请链接</text>
           </button>
           <button class="btn-action team-btn" @tap="handleGoTeam">
             <uni-icons type="person-filled" size="20" color="#00C853" />
@@ -87,9 +87,21 @@
         </view>
 
         <view class="btn-group">
+          <!-- #ifndef H5 -->
           <button class="btn-secondary" @tap="handleSaveQRCode">
             <uni-icons type="image" size="18" color="#1F2937" />
             <text>保存到相册</text>
+          </button>
+          <!-- #endif -->
+          <!-- #ifdef H5 -->
+          <button class="btn-secondary">
+            <uni-icons type="image" size="18" color="#1F2937" />
+            <text>截图保存</text>
+          </button>
+          <!-- #endif -->
+          <button class="btn-primary" @tap="handleCopyUrl">
+            <uni-icons type="link" size="18" color="#FFFFFF" />
+            <text>复制链接</text>
           </button>
         </view>
       </view>
@@ -212,6 +224,15 @@ async function handleSaveQRCode() {
   }
 }
 
+// 复制链接
+function handleCopyUrl() {
+  uni.setClipboardData({
+    data: state.inviteUrl,
+    success: () => {
+      xxep.$helper.toast('链接已复制');
+    }
+  });
+}
 // 分享二维码
 async function handleShareQRCode() {
   if (!qrcodeRef.value) {

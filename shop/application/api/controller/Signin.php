@@ -344,8 +344,8 @@ class Signin extends Api
                 'reward_money' => $rule->reward_money,
                 'reward_chance' => $rule->reward_chance,
                 'description' => $rule->description,
-                'is_received' => in_array($rule->id, $receivedRewards),
-                'can_receive' => $user->signin_days >= $rule->days && !in_array($rule->id, $receivedRewards)
+                'isReceived' => in_array($rule->id, $receivedRewards),
+                'canReceive' => $user->signin_days >= $rule->days && !in_array($rule->id, $receivedRewards)
             ];
             $list[] = $item;
         }

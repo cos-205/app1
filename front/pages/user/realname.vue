@@ -281,6 +281,13 @@ const handleSubmit = async () => {
       
       // 显示成功提示
       xxep.$helper.toast('实名认证成功！', 'success');
+      
+      // 延迟一点时间让用户看到成功提示，然后自动返回
+      setTimeout(() => {
+        uni.navigateBack({
+          delta: 1,
+        });
+      }, 1500);
     } else {
       // 显示失败提示
       xxep.$helper.toast(res.msg || '认证失败，请重试');

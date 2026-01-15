@@ -494,15 +494,16 @@ const handleSubmit = async () => {
     });
     
     if (res.code === 1) {
-      // 刷新用户信息
+       // 显示成功提示
+       xxep.$helper.toast('信息完善成功！');
+      // 刷新用户信息（确保获取最新的实名和地址状态）
       await xxep.$store('user').getInfo();
-      
-      // 显示成功提示
-      xxep.$helper.toast('信息完善成功！', 'success');
-      
-      uni.switchTab({
-        url: '/pages/index/index',
-      });
+      // 稍微延迟一下，确保 store 持久化完成
+      setTimeout(() => {
+        uni.switchTab({
+          url: '/pages/index/index',
+        });
+      }, 1500);
     }
     
   } catch (error) {
