@@ -84,6 +84,24 @@
               />
             </view>
           </view>
+
+          <view 
+            class="method-item"
+            :class="{ active: state.selectedMethod === 'dcep' }"
+            @tap="selectMethod('dcep')"
+          >
+            <view class="method-left">
+              <image class="method-icon" src="/static/pay/dcep.png" mode="aspectFit" />
+              <text class="method-name">数字人民币</text>
+            </view>
+            <view class="method-right">
+              <uni-icons 
+                :type="state.selectedMethod === 'dcep' ? 'checkbox-filled' : 'circle'" 
+                size="24" 
+                :color="state.selectedMethod === 'dcep' ? '#D32F2F' : '#CCCCCC'" 
+              />
+            </view>
+          </view>
         </view>
       </view>
 
@@ -121,7 +139,7 @@
 
 <script setup>
 import { reactive } from 'vue';
-import { onLoad, onShow } from '@dcloudio/uni-app';
+import { onLoad, onShow, onUnload } from '@dcloudio/uni-app';
 import xxep from '@/xxep';
 
 const state = reactive({
@@ -137,6 +155,7 @@ const state = reactive({
   },
   selectedMethod: 'alipay',
   paying: false,
+  pollingTimer: null, // 轮询定时器
 });
 
 onLoad((options) => {
@@ -151,13 +170,21 @@ onLoad((options) => {
 
 // 页面显示时检查支付状态（用户从支付页面返回时）
 onShow(() => {
-  // 如果正在支付中，检查支付结果
+  // 如果正在支付中，开始轮询支付结果
   if (state.paying && state.orderInfo.order_no) {
-    checkPaymentStatusOnce();
+    checkPaymentResult();
   }
 });
 
-// 单次检查支付状态
+// 页面卸载时清理定时器
+onUnload(() => {
+  if (state.pollingTimer) {
+    clearInterval(state.pollingTimer);
+    state.pollingTimer = null;
+  }
+});
+
+// 单次检查支付状态（保留此方法以备其他场景使用）
 async function checkPaymentStatusOnce() {
   try {
     const { code, data } = await xxep.$api.card.paymentResult({
@@ -170,9 +197,12 @@ async function checkPaymentStatusOnce() {
       uni.redirectTo({
         url: '/pages/card/payment-result?status=success&step=' + state.stepInfo.step + '&order_no=' + state.orderInfo.order_no,
       });
+      return true;
     }
+    return false;
   } catch (error) {
     console.error('检查支付状态失败:', error);
+    return false;
   }
 }
 
@@ -263,17 +293,30 @@ async function callPay(payParams) {
   }
 
   // #ifdef H5
-  // H5环境：使用 window.open 在新窗口打开支付页面
-  window.open(paymentUrl, '_blank');
-  // 跳转后开始轮询支付结果
-  checkPaymentResult();
+  // H5环境：跳转到支付页面
+  // 使用 location.href 直接跳转，避免 Safari 和 iOS WebView 拦截 window.open
+  // 支付完成后用户返回时，onShow 会自动触发轮询
+  try {
+    // 尝试在新窗口打开（可能被浏览器拦截）
+    const newWindow = window.open(paymentUrl, '_blank');
+    
+    // 检测窗口是否被拦截
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+      // 降级方案：当前窗口跳转
+      window.location.href = paymentUrl;
+    }
+  } catch (e) {
+    // 降级方案：当前窗口跳转
+    window.location.href = paymentUrl;
+  }
+  // 注意：不在这里调用 checkPaymentResult()，而是在 onShow 时触发
   // #endif
 
   // #ifdef APP-PLUS
   // APP环境：使用系统默认浏览器打开支付页面
   plus.runtime.openURL(paymentUrl);
-  // 跳转后开始轮询支付结果
-  checkPaymentResult();
+  // 注意：不在这里调用 checkPaymentResult()，而是在 onShow 时触发
+  // 用户从外部浏览器返回 APP 时，onShow 会自动触发轮询
   // #endif
 
   // #ifdef MP-WEIXIN
@@ -306,41 +349,56 @@ function handlePaySuccess() {
   checkPaymentResult();
 }
 
-// 查询支付结果
+// 查询支付结果（轮询）
 async function checkPaymentResult() {
+  // 防止重复轮询
+  if (state.pollingTimer) {
+    return;
+  }
+
   let retryCount = 0;
-  const maxRetry = 2;
+  const maxRetry = 30; // 最多轮询30次（60秒）
+  const interval = 2000; // 每2秒轮询一次
   
-  const timer = setInterval(async () => {
+  state.pollingTimer = setInterval(async () => {
     try {
+      retryCount++;
+      
       const { code, data } = await xxep.$api.card.paymentResult({
         order_no: state.orderInfo.order_no,
       });
 
       if (code === 1 && data.pay_status === 1) {
-        clearInterval(timer);
+        // 支付成功
+        clearInterval(state.pollingTimer);
+        state.pollingTimer = null;
         state.paying = false;
         
-        // 支付成功，跳转到结果页
         uni.redirectTo({
           url: '/pages/card/payment-result?status=success&step=' + state.stepInfo.step + '&order_no=' + state.orderInfo.order_no,
         });
+        return;
       }
 
-      retryCount++;
+      // 达到最大重试次数
       if (retryCount >= maxRetry) {
-        clearInterval(timer);
+        clearInterval(state.pollingTimer);
+        state.pollingTimer = null;
         state.paying = false;
         
-        // 超时，跳转到结果页
         uni.redirectTo({
           url: '/pages/card/payment-result?status=checking&order_no=' + state.orderInfo.order_no,
         });
       }
     } catch (error) {
-      console.error('查询支付结果失败:', error);
+      // 如果查询出错次数过多，也停止轮询
+      if (retryCount >= maxRetry) {
+        clearInterval(state.pollingTimer);
+        state.pollingTimer = null;
+        state.paying = false;
+      }
     }
-  }, 2000);
+  }, interval);
 }
 </script>
 
