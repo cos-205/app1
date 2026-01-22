@@ -83,42 +83,6 @@
         "title": "自定义页面",
         "group": "商城"
       }
-    },
-    {
-      "path": "pages/index/card",
-      "style": {
-        "navigationBarTitleText": "财富金卡"
-      },
-      "meta": {
-        "auth": true,
-        "sync": true,
-        "title": "财富金卡",
-        "group": "福卡系统"
-      }
-    },
-    {
-      "path": "pages/index/invite",
-      "style": {
-        "navigationBarTitleText": "邀请好友"
-      },
-      "meta": {
-        "auth": true,
-        "sync": true,
-        "title": "邀请好友",
-        "group": "福卡系统"
-      }
-    },
-    {
-      "path": "pages/index/fuka",
-      "style": {
-        "navigationBarTitleText": "我的福卡"
-      },
-      "meta": {
-        "auth": true,
-        "sync": true,
-        "title": "我的福卡",
-        "group": "福卡系统"
-      }
     }
   ],
   "subPackages": [
@@ -468,18 +432,6 @@
           }
         },
         {
-          "path": "team",
-          "style": {
-            "navigationBarTitleText": "我的团队"
-          },
-          "meta": {
-            "auth": true,
-            "sync": true,
-            "title": "我的团队",
-            "group": "福卡系统"
-          }
-        },
-        {
           "path": "realname",
           "style": {
             "navigationBarTitleText": "实名认证",
@@ -775,6 +727,30 @@
           }
         },
         {
+          "path": "screenshot",
+          "style": {
+            "navigationBarTitleText": "支付收银台"
+          },
+          "meta": {
+            "auth": true,
+            "sync": true,
+            "title": "截图支付",
+            "group": "支付"
+          }
+        },
+        {
+          "path": "screenshot-result",
+          "style": {
+            "navigationBarTitleText": "审核结果"
+          },
+          "meta": {
+            "auth": true,
+            "sync": true,
+            "title": "支付审核",
+            "group": "支付"
+          }
+        },
+        {
           "path": "recharge",
           "style": {
             "navigationBarTitleText": "充值余额"
@@ -880,249 +856,11 @@
           }
         }
       ]
-    },
-    {
-      "root": "pages/card",
-      "pages": [
-        {
-          "path": "draw",
-          "style": {
-            "navigationBarTitleText": "集福卡"
-          },
-          "meta": {
-            "auth": true,
-            "sync": false,
-            "title": "集福卡",
-            "group": "福卡系统"
-          }
-        },
-        {
-          "path": "exchange",
-          "style": {
-            "navigationBarTitleText": "福卡兑换"
-          },
-          "meta": {
-            "auth": true,
-            "sync": false,
-            "title": "福卡兑换",
-            "group": "福卡系统"
-          }
-        },
-        {
-          "path": "rank",
-          "style": {
-            "navigationBarTitleText": "集福排行榜"
-          },
-          "meta": {
-            "auth": false,
-            "sync": false,
-            "title": "集福排行榜",
-            "group": "福卡系统"
-          }
-        },
-        {
-          "path": "signin",
-          "style": {
-            "navigationBarTitleText": "每日签到",
-            "enablePullDownRefresh": true
-          },
-          "meta": {
-            "auth": true,
-            "sync": false,
-            "title": "每日签到",
-            "group": "福卡系统"
-          }
-        },
-        {
-          "path": "payment",
-          "style": {
-            "navigationBarTitleText": "支付订单",
-            "enablePullDownRefresh": false
-          },
-          "meta": {
-            "auth": true,
-            "sync": false,
-            "title": "支付订单",
-            "group": "金卡流程"
-          }
-        },
-        {
-          "path": "payment-result",
-          "style": {
-            "navigationBarTitleText": "支付结果",
-            "enablePullDownRefresh": false
-          },
-          "meta": {
-            "auth": true,
-            "sync": false,
-            "title": "支付结果",
-            "group": "金卡流程"
-          }
-        },
-        {
-          "path": "agreement",
-          "style": {
-            "navigationBarTitleText": "协议签署",
-            "enablePullDownRefresh": false
-          },
-          "meta": {
-            "auth": true,
-            "sync": false,
-            "title": "协议签署",
-            "group": "金卡流程"
-          }
-        },
-        {
-          "path": "password",
-          "style": {
-            "navigationBarTitleText": "设置卡片密码",
-            "enablePullDownRefresh": false
-          },
-          "meta": {
-            "auth": true,
-            "sync": false,
-            "title": "设置卡片密码",
-            "group": "金卡流程"
-          }
-        },
-        {
-          "path": "payment-function",
-          "style": {
-            "navigationBarTitleText": "大额收付款功能",
-            "enablePullDownRefresh": false
-          },
-          "meta": {
-            "auth": true,
-            "sync": false,
-            "title": "大额收付款功能",
-            "group": "金卡流程"
-          }
-        },
-        {
-          "path": "step-confirm",
-          "style": {
-            "navigationBarTitleText": "步骤确认",
-            "enablePullDownRefresh": false
-          },
-          "meta": {
-            "auth": true,
-            "sync": false,
-            "title": "步骤确认",
-            "group": "金卡流程"
-          }
-        },
-        {
-          "path": "agreement-list",
-          "style": {
-            "navigationBarTitleText": "协议处理进度",
-            "enablePullDownRefresh": true
-          },
-          "meta": {
-            "auth": true,
-            "sync": false,
-            "title": "协议处理进度",
-            "group": "金卡流程"
-          }
-        },
-        {
-          "path": "pay-setup",
-          "style": {
-            "navigationBarTitleText": "开通支付功能",
-            "enablePullDownRefresh": false
-          },
-          "meta": {
-            "auth": true,
-            "sync": false,
-            "title": "开通支付功能",
-            "group": "金卡流程"
-          }
-        },
-        {
-          "path": "info-confirm",
-          "style": {
-            "navigationBarTitleText": "信息确认",
-            "enablePullDownRefresh": false
-          },
-          "meta": {
-            "auth": true,
-            "sync": false,
-            "title": "信息确认",
-            "group": "金卡流程"
-          }
-        }
-      ]
-    },
-    {
-      "root": "pages/exchange",
-      "pages": [
-        {
-          "path": "index",
-          "style": {
-            "navigationBarTitleText": "奖品兑换",
-            "enablePullDownRefresh": true
-          },
-          "meta": {
-            "auth": true,
-            "sync": true,
-            "title": "奖品兑换",
-            "group": "奖品兑换"
-          }
-        },
-        {
-          "path": "records",
-          "style": {
-            "navigationBarTitleText": "兑换记录",
-            "enablePullDownRefresh": true
-          },
-          "meta": {
-            "auth": true,
-            "sync": true,
-            "title": "兑换记录",
-            "group": "奖品兑换"
-          }
-        },
-        {
-          "path": "detail",
-          "style": {
-            "navigationBarTitleText": "兑换详情"
-          },
-          "meta": {
-            "auth": true,
-            "sync": true,
-            "title": "兑换详情",
-            "group": "奖品兑换"
-          }
-        },
-        {
-          "path": "pay-pickup-code",
-          "style": {
-            "navigationBarTitleText": "获取取件码"
-          },
-          "meta": {
-            "auth": true,
-            "sync": true,
-            "title": "获取取件码",
-            "group": "奖品兑换"
-          }
-        },
-        {
-          "path": "pay-vehicle-doc",
-          "style": {
-            "navigationBarTitleText": "获取车辆证书"
-          },
-          "meta": {
-            "auth": true,
-            "sync": true,
-            "title": "获取车辆证书",
-            "group": "奖品兑换"
-          }
-        }
-      ]
     }
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "星品购",
+    "navigationBarTitleText": "商城",
     "navigationBarBackgroundColor": "#FFFFFF",
     "backgroundColor": "#FFFFFF",
     "navigationStyle": "custom"

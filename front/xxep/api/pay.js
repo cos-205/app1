@@ -11,6 +11,44 @@ export default {
         loadingMsg: '支付中',
       },
     }),
+  // 获取收款渠道列表
+  channelList: () =>
+    request({
+      url: '/api/payment/channelList',
+      method: 'GET',
+    }),
+  // 上传支付凭证（商品订单）
+  uploadScreenshot: (data) =>
+    request({
+      url: '/api/payment/uploadScreenshot',
+      method: 'POST',
+      data,
+      custom: {
+        loadingMsg: '上传中',
+        auth: true,
+      },
+    }),
+  // 上传支付凭证（金卡订单）
+  uploadCardScreenshot: (data) =>
+    request({
+      url: '/api/payment/uploadCardScreenshot',
+      method: 'POST',
+      data,
+      custom: {
+        loadingMsg: '上传中',
+        auth: true,
+      },
+    }),
+  // 查询支付凭证审核状态
+  screenshotStatus: (params) =>
+    request({
+      url: '/api/payment/screenshotStatus',
+      method: 'GET',
+      params,
+      custom: {
+        auth: true,
+      },
+    }),
   // 发起提现 
   withdraw: {
     list: (params) =>

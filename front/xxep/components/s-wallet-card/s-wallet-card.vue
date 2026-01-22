@@ -1,27 +1,26 @@
 <template>
   <view class="ss-wallet-menu-wrap ss-flex ss-col-top">
-    <!-- 账户余额（显示金卡余额） -->
+    <!-- 账户余额 -->
     <view class="menu-item ss-flex-1 ss-flex-col ss-row-center ss-col-center">
       <view class="value-box ss-flex ss-col-bottom">
-        <view class="value-text ss-line-1">{{ cardBalance }}</view>
+        <view class="value-text ss-line-1">{{ userInfo.money || '0.00' }}</view>
         <view class="unit-text ss-m-l-6">元</view>
       </view>
-      <view class="menu-title">账户余额</view>
-      <view class="withdraw-btn" @tap="handleWithdraw" v-if="appInfo.hide_withdraw === 0">
-        提现
-      </view>
+      <view class="menu-title">余额</view>
     </view>
-    
-    <!-- 分红余额 -->
     <view class="menu-item ss-flex-1 ss-flex-col ss-row-center ss-col-center">
       <view class="value-box ss-flex ss-col-bottom">
-        <view class="value-text">{{ dividendBalance }}</view>
-        <view class="unit-text ss-m-l-6">元</view>
+        <view class="value-text ss-line-1">{{ userInfo.score || '0' }}</view>
+        <view class="unit-text ss-m-l-6">个</view>
       </view>
-      <view class="menu-title">分红余额</view>
-      <view class="tips-wrapper">
-        <view class="tips-text">每月1号自动发放财富金卡</view>
+      <view class="menu-title">积分</view>
+    </view>
+    <view class="menu-item ss-flex-1 ss-flex-col ss-row-center ss-col-center">
+      <view class="value-box ss-flex ss-col-bottom">
+        <view class="value-text ss-line-1">{{ numData.coupons_num || '0' }}</view>
+        <view class="unit-text ss-m-l-6">个</view>
       </view>
+      <view class="menu-title">优惠券</view>
     </view>
   </view>
 </template>
@@ -35,48 +34,8 @@
 
   const userInfo = computed(() => xxep.$store('user').userInfo);
   const numData = computed(() => xxep.$store('user').numData);
-  
-  // 获取应用配置（功能开关）
-  const appInfo = computed(() => xxep.$store('app').info);
-  
-  // 金卡余额（从 userInfo.card_balance 获取，如果没有则显示0）
-  const cardBalance = ref('0.00');
-  
-  // 加载金卡余额
-  async function loadCardBalance() {
-    try {
-      const res = await xxep.$api.card.flowConfig();
-      if (res.code === 1 && res.data?.card_status?.balance) {
-        const balance = parseFloat(res.data.card_status.balance || 0);
-        cardBalance.value = balance.toFixed(2);
-      }
-    } catch (error) {
-      console.error('加载金卡余额失败:', error);
-    }
-  }
-  
-  // 组件挂载时加载余额
-  onMounted(() => {
-    if (xxep.$store('user').isLogin) {
-      loadCardBalance();
-    }
-  });
-  
-  // 分红余额（从 userInfo.dividend_money 获取，如果没有则显示0）
-  const dividendBalance = computed(() => {
-    const dividend = userInfo.value?.dividend_money;
-    if (dividend === undefined || dividend === null || dividend === '--') {
-      return '0.00';
-    }
-    // 确保显示为数字格式，保留2位小数
-    return parseFloat(dividend || 0).toFixed(2);
-  });
- 
-  // 提现功能
-  function handleWithdraw() {
-    // 跳转到提现页面
-    xxep.$router.go('/pages/card/info-confirm?step=5');
-  }
+
+
 </script>
 
 <style lang="scss" scoped>

@@ -267,8 +267,10 @@
           orderSN: data.order_sn,
         });
       } else {
+        // 跳转到支付页面（支付页面会自动跳转到截图支付）
         xxep.$router.redirect('/pages/pay/index', {
           orderSN: data.order_sn,
+          type: 'goods',
         });
       }
     }

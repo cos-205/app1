@@ -10,16 +10,7 @@
     <s-block v-for="(item, index) in template.data" :key="index" :styles="item.style">
       <s-block-item :type="item.type" :data="item.data" :styles="item.style" />
     </s-block>
-    
-    <!-- 退出登录按钮 -->
-    <view class="ss-p-x-20 ss-p-b-40" v-if="isLogin">
-        <button
-          class="logout-btn ss-reset-button ui-BG-Main ui-Shadow-Main"
-          @tap="onLogout"
-        >
-          退出登录
-        </button>
-      </view>
+
   </s-layout>
 </template>
 

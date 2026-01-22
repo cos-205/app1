@@ -1,7 +1,6 @@
 import activity from "./activity"
 import app from "./app"
 import cart from "./cart"
-import card from "./card"
 import category from "./category"
 import chat from "./chat"
 import commission from "./commission"
@@ -19,7 +18,6 @@ export default {
   activity,
   app,
   cart,
-  card,
   category,
   chat,
   commission,

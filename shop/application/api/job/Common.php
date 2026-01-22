@@ -3,7 +3,6 @@
 namespace app\api\job;
 
 use think\queue\Job;
-use addons\cus\listener\Fuka;
 
 /**
  * 通用队列任务
@@ -12,6 +11,7 @@ class Common
 {
     /**
      * 处理用户实名认证后的业务逻辑
+     * 已移除福卡相关业务逻辑
      * 
      * @param Job $job 当前任务对象
      * @param array $data 任务数据
@@ -30,15 +30,17 @@ class Common
                 return;
             }
             
-            // 调用福卡监听器处理实名认证后的业务
-            $fukaListener = new Fuka();
-            $fukaListener->userRealnameAfter(['user' => $user]);
+            // 福卡监听器已移除
+            // 如需添加其他实名认证后的业务逻辑，请在此处添加
             
             // 删除任务
             $job->delete();
             
         } catch (\Exception $e) {
-            
+            output_log('error', [
+                'title' => '用户实名认证队列任务执行失败',
+                'error' => $e->getMessage()
+            ]);
         }
     }
     

@@ -43,9 +43,9 @@
           :src="xxep.$url.static('/assets/addons/cus/uniapp/order/order_express.png')"
         >
         </image>
-        <view class="ss-font-30">{{ state.orderInfo.status_text }}</view>
+        <view class="ss-font-30">{{ getOrderStatusText() }}</view>
       </view>
-      <view class="ss-font-26 ss-m-x-20 ss-m-b-70">{{ state.orderInfo.status_desc }}</view>
+      <view class="ss-font-26 ss-m-x-20 ss-m-b-70">{{ getOrderStatusDesc() }}</view>
     </view>
 
     <!-- 收货地址 -->
@@ -169,6 +169,32 @@
           <text class="title">支付方式：</text>
           <text class="detail">{{ state.orderInfo.pay_types_text?.join(',') || '-' }}</text>
         </view>
+        <!-- 支付凭证展示 -->
+        <view class="notice-item" v-if="state.orderInfo.payment_screenshot">
+          <text class="title">支付凭证：</text>
+          <view class="screenshot-wrapper">
+            <image 
+              :src="xxep.$url.cdn(state.orderInfo.payment_screenshot)" 
+              mode="aspectFill"
+              class="payment-screenshot"
+              @tap="previewScreenshot"
+            ></image>
+            <view 
+              class="screenshot-status"
+              :class="{
+                'status-pending': state.orderInfo.screenshot_status === 0,
+                'status-approved': state.orderInfo.screenshot_status === 1,
+                'status-rejected': state.orderInfo.screenshot_status === 2
+              }"
+            >
+              {{ getScreenshotStatusText(state.orderInfo.screenshot_status) }}
+            </view>
+          </view>
+        </view>
+        <view class="notice-item" v-if="state.orderInfo.screenshot_audit_remark && state.orderInfo.screenshot_status === 2">
+          <text class="title">审核备注：</text>
+          <text class="detail reject-remark">{{ state.orderInfo.screenshot_audit_remark }}</text>
+        </view>
       </view>
     </view>
     <!--  价格信息  -->
@@ -235,7 +261,7 @@
       round="10"
       @close="state.showInvoicePopup = false"
     >
-      <view class="invoice-box">
+      <view class="invoice-box" v-if="false">
         <view class="invoice-box-title">申请发票</view>
         <view class="invoice-box-item bg-white ss-flex ss-col-center ss-row-between">
           <view class="item-title">申请发票</view>
@@ -269,13 +295,7 @@
           class="ss-reset-button pay-btn ui-BG-Main-Gradient"
           v-if="state.orderInfo.btns?.includes('pay')"
           @tap="onPay(state.orderInfo.order_sn)"
-          >继续支付</button
-        >
-        <button
-          class="ss-reset-button cancel-btn"
-          v-if="state.orderInfo.btns?.includes('apply_refund')"
-          @tap="onRefund(state.orderInfo.id)"
-          >申请退款</button
+          >{{ state.orderInfo.payment_screenshot ? '重新上传' : '继续支付' }}</button
         >
         <button
           class="ss-reset-button cancel-btn"
@@ -306,13 +326,7 @@
           @tap="onComment(state.orderInfo.order_sn)"
           >评价晒单</button
         >
-        <button
-          v-if="state.orderInfo.btns?.includes('invoice')"
-          class="ss-reset-button cancel-btn"
-          @tap.stop="onOrderInvoice(state.orderInfo.invoice?.id)"
-        >
-          查看发票
-        </button>
+
         <button
           v-if="state.orderInfo.btns?.includes('re_apply_refund')"
           class="ss-reset-button cancel-btn"
@@ -320,12 +334,6 @@
         >
           重新退款
         </button>
-        <button
-          class="ss-reset-button cancel-btn"
-          v-if="state.orderInfo.btns?.includes('apply_invoice')"
-          @tap.stop="state.showInvoicePopup = true"
-          >申请开票</button
-        >
       </view>
     </su-fixed>
   </s-layout>
@@ -371,9 +379,56 @@
   });
   // 去支付
   function onPay(orderSN) {
-    xxep.$router.go('/pages/pay/index', {
+    xxep.$router.go('/pages/pay/screenshot', {
       orderSN,
+      type: 'goods',
     });
+  }
+
+  // 预览支付凭证
+  function previewScreenshot() {
+    if (state.orderInfo.payment_screenshot) {
+      uni.previewImage({
+        urls: [xxep.$url.cdn(state.orderInfo.payment_screenshot)],
+        current: 0,
+      });
+    }
+  }
+
+  // 获取审核状态文本
+  function getScreenshotStatusText(status) {
+    const statusMap = {
+      0: '待审核',
+      1: '审核通过',
+      2: '审核拒绝'
+    };
+    return statusMap[status] || '未知状态';
+  }
+
+  // 获取订单状态文本
+  function getOrderStatusText() {
+    // 如果有支付凭证且状态是未支付，显示截图审核状态
+    if (state.orderInfo.payment_screenshot && state.orderInfo.status === 'unpaid') {
+      if (state.orderInfo.screenshot_status === 0) {
+        return '待审核';
+      } else if (state.orderInfo.screenshot_status === 2) {
+        return '审核拒绝';
+      }
+    }
+    return state.orderInfo.status_text;
+  }
+
+  // 获取订单状态描述
+  function getOrderStatusDesc() {
+    // 如果有支付凭证且状态是未支付，显示截图审核描述
+    if (state.orderInfo.payment_screenshot && state.orderInfo.status === 'unpaid') {
+      if (state.orderInfo.screenshot_status === 0) {
+        return '您的支付凭证正在审核中，请耐心等待';
+      } else if (state.orderInfo.screenshot_status === 2) {
+        return '您的支付凭证审核未通过，请重新上传';
+      }
+    }
+    return state.orderInfo.status_desc;
   }
 
   function onGoodsDetail(id) {
@@ -850,5 +905,45 @@
         font-size: 30rpx;
       }
     }
+  }
+
+  // 支付凭证样式
+  .screenshot-wrapper {
+    display: flex;
+    align-items: center;
+    margin-top: 10rpx;
+
+    .payment-screenshot {
+      width: 160rpx;
+      height: 160rpx;
+      border-radius: 8rpx;
+      border: 1rpx solid #eee;
+      margin-right: 20rpx;
+    }
+
+    .screenshot-status {
+      padding: 8rpx 20rpx;
+      border-radius: 20rpx;
+      font-size: 24rpx;
+      
+      &.status-pending {
+        background-color: #fff7e6;
+        color: #fa8c16;
+      }
+
+      &.status-approved {
+        background-color: #f6ffed;
+        color: #52c41a;
+      }
+
+      &.status-rejected {
+        background-color: #fff1f0;
+        color: #ff4d4f;
+      }
+    }
+  }
+
+  .reject-remark {
+    color: #ff4d4f;
   }
 </style>

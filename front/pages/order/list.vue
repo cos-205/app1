@@ -24,7 +24,7 @@
         <view class="order-card-header ss-flex ss-col-center ss-row-between ss-p-x-20">
           <view class="order-no">订单号：{{ order.order_sn }}</view>
           <view class="order-state ss-font-26" :class="formatOrderColor(order.status_code)">{{
-            order.status_text
+            getOrderStatusText(order)
           }}</view>
         </view>
         <view class="border-bottom" v-for="item in order.items" :key="item.id">
@@ -168,13 +168,13 @@
               查看物流
             </button>
 
-            <button
+            <!-- <button
               v-if="order.btns.includes('apply_refund')"
               class="tool-btn ss-reset-button"
               @tap.stop="onRefund(order.id)"
             >
               申请退款
-            </button>
+            </button> -->
             <button
               v-if="order.btns.includes('re_apply_refund')"
               class="tool-btn ss-reset-button"
@@ -212,7 +212,7 @@
               class="tool-btn ss-reset-button ui-BG-Main-Gradient"
               @tap.stop="onPay(order.order_sn)"
             >
-              继续支付
+              {{ order.payment_screenshot ? '重新上传' : '继续支付' }}
             </button>
           </view>
         </view>
@@ -318,9 +318,23 @@
 
   // 继续支付
   function onPay(orderSN) {
-    xxep.$router.go('/pages/pay/index', {
+    xxep.$router.go('/pages/pay/screenshot', {
       orderSN,
+      type: 'goods',
     });
+  }
+
+  // 获取订单状态文本
+  function getOrderStatusText(order) {
+    // 如果有支付凭证且状态是未支付，显示截图审核状态
+    if (order.payment_screenshot && order.status === 'unpaid') {
+      if (order.screenshot_status === 0) {
+        return '待审核';
+      } else if (order.screenshot_status === 2) {
+        return '审核拒绝';
+      }
+    }
+    return order.status_text;
   }
 
   // 评价

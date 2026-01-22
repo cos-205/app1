@@ -13,6 +13,30 @@
       <view class="modal-content ss-flex-1">
         <view class="pay-title ss-p-l-30 ss-m-y-30">选择支付方式</view>
         <radio-group @change="onTapPay">
+          <!-- 截图支付方式 -->
+          <label class="pay-type-item">
+            <view class="pay-item ss-flex ss-col-center ss-row-between ss-p-x-30 border-bottom">
+              <view class="ss-flex ss-col-center">
+                <image
+                  class="pay-icon"
+                  src="/static/pay/screenshot.png"
+                  mode="aspectFit"
+                ></image>
+                <text class="pay-title">截图支付</text>
+              </view>
+              <view class="check-box ss-flex ss-col-center ss-p-l-10">
+                <view class="userInfo-money ss-m-r-10">扫码支付，上传截图</view>
+                <radio
+                  value="screenshot"
+                  color="var(--ui-BG-Main)"
+                  style="transform: scale(0.8)"
+                  :checked="state.payment === 'screenshot'"
+                />
+              </view>
+            </view>
+          </label>
+          
+          <!-- 原有支付方式 -->
           <label class="pay-type-item" v-for="item in state.payMethods" :key="item.title">
             <view
               class="pay-item ss-flex ss-col-center ss-row-between ss-p-x-30 border-bottom"
@@ -137,6 +161,16 @@
       xxep.$helper.toast('请选择支付方式');
       return;
     }
+    
+    // 截图支付
+    if (state.payment === 'screenshot') {
+      xxep.$router.go('/pages/pay/screenshot', {
+        orderSN: state.orderInfo.order_sn || state.orderInfo.id,
+        type: state.orderType,
+      });
+      return;
+    }
+    
     if (state.payment === 'money') {
       uni.showModal({
         title: '提示',
@@ -247,6 +281,16 @@
     if (options.id) {
       id = options.id;
     }
+    
+    // 默认直接跳转到截图支付页面
+    const orderType = options.type === 'recharge' ? 'recharge' : 'goods';
+    xxep.$router.redirect('/pages/pay/screenshot', {
+      orderSN: id,
+      type: orderType,
+    });
+    
+    // 注释掉原有的加载订单逻辑，因为已经跳转到截图支付页面
+    /*
     if (options.type === 'recharge') {
       state.orderType = 'recharge';
       // 充值订单
@@ -256,6 +300,7 @@
       state.orderType = 'goods';
       setGoodsOrder(id);
     }
+    */
   });
 </script>
 

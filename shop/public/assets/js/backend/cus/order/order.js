@@ -529,6 +529,30 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         })
                     }
 
+                    // 标记已支付（列表页）
+                    function onMarkPaidFromList(row) {
+                        Layer.confirm('确认该订单支付截图真实有效，并标记为已支付吗？', {
+                            title: '确认操作',
+                            btn: ['确定', '取消']
+                        }, function(index) {
+                            Fast.api.ajax({
+                                url: 'cus/order/order/markPaid',
+                                type: 'POST',
+                                data: {
+                                    id: row.id
+                                }
+                            }, function(ret, res) {
+                                Layer.close(index);
+                                Toastr.success(ret.msg || '标记成功');
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 1000);
+                            }, function(ret, res) {
+                                Layer.close(index);
+                            });
+                        });
+                    }
+
                     onMounted(() => {
                         getType()
                     })
@@ -561,6 +585,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         onOfflineConfirm,
                         onDetail,
                         onAction,
+                        onMarkPaidFromList,
                     }
                 }
             }
@@ -868,6 +893,30 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         });
                     }
 
+                    // 标记已支付（详情页）
+                    function markPaidOrder() {
+                        Layer.confirm('确认该订单支付截图真实有效，并标记为已支付吗？', {
+                            title: '确认操作',
+                            btn: ['确定', '取消']
+                        }, function(index) {
+                            Fast.api.ajax({
+                                url: 'cus/order/order/markPaid',
+                                type: 'POST',
+                                data: {
+                                    id: state.id
+                                }
+                            }, function(ret, res) {
+                                Layer.close(index);
+                                Toastr.success(ret.msg || '标记成功');
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 1000);
+                            }, function(ret, res) {
+                                Layer.close(index);
+                            });
+                        });
+                    }
+
                     onMounted(() => {
                         getDetail()
                     })
@@ -903,7 +952,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         onRefund,
                         onAftersale,
                         onComment,
-                        onConfirm
+                        onConfirm,
+                        markPaidOrder
                     }
                 }
             }

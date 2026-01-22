@@ -38,11 +38,6 @@
     z-index: -100;
     border-radius: 12rpx;
     overflow: hidden;
-    
-    // 设置视频容器的背景为红色
-    :deep(.uni-video-container) {
-      background: url('/static/images/fuka_bg.jpeg') no-repeat center center;
-      background-size: 100% 100%;
-    }
+
   }
 </style>

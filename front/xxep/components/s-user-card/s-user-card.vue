@@ -30,48 +30,11 @@
             <text class="value">{{ maskedMobile }}</text>
           </view>
           
-          <!-- 第三行：邀请码 -->
-          <view class="info-row" v-if="isLogin">
-            <text class="label">邀请码：</text>
-            <text class="value">{{ displayInviteCode }}</text>
-            <button 
-              class="copy-btn" 
-              @tap.stop="copyInviteCode"
-              v-if="displayInviteCode !== '未设置'"
-            >
-              复制
-            </button>
-          </view>
         </view>
       </view>
       
       <!-- 右侧：会员等级 + 入场券 + 二维码 -->
       <view class="right-box ss-m-r-52">
-        <!-- 会员等级 -->
-        <view 
-          class="member-level-wrapper" 
-          @tap="showMemberDetail"
-          v-if="isLogin"
-        >
-          <view class="member-level-content">
-            <image 
-              v-if="memberLevelImage" 
-              class="member-level-image" 
-              :src="memberLevelImage" 
-              mode="aspectFit"
-            />
-            <text class="level-name">{{ displayMemberLevel }}</text>
-          </view>
-        </view>
-        
-        <!-- 入场券 -->
-        <view 
-          class="ticket-count" 
-          @tap="showTickets"
-          v-if="isLogin && appInfo.hide_entry_ticket === 0"
-        >
-          入场券：<text class="count">{{ displayTicketCount }}</text>张
-        </view>
         
         <!-- 二维码按钮 -->
         <!-- <button class="ss-reset-button qrcode-btn" @tap="showShareModal">
@@ -134,33 +97,6 @@
       type: String,
       default: '',
     },
-    // 邀请码
-    inviteCode: {
-      type: String,
-      default: '',
-    },
-    // 会员等级
-    memberLevel: {
-      type: String,
-      default: '',
-    },
-    // 入场券数量
-    ticketCount: {
-      type: [String, Number],
-      default: 0,
-    },
-    vip: {
-      type: [String, Number],
-      default: '1',
-    },
-    collectNum: {
-      type: [String, Number],
-      default: '1',
-    },
-    likeNum: {
-      type: [String, Number],
-      default: '1',
-    },
   });
 
   // 手机号脱敏处理
@@ -170,142 +106,6 @@
     return mobile.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
   });
 
-  // 邀请码显示
-  const displayInviteCode = computed(() => {
-    return userInfo.value?.invite_code || props.inviteCode || '未设置';
-  });
-
-  // 会员等级ID到名称的映射（与数据库 fa_fuka_member_level 表对应）
-  const memberLevelMap = {
-    0: { name: '普通会员', type: 'normal' },
-    1: { name: '铂金会员', type: 'platinum' },
-    2: { name: '黄金会员', type: 'gold' },
-    3: { name: '钻石会员', type: 'diamond' },
-    4: { name: '黑金会员', type: 'black' },
-    5: { name: '至尊会员', type: 'supreme' },
-  };
-
-  // 会员等级显示
-  const displayMemberLevel = computed(() => {
-    const level = userInfo.value?.member_level || props.memberLevel;
-    
-    // 如果已经是文字名称，直接返回
-    if (level && isNaN(level)) {
-      return level;
-    }
-    
-    // 如果是数字ID，转换为名称
-    const levelId = parseInt(level) || 0;
-    return memberLevelMap[levelId]?.name || '普通会员';
-  });
-
-  // 会员等级图片路径
-  const memberLevelImage = computed(() => {
-    const level = userInfo.value?.member_level || props.memberLevel;
-    
-    // 如果是数字ID，生成图片路径
-    if (level !== undefined && level !== null && !isNaN(level)) {
-      const levelId = parseInt(level);
-      return `/static/level/${levelId}.png`;
-    }
-    
-    return '';
-  });
-
-  // 会员等级样式类
-  const memberLevelClass = computed(() => {
-    const level = userInfo.value?.member_level || props.memberLevel;
-    
-    // 如果有 member_level_type 字段，优先使用
-    if (userInfo.value?.member_level_type) {
-      return `level-${userInfo.value.member_level_type}`;
-    }
-    
-    // 如果是数字ID，从映射表获取类型
-    if (level !== undefined && level !== null && !isNaN(level)) {
-      const levelId = parseInt(level);
-      const levelType = memberLevelMap[levelId]?.type || 'normal';
-      return `level-${levelType}`;
-    }
-    
-    // 如果是文字名称，根据名称判断类型
-    const levelName = String(level || '');
-    if (levelName.includes('至尊')) return 'level-supreme';
-    if (levelName.includes('黑金')) return 'level-black';
-    if (levelName.includes('钻石')) return 'level-diamond';
-    if (levelName.includes('黄金')) return 'level-gold';
-    if (levelName.includes('铂金')) return 'level-platinum';
-    
-    return 'level-normal';
-  });
-
-  // 入场券数量（集福机会次数，对应数据库字段 fuka_chance）
-  const displayTicketCount = computed(() => {
-    return userInfo.value?.fuka_chance || userInfo.value?.ticket_count || props.ticketCount || 0;
-  });
-
-  // 复制邀请码
-  function copyInviteCode() {
-    const code = displayInviteCode.value;
-    if (code === '未设置') {
-      uni.showToast({
-        title: '暂无邀请码',
-        icon: 'none',
-      });
-      return;
-    }
-
-    uni.setClipboardData({
-      data: code,
-      success: () => {
-        uni.showToast({
-          title: '邀请码已复制',
-          icon: 'success',
-        });
-      },
-      fail: () => {
-        uni.showToast({
-          title: '复制失败',
-          icon: 'none',
-        });
-      },
-    });
-  }
-
-  // 查看会员详情
-  function showMemberDetail() {
-    if (!isLogin.value) {
-      showAuthModal();
-      return;
-    }
-    xxep.$router.go('/pages/user/member');
-  }
-
-  // 查看入场券
-  function showTickets() {
-    if (!isLogin.value) {
-      showAuthModal();
-      return;
-    }
-    
-    // 显示入场券说明
-    uni.showModal({
-      title: '入场券说明',
-      content: '本次与会名额仅有3千名。\n\n入场券预定费，到场后原路退还。\n\n每位到场参与人员可获得10万人民币现金。',
-      confirmText: '我知道了',
-      showCancel: false,
-      success: (res) => {
-        if (res.confirm) {
-          // 用户点击确认后，可以跳转到入场券详情页（如果有的话）
-          // xxep.$router.go('/pages/user/tickets');
-        }
-      }
-    });
-  }
-
-  function onBind() {
-    showAuthModal('changeMobile');
-  }
 </script>
 
 <style lang="scss" scoped>

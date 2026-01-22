@@ -617,6 +617,30 @@
                         </div>
                     </template>
                 </el-table-column>
+                <el-table-column label="支付截图" min-width="160" align="center">
+                    <template #default="scope">
+                        <div v-if="scope.row.payment_screenshot" class="sa-flex sa-column sa-row-center">
+                            <el-image 
+                                :src="scope.row.payment_screenshot" 
+                                :preview-src-list="[scope.row.payment_screenshot]"
+                                style="width: 60px; height: 60px; cursor: pointer; margin-bottom: 4px;"
+                                fit="cover">
+                            </el-image>
+                            <el-tag v-if="scope.row.screenshot_status == 0" type="warning" size="small" style="margin-bottom: 4px;">待审核</el-tag>
+                            <el-tag v-if="scope.row.screenshot_status == 1" type="success" size="small">已审核</el-tag>
+                            <el-tag v-if="scope.row.screenshot_status == 2" type="danger" size="small">已拒绝</el-tag>
+                            {if $auth->check('cus/order/order/markPaid')}
+                            <el-button v-if="scope.row.screenshot_status == 0 && scope.row.status == 'unpaid'" 
+                                type="success" 
+                                size="small"
+                                @click="onMarkPaidFromList(scope.row)">
+                                标记已支付
+                            </el-button>
+                            {/if}
+                        </div>
+                        <div v-else style="color: #999;">-</div>
+                    </template>
+                </el-table-column>
                 <el-table-column label="操作" min-width="230">
                     <template #default="scope">
                         <div class="status" :class="statusCode(scope.row).class">{{statusCode(scope.row).text}}</div>

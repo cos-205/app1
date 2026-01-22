@@ -20,6 +20,8 @@ use addons\cus\service\order\OrderDispatch as OrderDispatchService;
 use addons\cus\library\express\Express as ExpressLib;
 use addons\cus\library\Operator;
 use addons\cus\facade\Wechat;
+use addons\cus\service\StockSale;
+use addons\cus\facade\Activity as ActivityFacade;
 
 class Order extends Common
 {
@@ -67,6 +69,17 @@ class Order extends Common
 
                     return $item;
                 });
+                
+                // 如果有支付凭证且状态是未支付，显示为待审核
+                if (!empty($order['payment_screenshot']) && $order['status'] === 'unpaid') {
+                    if ($order['screenshot_status'] == 0) {
+                        $order['status_text'] = '待审核';
+                        $order['status_desc'] = '支付凭证正在审核中';
+                    } elseif ($order['screenshot_status'] == 2) {
+                        $order['status_text'] = '审核拒绝';
+                        $order['status_desc'] = '支付凭证审核未通过';
+                    }
+                }
             })->toArray();
 
         foreach ($orders['data'] as &$order) {
@@ -152,6 +165,17 @@ class Order extends Common
         (new ExpressLib)->updateOrderExpress($id);
 
         $order = $this->model->withTrashed()->with(['user', 'items', 'address', 'activity_orders', 'pays', 'invoice'])->where('id', $id)->find();
+        
+        // 如果有支付凭证且状态是未支付，显示为待审核
+        if (!empty($order['payment_screenshot']) && $order['status'] === 'unpaid') {
+            if ($order['screenshot_status'] == 0) {
+                $order['status_text'] = '待审核';
+                $order['status_desc'] = '支付凭证正在审核中';
+            } elseif ($order['screenshot_status'] == 2) {
+                $order['status_text'] = '审核拒绝';
+                $order['status_desc'] = '支付凭证审核未通过';
+            }
+        }
         if (!$order) {
             $this->error(__('No Results were found'));
         }
@@ -662,6 +686,82 @@ class Order extends Common
         });
 
         $this->success('退款成功');
+    }
+
+
+    /**
+     * 标记已支付（审核支付截图通过）
+     *
+     * @return void
+     */
+    public function markPaid()
+    {
+        if (!$this->request->isAjax()) {
+            $this->error('非法请求');
+        }
+
+        $id = $this->request->param('id');
+        if (!$id) {
+            $this->error('订单ID不能为空');
+        }
+
+        $order = $this->model->where('id', $id)->where('status', 'unpaid')->find();
+        if (!$order) {
+            $this->error('订单不存在或不是未支付状态');
+        }
+
+        if (!$order['payment_screenshot']) {
+            $this->error('该订单没有支付截图');
+        }
+
+        if ($order['screenshot_status'] != 0) {
+            $this->error('该订单截图已审核');
+        }
+
+        Db::startTrans();
+        try {
+            // 更新订单状态为已支付
+            $order->status = 'paid';
+            $order->paid_time = time();
+            $order->screenshot_status = 1;
+            $order->screenshot_audit_time = time();
+            $order->screenshot_audit_remark = '管理员审核通过';
+            $order->save();
+
+            // 重新查询订单，加载关联数据
+            $order = $this->model->with('items')->where('id', $id)->find();
+            $user = User::get($order->user_id);
+
+            // 订单减库存
+            $stockSale = new StockSale();
+            $stockSale->forwardStockSale($order);
+
+            // 处理发票审核改为等待开具
+            if ($order->invoice_status == 1) {
+                $invoice = \app\admin\model\cus\order\Invoice::where('order_id', $order->id)->find();
+                if ($invoice) {
+                    $invoice->status = 'waiting';
+                    $invoice->save();
+                }
+            }
+
+            // 处理活动，加入拼团，完成拼团，添加赠品记录等
+            ActivityFacade::buyOk($order, $user);
+
+            // 将订单参与活动信息改为已支付
+            $orderOper = new OrderOper();
+            $orderOper->activityOrderPaid($order);
+
+            // 触发订单支付完成事件
+            $data = ['order' => $order, 'user' => $user];
+            \think\Hook::listen('order_paid_after', $data);
+
+            Db::commit();
+            $this->success('标记成功');
+        } catch (\Exception $e) {
+            Db::rollback();
+            $this->error('标记失败：' . $e->getMessage());
+        }
     }
 
 

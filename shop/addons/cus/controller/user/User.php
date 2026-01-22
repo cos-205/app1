@@ -81,16 +81,6 @@ class User extends Common
         $user = UserModel::with(['parent_user', 'third_oauth'])->where('id', $user->id)->find();
 
         $user->hidden(['password', 'salt', 'createtime', 'updatetime', 'deletetime', 'remember_token', 'login_fail', 'login_ip', 'login_time']);
-        $user->addressTotal =  1;//\app\admin\model\cus\user\Address::where('user_id', $user->id)->count() ?? 0;
-        
-        // 获取分红余额（从用户统计表中获取）
-        $userStatistics = \app\common\model\fuka\UserStatistics::where('user_id', $user->id)->find();
-        if ($userStatistics) {
-            // 分红余额（单位：万元，转换为元）
-            $user->dividend_money = floatval($userStatistics->dividend_money ?? 0) * 10000;
-        } else {
-            $user->dividend_money = 0;
-        }
         
         $this->success('个人详情', $user);
     }

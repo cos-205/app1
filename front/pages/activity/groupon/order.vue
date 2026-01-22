@@ -134,8 +134,9 @@
 
   // 继续支付
   function onPay(orderSN) {
-    xxep.$router.go('/pages/pay/index', {
+    xxep.$router.go('/pages/pay/screenshot', {
       orderSN,
+      type: 'goods',
     });
   }
 

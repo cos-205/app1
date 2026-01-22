@@ -23,37 +23,4 @@ return [
 //            'api'   => 'api',
 //        ],
 
-    // ============================================
-    // 集福卡系统 API 路由配置
-    // ============================================
-    
-    // 集福卡模块路由
-    'api/fuka/typeList' => 'api/fuka/typeList',                    // GET - 获取福卡类型列表
-    'api/fuka/myCards' => 'api/fuka/myCards',                     // GET - 获取我的福卡列表
-    'api/fuka/useChance' => 'api/fuka/useChance',                 // POST - 使用集福机会
-    'api/fuka/exchange' => 'api/fuka/exchange',                   // POST - 一键兑换
-    'api/fuka/exchangeList' => 'api/fuka/exchangeList',           // GET - 获取兑换记录列表
-    'api/fuka/rankList' => 'api/fuka/rankList',                   // GET - 获取集福排行榜
-    
-    // 签到模块路由
-    'api/signin/doSignin' => 'api/signin/doSignin',               // POST - 每日签到
-    'api/signin/receiveReward' => 'api/signin/receiveReward',     // POST - 领取签到奖励
-    'api/signin/rewardList' => 'api/signin/rewardList',           // GET - 获取签到奖励列表
-    
-    // 团队模块路由
-    'api/team/myTeam' => 'api/team/myTeam',                        // GET - 获取我的团队信息
-    'api/team/memberList' => 'api/team/memberList',                // GET - 获取团队成员列表
-    'api/team/inviteList' => 'api/team/inviteList',                // GET - 获取邀请记录列表
-    'api/team/rewardList' => 'api/team/rewardList',               // GET - 获取团队奖励记录
-    
-    // 财富金卡模块路由（控制器：Card）
-    'api/card/info' => 'api/card/info',                           // GET - 获取金卡信息
-    'api/card/apply' => 'api/card/apply',                         // POST - 申请财富金卡
-    'api/card/completeStep' => 'api/card/completeStep',           // POST - 完成流程步骤
-    'api/card/payFee' => 'api/card/payFee',                       // POST - 支付流程费用
-    
-    // 用户邀请模块路由（控制器：User）
-    'api/user/getInviteInfo' => 'api/user/getInviteInfo',         // GET - 获取邀请信息
-    'api/user/getTeamInfo' => 'api/user/getTeamInfo',             // GET - 获取团队信息
-    'api/user/getTeamMembers' => 'api/user/getTeamMembers',       // GET - 获取团队成员列表
 ];

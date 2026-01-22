@@ -402,6 +402,13 @@
                                 <el-button v-if="state.detail.btns?.includes('refund')" @click="onFullRefund">全部退款
                                 </el-button>
                                 {/if}
+                {if $auth->check('cus/order/order/markPaid')}
+                <el-button v-if="state.detail.payment_screenshot && state.detail.screenshot_status == 0 && state.detail.status == 'unpaid'" 
+                    type="success" 
+                    @click="markPaidOrder">
+                    标记已支付
+                </el-button>
+                {/if}
                             </div>
                             <div class="memo sa-flex">
                                 <template v-if="memo.flag">
@@ -586,6 +593,36 @@
                                 <div v-if="state.detail.paid_time" class="order-item">
                                     <div class="left">付款时间：</div>
                                     <div class="right">{{ state.detail.paid_time }}</div>
+                                </div>
+                                <!-- 支付截图信息 -->
+                                <div v-if="state.detail.payment_screenshot" class="order-item">
+                                    <div class="left">支付截图：</div>
+                                    <div class="right">
+                                        <el-image 
+                                            :src="state.detail.payment_screenshot" 
+                                            :preview-src-list="[state.detail.payment_screenshot]"
+                                            style="width: 100px; height: 100px; cursor: pointer;"
+                                            fit="cover">
+                                        </el-image>
+                                    </div>
+                                </div>
+                                <div v-if="state.detail.payment_screenshot" class="order-item">
+                                    <div class="left">截图状态：</div>
+                                    <div class="right">
+                                        <el-tag v-if="state.detail.screenshot_status == 0" type="warning">待审核</el-tag>
+                                        <el-tag v-if="state.detail.screenshot_status == 1" type="success">审核通过</el-tag>
+                                        <el-tag v-if="state.detail.screenshot_status == 2" type="danger">审核拒绝</el-tag>
+                                    </div>
+                                </div>
+                                <div v-if="state.detail.screenshot_audit_remark" class="order-item">
+                                    <div class="left">审核备注：</div>
+                                    <div class="right">{{ state.detail.screenshot_audit_remark }}</div>
+                                </div>
+                                <div v-if="state.detail.payment_screenshot && state.detail.screenshot_status == 0 && state.detail.status == 'unpaid'" class="order-item">
+                                    <div class="left">快速操作：</div>
+                                    <div class="right">
+                                        <el-button type="success" size="small" @click="markPaidOrder">标记已支付</el-button>
+                                    </div>
                                 </div>
                             </el-col>
                             <el-col v-if="state.detail.user" :xs="24" :sm="12" :md="12" :lg="6" :xl="6">

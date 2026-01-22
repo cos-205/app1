@@ -37,7 +37,7 @@
         <button
           class="check-btn ss-reset-button"
           v-if="payResult === 'failed'"
-          @tap="xxep.$router.redirect('/pages/pay/index', { orderSN: state.orderId })"
+          @tap="xxep.$router.redirect('/pages/pay/screenshot', { orderSN: state.orderId, type: 'goods' })"
         >
           重新支付
         </button>
