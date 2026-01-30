@@ -26,7 +26,7 @@
             ></image>
             <text class="share-title">微信好友</text>
           </button>
-          <button
+          <!-- <button
             v-if="shareConfig.methods.includes('poster')"
             class="share-item share-btn ss-flex-col ss-col-center"
             @tap="onShareByPoster"
@@ -37,7 +37,7 @@
               mode=""
             ></image>
             <text class="share-title">生成海报</text>
-          </button>
+          </button> -->
 
           <button
             v-if="shareConfig.methods.includes('link')"
@@ -134,7 +134,8 @@
 
   // 复制链接分享
   const onShareByCopyLink = () => {
-    xxep.$helper.copyText(props.shareInfo.link);
+	const link = window.location.host + window.location.pathname + '/#/' + props.shareInfo.link
+    xxep.$helper.copyText(link);
     closeShareModal();
   };
 

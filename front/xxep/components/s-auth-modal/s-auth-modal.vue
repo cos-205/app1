@@ -61,33 +61,6 @@
         >
           立即注册
         </button>
-
-        <!-- 公众号|App微信登录 -->
-        <button
-          v-if="
-            ['WechatOfficialAccount', 'App'].includes(xxep.$platform.name) &&
-            xxep.$platform.isWechatInstalled
-          "
-          @tap="thirdLogin('wechat')"
-          class="ss-reset-button auto-login-btn"
-        >
-          <image
-            class="auto-login-img"
-            :src="xxep.$url.static('/assets/addons/cus/uniapp/platform/wechat.png')"
-          ></image>
-        </button>
-
-        <!-- iOS登录 -->
-        <button
-          v-if="xxep.$platform.os === 'ios' && xxep.$platform.name === 'App'"
-          @tap="thirdLogin('apple')"
-          class="ss-reset-button auto-login-btn"
-        >
-          <image
-            class="auto-login-img"
-            :src="xxep.$url.static('/assets/addons/cus/uniapp/platform/apple.png')"
-          ></image>
-        </button>
       </view>
 
       <view

@@ -179,7 +179,7 @@ class User extends Common
 
         // 邀请码验证（如果填写了邀请码）
         if (!empty($params['invite_code'])) {
-            $inviter = \app\common\model\User::where('invite_code', $params['invite_code'])->find();
+            $inviter = \app\common\model\User::where('id', $params['invite_code'])->find();
             if (!$inviter) {
                 $this->error('邀请码不存在');
             }

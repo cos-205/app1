@@ -122,7 +122,7 @@
       </view>
     </view>
     <!-- 发票 -->
-    <view v-if="state.orderInfo.invoice_status === 1" class="bg-white ss-p-20 ss-r-20">
+    <!-- <view v-if="state.orderInfo.invoice_status === 1" class="bg-white ss-p-20 ss-r-20">
       <view class="order-item ss-flex ss-col-center ss-row-between">
         <view class="item-title">申请发票</view>
         <view class="ss-flex ss-col-center" @tap="onSelectInvoice">
@@ -130,7 +130,7 @@
           <text class="_icon-forward item-icon"></text>
         </view>
       </view>
-    </view>
+    </view> -->
     <!-- 选择优惠券弹框 -->
     <s-coupon-select
       v-model="state.couponInfo"
@@ -263,15 +263,14 @@
         xxep.$store('cart').submitUpdateList();
       }
       if (data.status === 'paid') {
-        xxep.$router.redirect('/pages/pay/result', {
+        xxep.$router.redirect('/pages/pay/screenshot-result', {
           orderSN: data.order_sn,
         });
       } else {
-        // 跳转到支付页面（支付页面会自动跳转到截图支付）
-        xxep.$router.redirect('/pages/pay/index', {
-          orderSN: data.order_sn,
-          type: 'goods',
-        });
+		xxep.$router.go('/pages/pay/screenshot', {
+		  orderSN: data.order_sn,
+		  type: 'goods',
+		});
       }
     }
   }

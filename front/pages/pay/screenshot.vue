@@ -17,7 +17,7 @@
         <view class="selector-value">
           <text v-if="state.selectedChannel" class="selected-text">{{ state.selectedChannel.channel_name }}</text>
           <text v-else class="placeholder-text">请选择支付渠道</text>
-          <text class="iconfont icon-arrow-right"></text>
+          <text class="iconfont icon-arrow-right">切换</text>
         </view>
       </view>
 

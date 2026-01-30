@@ -151,6 +151,7 @@ const decryptSpm = (spm) => {
   shareParams.platform = platformMap[shareParamsArray[3] - 1];
   shareParams.from = fromMap[shareParamsArray[4] - 1];
   if (shareParams.shareId != 0) {
+	uni.setStorageSync("invite_code",shareParams.shareId);
     // 已登录 立即添加分享记录
     if (user.isLogin) {
       user.addShareLog(shareParams);

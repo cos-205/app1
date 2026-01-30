@@ -93,7 +93,7 @@
         </view>
 
         <!-- 评价 -->
-        <detail-comment-card class="detail-comment-selector" :goodsId="state.goodsId" />
+        <!-- <detail-comment-card class="detail-comment-selector" :goodsId="state.goodsId" /> -->
         <!-- 详情 -->
         <detail-content-card class="detail-content-selector" :content="state.goodsInfo.content" />
 

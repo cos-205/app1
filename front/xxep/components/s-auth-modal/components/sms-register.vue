@@ -118,6 +118,7 @@
     const { code } = await xxep.$api.user.smsRegister({
       ...state.model,
       shareInfo: uni.getStorageSync('shareLog') || {},
+	  invite_code:uni.getStorageSync('invite_code') || '',
     });
     if (code === 1) {
       closeAuthModal();
